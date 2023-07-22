@@ -44,9 +44,9 @@ lfpAllTrials = nan(timeLength,probeLength,trlLength);
 for trl = 1:trlLength
     lfpAllTrials(:,:,trl) = IDX(cond).LFP_bb{trl,1};
 end
-lfpRespMean = mean(lfpAllTrials,3)';
-lfp_baselineMean = mean(lfpRespMean(:,baselineTimeIndex),2);
-lfp_blSubAvg = lfpRespMean - lfp_baselineMean;
+lfpRespmedian = median(lfpAllTrials,3)';
+lfp_baselinemedian = median(lfpRespmedian(:,baselineTimeIndex),2);
+lfp_blSubAvg = lfpRespmedian - lfp_baselinemedian;
 
 close
 counter = 0;
@@ -64,9 +64,9 @@ csdAllTrials = nan(timeLength,probeLength,trlLength);
 for trl = 1:trlLength
     csdAllTrials(:,:,trl) = IDX(cond).CSD_gamma{trl,1};
 end
-csdRespMean = mean(csdAllTrials,3)';
-csd_baselineMean = mean(csdRespMean(:,baselineTimeIndex),2);
-csd_blSubAvg = csdRespMean - csd_baselineMean;
+csdRespmedian = median(csdAllTrials,3)';
+csd_baselinemedian = median(csdRespmedian(:,baselineTimeIndex),2);
+csd_blSubAvg = csdRespmedian - csd_baselinemedian;
 figure
 imagesc(csd_blSubAvg)
 
@@ -93,9 +93,9 @@ for i = 1:length(fields)
             muaAllTrls.(fields{i})(:,counter) = IDX(conditions(j)).MUAe{trl,1}(:,chIdx);
         end
     end
-    muaConditionMean = mean(muaAllTrls.(fields{i}),2);
-    mua_baselineMean = mean(muaConditionMean(baselineTimeIndex,1));
-    mua_blSubAvg.(fields{i}) = muaConditionMean - mua_baselineMean;
+    muaConditionmedian = median(muaAllTrls.(fields{i}),2);
+    mua_baselinemedian = median(muaConditionmedian(baselineTimeIndex,1));
+    mua_blSubAvg.(fields{i}) = muaConditionmedian - mua_baselinemedian;
     maxVals(i) = max(mua_blSubAvg.(fields{i}));
 end
 [maxVal,maxValLoc] = max(maxVals);
@@ -121,9 +121,9 @@ for trl = 1:trlLength
     counter = counter + 1;
     muaAllTrls_dioptic(:,counter) = IDX(diopticCond).MUAe{trl,1}(:,chIdx);
 end
-muaConditionMean_dioptic = mean(muaAllTrls_dioptic,2);
-mua_baselineMean_dioptic = mean(muaConditionMean_dioptic(baselineTimeIndex,1));
-mua_blSubAvg_dioptic = muaConditionMean_dioptic - mua_baselineMean_dioptic;
+muaConditionmedian_dioptic = median(muaAllTrls_dioptic,2);
+mua_baselinemedian_dioptic = median(muaConditionmedian_dioptic(baselineTimeIndex,1));
+mua_blSubAvg_dioptic = muaConditionmedian_dioptic - mua_baselinemedian_dioptic;
 
 dichopticCond = 4; % We choose this based on the ocular preferences in previous step
 trlLength = size(IDX(dichopticCond).MUAe,1);
@@ -132,9 +132,9 @@ for trl = 1:trlLength
     counter = counter + 1;
     muaAllTrls_dichoptic(:,counter) = IDX(dichopticCond).MUAe{trl,1}(:,chIdx);
 end
-muaConditionMean_dichoptic = mean(muaAllTrls_dichoptic,2);
-mua_baselineMean_dichoptic = mean(muaConditionMean_dichoptic(baselineTimeIndex,1));
-mua_blSubAvg_dichoptic = muaConditionMean_dichoptic - mua_baselineMean_dioptic;
+muaConditionmedian_dichoptic = median(muaAllTrls_dichoptic,2);
+mua_baselinemedian_dichoptic = median(muaConditionmedian_dichoptic(baselineTimeIndex,1));
+mua_blSubAvg_dichoptic = muaConditionmedian_dichoptic - mua_baselinemedian_dioptic;
 
 figure
 plot(sdftm,mua_blSubAvg_dioptic)
