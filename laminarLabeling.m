@@ -9,7 +9,6 @@
 %% Setup
 % Directories
 clear
-close all
 codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
 cd(codeDir)
 outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
@@ -49,6 +48,7 @@ for contact = probeLength:-1:1
     chResponse = lfp_blSubAvg(contact,:);
     yValueAdder = chResponse + 150 * counter;
     plot(sdftm,yValueAdder,'k')
+    hold on
 end
 
 vline(0)
@@ -60,11 +60,22 @@ box off
 
 %% CSD
 subplot(1,5,2)
-csdAllTrials = nan(timeLength,probeLength,trlLength);
-for trl = 1:trlLength
-    csdAllTrials(:,:,trl) = IDX(cond).CSD_gamma{trl,1};
+% % csdAllTrials = nan(timeLength,probeLength,trlLength);
+% % for trl = 1:trlLength
+% %     csdAllTrials(:,:,trl) = IDX(cond).CSD_gamma{trl,1};
+% % end
+
+conditionLength = 20; % There are 20 conditions, 20 rows in IDX.
+counter = 0;
+for cond = 1:conditionLength
+    trlLength = size(IDX(cond).CSD_gamma,1);
+    for trl = 1:trlLength
+        counter = counter + 1;
+        csd_allLFPdata(:,:,counter) = IDX(cond).CSD_gamma{trl,1};
+    end
 end
-csdRespmedian = median(csdAllTrials,3)';
+
+csdRespmedian = median(csd_allLFPdata,3)';
 csd_baselinemedian = median(csdRespmedian(:,baselineTimeIndex),2);
 csd_blSubAvg = csdRespmedian - csd_baselinemedian;
 
@@ -82,7 +93,7 @@ c = colorbar;
 
 %% PSD
 
-You are here - calculate PSD from IDX.LFP_bb triggered data. 
+% % You are here - calculate PSD from IDX.LFP_bb triggered data. 
 
 subplot(1,5,3)
 conditionLength = 20; % There are 20 conditions, 20 rows in IDX.
@@ -97,19 +108,19 @@ end
 
 % FFT
 Fs       = 1000; % Hz
-chanN    = size(SDF,1); % lfp is 11272360x24, SDF is ch x time x trial
+chanN    = size(psd_allLFPdata,2); 
 % loop through channels 
 for ch = 1:chanN
     %loop through trials
-    for trialNum = 1:size(SDF,3)
+    for trialNum = 1:size(psd_allLFPdata,3)
         clear x n Spec
-        lfp_holder        = SDF(ch,:,trialNum)';
+        lfp_holder        = psd_allLFPdata(:,ch,trialNum);
     
         %%%%%%%%%%%%%%%%%
         % % % % % % % % % %  x =bandStopFiltLFP(lfp_holder); fix bandstop filter
         %%%%%%%%%%%%%%%%%
     
-        n        = size(lfp_holder,2); % Number of data points
+        n        = size(lfp_holder,1); % Number of data points
         % prep for psd 
             nfft     = 512; 
             window   = hanning(nfft); 
@@ -144,7 +155,7 @@ for ch = 1:chanN
             end
         freq_vector = (select - 1)*Fs/nfft;
         if ch == 1
-            power = nan(chanN,size(Spec,1),size(SDF,3));
+            power = nan(chanN,size(Spec,1),size(psd_allLFPdata,3));
         end
         power(ch,:,trialNum) = Spec; 
     end
@@ -153,7 +164,7 @@ end
 powerPermute = permute(power,[2 1 3]);
 
 % average power
-powerAvg = nanmean(powerPermute,3);
+powerAvg = mean(powerPermute,3,"omitnan");
 
 
 % cheat at your band stop filter - remove 60Hz artifact manually
@@ -172,13 +183,32 @@ powerAvg(idx60hz,:) = 0;
  end
 
 set(gcf,'color','w'); 
-imagesc(freq_vector,chans,power_norm'); 
+imagesc(freq_vector,yAxisChannels,power_norm'); 
 colormap('hot'); xlim([0 100]); 
 xlabel('freq (Hz)'); ylabel('contact number'); 
-set(gca,'tickdir','out','ytick',chans); 
+set(gca,'tickdir','out','ytick',yAxisChannels); 
 
 %% Gamma Beta Cross
 subplot(1,5,4)
+
+% Get the Gamma x Beta cross
+% Beta is 12 - 20Hz (for our purposes)
+% Gamma is 30-59,61:100
+beta_index = (freq_vector > 12) & (freq_vector < 30);
+gamma_index = (freq_vector > 30) ;
+gamma_index(idx60hz) = false;
+        
+for j = yAxisChannels
+    avgBeta(j,1) = mean(power_norm(beta_index,j));
+    avgGamma(j,1) = mean(power_norm(gamma_index,j),"omitnan");
+end
+
+plot(avgBeta)
+hold on
+plot(fliplr(avgGamma))
+view([90 -90])
+set(gca,'xdir','reverse')
+legend('Beta','Gamma','Location','best')
 
 
 %% MUAe

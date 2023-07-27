@@ -27,7 +27,20 @@ outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
 cd(outputDir)
 load('sortedData_211008_B_bmcBRFS001.mat')
 
+% Variables
+cond = 1; % Using most excitatory stimulus, condition 1, 'Simult. Dioptic. PO'
+probeLength = size(IDX(cond).LFP_bb{1,1},2);
+sdftm = STIM(1).sdftm;
+timeLength = length(sdftm);
+trlLength = size(IDX(cond).LFP_bb,1);
+baselineTimeIndex = find(sdftm == -50):find(sdftm == 0); 
+xAxisTime = sdftm;
+xAxisLim = [-100 400];
+yAxisChannels = 1:32;
 
+% Figure settings
+set(0,'DefaultFigureWindowStyle','docked')
+f = figure;
 
 %% Continuous line plots for individual units
 % Using unit on contact 15 as example plot
