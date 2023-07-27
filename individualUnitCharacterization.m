@@ -20,55 +20,14 @@
 
 %% Setup
 clear
-codeDir = 'C:\Users\neuropixel\Documents\GitHub\preProcessEphysData'; 
+codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
 cd(codeDir)
 outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
 
 cd(outputDir)
 load('sortedData_211008_B_bmcBRFS001.mat')
 
-%% Laminar plots, on condition 1, 'Simult. Dioptic. PO'
-% LFP, CSD, PSD, Gamma/Beta cross, MUA
 
-% Preallocate
-cond = 1; % Using most excitatory stimulus
-probeLength = size(IDX(cond).LFP_bb{1,1},2);
-sdftm = STIM(1).sdftm;
-timeLength = length(sdftm);
-trlLength = size(IDX(cond).LFP_bb,1);
-baselineTimeIndex = find(sdftm == -50):find(sdftm == 0) ; 
-
-
-% LFP
-lfpAllTrials = nan(timeLength,probeLength,trlLength);
-for trl = 1:trlLength
-    lfpAllTrials(:,:,trl) = IDX(cond).LFP_bb{trl,1};
-end
-lfpRespmedian = median(lfpAllTrials,3)';
-lfp_baselinemedian = median(lfpRespmedian(:,baselineTimeIndex),2);
-lfp_blSubAvg = lfpRespmedian - lfp_baselinemedian;
-
-close
-counter = 0;
-for contact = probeLength:-1:1
-    counter = counter + 1;
-    chResponse = lfp_blSubAvg(contact,:);
-    yValueAdder = chResponse + 150 * counter;
-    plot(sdftm,yValueAdder,'k')
-    hold on
-end
-ylim([-200 5000])
-
-% CSD
-csdAllTrials = nan(timeLength,probeLength,trlLength);
-for trl = 1:trlLength
-    csdAllTrials(:,:,trl) = IDX(cond).CSD_gamma{trl,1};
-end
-csdRespmedian = median(csdAllTrials,3)';
-csd_baselinemedian = median(csdRespmedian(:,baselineTimeIndex),2);
-csd_blSubAvg = csdRespmedian - csd_baselinemedian;
-figure
-imagesc(csd_blSubAvg)
 
 %% Continuous line plots for individual units
 % Using unit on contact 15 as example plot
