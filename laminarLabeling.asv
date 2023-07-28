@@ -22,25 +22,36 @@ probeLength = size(IDX(cond).LFP_bb{1,1},2);
 sdftm = STIM(1).sdftm;
 timeLength = length(sdftm);
 trlLength = size(IDX(cond).LFP_bb,1);
-baselineTimeIndex = find(sdftm == -50):find(sdftm == 0); 
 xAxisTime = sdftm;
 xAxisLim = [-100 400];
 yAxisChannels = 1:32;
+yAxisLim =      [1 32];
 
 % Figure settings
 set(0,'DefaultFigureWindowStyle','docked')
 f = figure;
+title()
 % % f.Position = [1 1 2502 1224];
 
-%% LFP
-subplot(1,5,1)
-lfpAllTrials = nan(timeLength,probeLength,trlLength);
-for trl = 1:trlLength
-    lfpAllTrials(:,:,trl) = IDX(cond).LFP_bb{trl,1};
+%% Average data from all trials
+
+counter = 0;
+for cond = 1:20 % There are 20 conditions, 20 rows in IDX.
+    trlLength = size(IDX(cond).LFP_bb,1);
+    for trl = 1:trlLength
+        counter = counter + 1;
+        lfpAllData(:,:,counter) = IDX(cond).LFP_bb{trl,1};
+    end
 end
-lfpRespmedian = median(lfpAllTrials,3)';
+
+lfpRespmedian = median(lfpAllData,3)';
+baselineTimeIndex = find(sdftm == -50):find(sdftm == 0); 
 lfp_baselinemedian = median(lfpRespmedian(:,baselineTimeIndex),2);
 lfp_blSubAvg = lfpRespmedian - lfp_baselinemedian;
+
+
+%% LFP
+ax1 = subplot(1,5,1);
 
 counter = 0;
 for contact = probeLength:-1:1
@@ -55,19 +66,17 @@ vline(0)
 
 ylim([25 4900])
 xlim(xAxisLim)
+xlabel('Time from stimulus onset (ms)');
 set(gca,'YTick', [])
 box off
+title('LFP')
+
 
 %% CSD
-subplot(1,5,2)
-% % csdAllTrials = nan(timeLength,probeLength,trlLength);
-% % for trl = 1:trlLength
-% %     csdAllTrials(:,:,trl) = IDX(cond).CSD_gamma{trl,1};
-% % end
+ax2 = subplot(1,5,2);
 
-conditionLength = 20; % There are 20 conditions, 20 rows in IDX.
 counter = 0;
-for cond = 1:conditionLength
+for cond = 1:20
     trlLength = size(IDX(cond).CSD_gamma,1);
     for trl = 1:trlLength
         counter = counter + 1;
@@ -81,40 +90,35 @@ csd_blSubAvg = csdRespmedian - csd_baselinemedian;
 
 imagesc(xAxisTime,yAxisChannels,csd_blSubAvg)
 climit = max(abs(get(gca,'CLim'))*.8);
-ydir = 'reverse';
-set(gca,'CLim',[-climit climit],'Box','off','TickDir','out')
-colormap(flipud(jet));
+xlabel('Time (ms)');
+ylabel('contact number'); 
+set(ax2,'CLim',[-climit climit],'ytick',yAxisChannels); 
+colormap(ax2,flipud(jet));
 
 vline(0)
 xlim(xAxisLim)
 box off
+
 c = colorbar;
+c.Label.String = "(uV / mm)^2";
+c.Label.Rotation = 270;
+
+
+title('CSD')
 
 
 %% PSD
-
-% % You are here - calculate PSD from IDX.LFP_bb triggered data. 
-
-subplot(1,5,3)
-conditionLength = 20; % There are 20 conditions, 20 rows in IDX.
-counter = 0;
-for cond = 1:conditionLength
-    trlLength = size(IDX(cond).LFP_bb,1);
-    for trl = 1:trlLength
-        counter = counter + 1;
-        psd_allLFPdata(:,:,counter) = IDX(cond).LFP_bb{trl,1};
-    end
-end
+ax3 = subplot(1,5,3);
 
 % FFT
 Fs       = 1000; % Hz
-chanN    = size(psd_allLFPdata,2); 
+chanN    = size(lfpAllData,2); 
 % loop through channels 
 for ch = 1:chanN
     %loop through trials
-    for trialNum = 1:size(psd_allLFPdata,3)
+    for trialNum = 1:size(lfpAllData,3)
         clear x n Spec
-        lfp_holder        = psd_allLFPdata(:,ch,trialNum);
+        lfp_holder        = lfpAllData(:,ch,trialNum);
     
         %%%%%%%%%%%%%%%%%
         % % % % % % % % % %  x =bandStopFiltLFP(lfp_holder); fix bandstop filter
@@ -139,7 +143,8 @@ for ch = 1:chanN
             for j=1:k
                 xw    = window.*(x(index));
                 index = index + (nwind - noverlap);
-                Xx    = abs(fft(xw,nfft)).^2;
+                % fft --> absolute value --> squared.
+                Xx    = abs(fft(xw,nfft)).^2; % Xx is power.
                 Spec  = Spec + Xx;  
             end
         % Select first half
@@ -155,66 +160,108 @@ for ch = 1:chanN
             end
         freq_vector = (select - 1)*Fs/nfft;
         if ch == 1
-            power = nan(chanN,size(Spec,1),size(psd_allLFPdata,3));
+            power = nan(chanN,size(Spec,1),size(lfpAllData,3));
         end
         power(ch,:,trialNum) = Spec; 
     end
 end
 % permute power, initial design was (spec x chanN)
-powerPermute = permute(power,[2 1 3]);
+powerPermute = permute(power,[2 1 3]); %output is (freq x ch x trial)
 
 % average power
 powerAvg = mean(powerPermute,3,"omitnan");
 
 
-% cheat at your band stop filter - remove 60Hz artifact manually
-idx60hz = find((freq_vector > 57.4 & freq_vector < 62.6 ));
-powerAvg(idx60hz,:) = 0;
-%remove top channel artifact?
-    % warning('removing top channel artifact - necessary? BMC DEV!!')
-    % powerAvg(:,1) = 0;
 
-% normalize power @ each frequency relative to power across contacts 
+%remove top channel artifact?
+    warning('removing top channel artifact')
+    powerAvg(:,1) = 0;
+
+
+% normalize power. At each frequency, we divide the power of each channel
+% by that of the channel with the highest power.
  power_norm = nan(size(powerAvg)); 
- for ch = 1:size(powerAvg,2)
-     for f = 1:size(powerAvg,1)
-         power_norm(f,ch) = (powerAvg(f,ch) - mean(powerAvg(f,:)))./(mean(powerAvg(f,:))) * 100; % percent deviation from mean
-     end
- end
+for freq = 1:size(powerAvg,1)
+    powerOfAllChAtThisFreq = powerAvg(freq,:);
+    [maxPower,chWithMaxPower] = max(powerOfAllChAtThisFreq);
+    power_norm(freq,:) = powerOfAllChAtThisFreq ./ maxPower;
+end
 
 set(gcf,'color','w'); 
 imagesc(freq_vector,yAxisChannels,power_norm'); 
-colormap('hot'); xlim([0 100]); 
-xlabel('freq (Hz)'); ylabel('contact number'); 
-set(gca,'tickdir','out','ytick',yAxisChannels); 
+colormap(ax3,'parula');
+d = colorbar;
+d.Label.String = "relative power";
+d.Label.Rotation = 270;
+d.Label.Position(1) = 4;
 
-%% Gamma Beta Cross
-subplot(1,5,4)
+
+xlim([0 100]); 
+xlabel('freq (Hz)'); 
+set(ax3,'ytick',yAxisChannels)
+set(ax3,'XTick',[5,12,40,100]); 
+xlim([0 100]); 
+
+title('PSD')
+
+%% Theta-Alpha Gamma Cross
+ax4 = subplot(1,5,4);
+title('Theta-Alpha Gamma cross')
 
 % Get the Gamma x Beta cross
 % Beta is 12 - 20Hz (for our purposes)
 % Gamma is 30-59,61:100
-beta_index = (freq_vector > 12) & (freq_vector < 25);
-gamma_index = (freq_vector > 30) ;
-gamma_index(idx60hz) = false;
+beta_index = (freq_vector > 5) & (freq_vector < 12);
+gamma_index = (freq_vector > 40) & (freq_vector < 100);
+% % % gamma_index(idx60hz) = false;
         
 for j = yAxisChannels
     avgBeta(j,1) = mean(power_norm(beta_index,j));
-    avgGamma(j,1) = nanmean(power_norm(gamma_index,j));
+    avgGamma(j,1) = mean(power_norm(gamma_index,j));
 end
 
+plot(avgBeta)
+hold on
+plot(fliplr(avgGamma))
+set(ax4, 'XDir','reverse')
+view([90 -90])
+xlim(yAxisLim)
+ylabel('Normalized power (% Deviation from the mean)'); 
+set(ax4,'xtick',yAxisChannels,'Box','off'); 
+legend('5-12 Hz','40-100 Hz','Location','best')
+
+title('Theta-Alpha Gamma cross')
 
 %% MUAe
-subplot(1,5,5)
-
-muaAllTrials = nan(timeLength,probeLength,trlLength);
-for trl = 1:trlLength
-    muaAllTrials(:,:,trl) = IDX(cond).MUAe{trl,1};
+ax5 = subplot(1,5,5);
+counter = 0;
+for cond = 1:20 % There are 20 conditions, 20 rows in IDX.
+    trlLength = size(IDX(cond).MUAe,1);
+    for trl = 1:trlLength
+        counter = counter + 1;
+        muaAllData(:,:,counter) = IDX(cond).MUAe{trl,1};
+    end
 end
-muaRespmedian = median(muaAllTrials,3)';
+
+muaRespmedian = median(muaAllData,3)';
+baselineTimeIndex = find(sdftm == -50):find(sdftm == 0); 
+mua_baselinemedian = median(muaRespmedian(:,baselineTimeIndex),2);
+mua_blSubAvg = muaRespmedian - mua_baselinemedian;
+
+muaRespmedian = median(muaAllData,3)';
 mua_baselinemedian = median(muaRespmedian(:,baselineTimeIndex),2);
 mua_blSubAvg = muaRespmedian - mua_baselinemedian;
 imagesc(xAxisTime,yAxisChannels,mua_blSubAvg)
+colormap(ax5,'turbo');
+e = colorbar;
+e.Label.String = "uV";
+e.Label.Rotation = 270;
+
 vline(0)
 xlim(xAxisLim)
+xlabel('Time (ms)');
+
 box off
+set(ax5,'ytick',yAxisChannels); 
+
+title('MUAe')

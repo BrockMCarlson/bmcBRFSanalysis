@@ -1,0 +1,18 @@
+ROOTDIR = 'C:\Users\neuropixel\Documents\MATLAB\BMC_AdaptdcosFigures\';
+cd(ROOTDIR)
+[IDX,ERR] = IDX_iScienceSubmission(ROOTDIR);
+cd(ROOTDIR)
+load(strcat(ROOTDIR,filesep,'IDX_iScienceSubmission.mat'))
+% IDX breakdown
+numUnits = idxBreakdown(IDX,ERR);
+%% Figure 2a and 2b
+gramm_dCOS_line(IDX);
+% Figure 2c
+gramm_adaptation_line(IDX)
+% Figure 3
+gramm_2x2_line(IDX)
+gramm_2x2_subline(IDX)
+% Figure 4
+gramm_adaptationEffect(IDX)
+
+
