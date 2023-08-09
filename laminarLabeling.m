@@ -15,7 +15,6 @@ sessionLabel = '211012_B_bmcBRFS001';
 codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
 cd(codeDir)
 outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
-
 cd(outputDir)
 load(strcat('sortedData_',sessionLabel,'.mat'))
 
@@ -31,7 +30,6 @@ yAxisChannels = 1:32;
 yAxisLim =      [1 32];
 
 % Figure settings
-set(0,'DefaultFigureWindowStyle','docked')
 f = figure;
 sgtitle(sessionLabel,'interpreter','none')
 % % f.Position = [1 1 2502 1224];
@@ -250,10 +248,6 @@ muaRespmedian = median(muaAllData,3)';
 baselineTimeIndex = find(sdftm == -50):find(sdftm == 0); 
 mua_baselinemedian = median(muaRespmedian(:,baselineTimeIndex),2);
 mua_blSubAvg = muaRespmedian - mua_baselinemedian;
-
-muaRespmedian = median(muaAllData,3)';
-mua_baselinemedian = median(muaRespmedian(:,baselineTimeIndex),2);
-mua_blSubAvg = muaRespmedian - mua_baselinemedian;
 imagesc(xAxisTime,yAxisChannels,mua_blSubAvg)
 colormap(ax5,'turbo');
 e = colorbar;
@@ -268,3 +262,4 @@ box off
 set(ax5,'ytick',yAxisChannels); 
 
 title('MUAe')
+
