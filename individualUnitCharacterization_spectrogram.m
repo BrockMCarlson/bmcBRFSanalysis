@@ -37,11 +37,12 @@ baselineTimeIndex = find(sdftm == -50):find(sdftm == 0);
 xAxisTime = sdftm;
 yAxisChannels = 1:32;
 
-for chIdx = yAxisChannels
+% for chIdx = yAxisChannels
+for chIdx = 20
     %% Continuous line plots for individual units
     
     % Figure settings
-    set(0,'DefaultFigureWindowStyle','normal')
+    set(0,'DefaultFigureWindowStyle','docked')
     f = figure;
     set(f,'Position',[-2.0583e+03 7.6667 1186 1.3447e+03])
     
@@ -58,10 +59,10 @@ for chIdx = yAxisChannels
         conditions = cond.(fields{i});
         counter = 0;
         for j = 1:length(conditions)
-            trlLength = size(IDX(conditions(j)).LFP_gamma,1);
+            trlLength = size(IDX(conditions(j)).LFP_bb,1);
             for trl = 1:trlLength
                 counter = counter + 1;
-                muaAllTrls.(fields{i})(:,counter) = IDX(conditions(j)).LFP_gamma{trl,1}(:,chIdx);
+                muaAllTrls.(fields{i})(:,counter) = IDX(conditions(j)).LFP_bb{trl,1}(:,chIdx);
             end
         end
         muaConditionmean = mean(muaAllTrls.(fields{i}),2);
@@ -79,25 +80,38 @@ for chIdx = yAxisChannels
     
     for i = 1: length(sortedResponseIdx)
         subplot(4,2,i)
-        plot(sdftm,smoothdata(mua_blSubAvg.(fields{sortedResponseIdx(i)}),"gaussian",10))
-        ylim([-10 maxVal])
-        vline(0)
-        xlim([sdftm(1) sdftm(end)])
-        title(fields{sortedResponseIdx(i)},'interpreter','none')
-        ylabel('uV')
+        x = mua_blSubAvg.(fields{sortedResponseIdx(i)}); %input signal, vector
+        win = 50; % window, integer | vector | []
+        noverlap = win-2; % Number of overlapped samples, positive integer | []
+        nfft = 512; %  number of DFT points
+        w = []; % Normalized frequencies, vector
+        f = []; % Cyclical frequencies, vector
+        fs = 1000; % sample rate, 1 Hz (default) | positive scalar 
+        freqrange = []; % Frequency range for PSD estimate, "onesided" | "twosided" | "centered
+        spectrumtype = "psd"; % Power spectrum scaling, "psd" (default) | "power"
+        freqloc = "yaxis"; % Frequency display axis, "xaxis" (default) | "yaxis"
+        spectrogram(x,win,noverlap,nfft,fs,spectrumtype,freqloc)
+        xticks([0 200 400 600 800 1000])
+        xticklabels({'-200', '0', '200', '400', '600', '800'})
+        vline(200)
+        ylim([0 100])
+        % vline(0)
+        % xlim([sdftm(1) sdftm(end)])
+        % title(fields{sortedResponseIdx(i)},'interpreter','none')
+        % ylabel('uV')
     end
     
-    titleText = {strcat('Channel Index = ',string(chIdx));strcat('Preferred Response = ',fields{maxValLoc}(7:end))};
+    titleText = {strcat('Channel Index = ',string(chIdx));strcat('Preferred Response = ',preferedStimulus)};
     sgtitle(titleText,'interpreter','none')
     
     
     %% Dioptic vs dichoptic
     % % % diopticCond = 1;
-    % % % trlLength = size(IDX(diopticCond).LFP_gamma,1);
+    % % % trlLength = size(IDX(diopticCond).LFP_bb,1);
     % % % counter = 0;
     % % % for trl = 1:trlLength
     % % %     counter = counter + 1;
-    % % %     muaAllTrls_dioptic(:,counter) = IDX(diopticCond).LFP_gamma{trl,1}(:,chIdx);
+    % % %     muaAllTrls_dioptic(:,counter) = IDX(diopticCond).LFP_bb{trl,1}(:,chIdx);
     % % % end
     % % % muaConditionmean_dioptic = mean(muaAllTrls_dioptic,2);
     % % % mua_baselinemean_dioptic = mean(muaConditionmean_dioptic(baselineTimeIndex,1));
@@ -110,11 +124,11 @@ for chIdx = yAxisChannels
     % % % else
     % % %     warning('unit preferres "null" orientation')
     % % % end
-    % % % trlLength = size(IDX(dichopticCond).LFP_gamma,1);
+    % % % trlLength = size(IDX(dichopticCond).LFP_bb,1);
     % % % counter = 0;
     % % % for trl = 1:trlLength
     % % %     counter = counter + 1;
-    % % %     muaAllTrls_dichoptic(:,counter) = IDX(dichopticCond).LFP_gamma{trl,1}(:,chIdx);
+    % % %     muaAllTrls_dichoptic(:,counter) = IDX(dichopticCond).LFP_bb{trl,1}(:,chIdx);
     % % % end
     % % % muaConditionmean_dichoptic = mean(muaAllTrls_dichoptic,2);
     % % % mua_baselinemean_dichoptic = mean(muaConditionmean_dichoptic(baselineTimeIndex,1));
@@ -151,12 +165,12 @@ for chIdx = yAxisChannels
     
     % Average data
     % Null to preferred
-    trlLength = size(IDX(nullToPreferred).LFP_gamma,1);
+    trlLength = size(IDX(nullToPreferred).LFP_bb,1);
     counter = 0;
     for trl = 1:trlLength
         counter = counter + 1;
-        muaAllTrls_NtP_adapter(:,counter) = IDX(nullToPreferred).LFP_gamma{trl,1}(:,chIdx); %first 800
-        muaAllTrls_NtP_flash(:,counter) = IDX(nullToPreferred).LFP_gamma{trl,2}(:,chIdx); % second 800
+        muaAllTrls_NtP_adapter(:,counter) = IDX(nullToPreferred).LFP_bb{trl,1}(:,chIdx); %first 800
+        muaAllTrls_NtP_flash(:,counter) = IDX(nullToPreferred).LFP_bb{trl,2}(:,chIdx); % second 800
     end
     muaConditionmean_NtP(:,1) = mean(muaAllTrls_NtP_adapter,2);
     muaConditionmean_NtP(:,2) = mean(muaAllTrls_NtP_flash,2);
@@ -164,12 +178,12 @@ for chIdx = yAxisChannels
     mua_blSubAvg_NtP = muaConditionmean_NtP - mua_baselinemean_NtP;
     
     % preferredToNull
-    trlLength = size(IDX(preferredToNull).LFP_gamma,1);
+    trlLength = size(IDX(preferredToNull).LFP_bb,1);
     counter = 0;
     for trl = 1:trlLength
         counter = counter + 1;
-        muaAllTrls_PtN(:,counter,1) = IDX(preferredToNull).LFP_gamma{trl,1}(:,chIdx); %first 800
-        muaAllTrls_PtN(:,counter,2) = IDX(preferredToNull).LFP_gamma{trl,2}(:,chIdx); %second 800
+        muaAllTrls_PtN(:,counter,1) = IDX(preferredToNull).LFP_bb{trl,1}(:,chIdx); %first 800
+        muaAllTrls_PtN(:,counter,2) = IDX(preferredToNull).LFP_bb{trl,2}(:,chIdx); %second 800
     end
     muaConditionmean_PtN = squeeze(mean(muaAllTrls_PtN,2));
     mua_baselinemean_PtN = mean(muaConditionmean_PtN(baselineTimeIndex,:));
@@ -192,7 +206,7 @@ for chIdx = yAxisChannels
     plot(sdftm,smoothed_NtP(:,2))
     hold on
     plot(sdftm,smoothed_PtN(:,2))
-    ylim([-10 maxVal])
+    % ylim([-10 maxVal])
     vline(0)
     legend ('Preferred flash (after null adapter)','Null flash (after preferred adapter)')
     title('Physical Alternation, monocular flash')
@@ -219,29 +233,29 @@ for chIdx = yAxisChannels
     
     % Average data
     % Null to preferred
-    trlLength = size(IDX(nullToPreferred).LFP_gamma,1);
+    trlLength = size(IDX(nullToPreferred).LFP_bb,1);
     counter = 0;
     for trl = 1:trlLength
         counter = counter + 1;
-        muaAllTrls_NtP_adapter(:,counter) = IDX(nullToPreferred).LFP_gamma{trl,1}(:,chIdx); %first 800
-        muaAllTrls_NtP_flash(:,counter) = IDX(nullToPreferred).LFP_gamma{trl,2}(:,chIdx); % second 800
+        muaAllTrls_NtP_adapter(:,counter) = IDX(nullToPreferred).LFP_bb{trl,1}(:,chIdx); %first 800
+        muaAllTrls_NtP_flash(:,counter) = IDX(nullToPreferred).LFP_bb{trl,2}(:,chIdx); % second 800
     end
     muaConditionmean_NtP(:,1) = mean(muaAllTrls_NtP_adapter,2);
     muaConditionmean_NtP(:,2) = mean(muaAllTrls_NtP_flash,2);
     mua_baselinemean_NtP = mean(muaConditionmean_NtP(baselineTimeIndex,:));
-    mua_blSubAvg_NtP = muaConditionmean_NtP - mua_baselinemean_NtP;
+    mua_blSubAvg_NtP = muaConditionmean_NtP - mua_baselinemean_NtP; %Main output 1
     
     % preferredToNull
-    trlLength = size(IDX(preferredToNull).LFP_gamma,1);
+    trlLength = size(IDX(preferredToNull).LFP_bb,1);
     counter = 0;
     for trl = 1:trlLength
         counter = counter + 1;
-        muaAllTrls_PtN(:,counter,1) = IDX(preferredToNull).LFP_gamma{trl,1}(:,chIdx); %first 800
-        muaAllTrls_PtN(:,counter,2) = IDX(preferredToNull).LFP_gamma{trl,2}(:,chIdx); %second 800
+        muaAllTrls_PtN(:,counter,1) = IDX(preferredToNull).LFP_bb{trl,1}(:,chIdx); %first 800
+        muaAllTrls_PtN(:,counter,2) = IDX(preferredToNull).LFP_bb{trl,2}(:,chIdx); %second 800
     end
     muaConditionmean_PtN = squeeze(mean(muaAllTrls_PtN,2));
     mua_baselinemean_PtN = mean(muaConditionmean_PtN(baselineTimeIndex,:));
-    mua_blSubAvg_PtN = muaConditionmean_PtN - mua_baselinemean_PtN(1);
+    mua_blSubAvg_PtN = muaConditionmean_PtN - mua_baselinemean_PtN(1); % Main output 2
     
     % Plot Data
     smoothed_NtP = smoothdata(mua_blSubAvg_NtP,"gaussian",10);
@@ -261,15 +275,15 @@ for chIdx = yAxisChannels
     plot(sdftm,smoothed_NtP(:,2))
     hold on
     plot(sdftm,smoothed_PtN(:,2))
-    ylim([-10 maxVal])
+    % ylim([-10 maxVal])
     vline(0)
     legend ('Preferred flash (after null adapter)','Null flash (after preferred adapter)')
-    title('BRFS, binocular dichoptic flash')
+    title({'BRFS, binocular dichoptic flash';'Same stimulus different history'})
     xlabel('Time (ms) from flash onset')
 
     %% Save output
     % % cd(outputDir)
-    % % pdfOutputName = strcat(fileName(12:end-4),'_individualUnitClassification_LFP_gamma.pdf');
+    % % pdfOutputName = strcat(fileName(12:end-4),'_individualUnitClassification_LFP_bb.pdf');
     % % exportgraphics(f,pdfOutputName,"Append",true)
 
 end
