@@ -33,7 +33,7 @@ load(fileName)
 probeLength = size(IDX(1).LFP_bb{1,1},2);
 sdftm = STIM(1).sdftm;
 timeLength = length(sdftm);
-baselineTimeIndex = find(sdftm == -50):find(sdftm == 0); 
+baselineTimeIndex = find(sdftm == -100):find(sdftm == 0); 
 xAxisTime = sdftm;
 yAxisChannels = 1:32;
 
