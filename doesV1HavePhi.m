@@ -4,10 +4,10 @@
 % This script will take in MUAe data, generate a TPM, and then export that
 % TPM for PhPhi application
 
-cd('S:\formattedDataOutputs')
+cd('C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs')
 
 load('filteredData_211008_B_bmcBRFS001.mat')
-clearvars -except MUAe
+
 % Channels are chosen from laminarBoundaryCalculations.xlsx from SfN work
 upperCh = 8:19;
 middleCh = 20:25;
@@ -34,9 +34,29 @@ for i = 1:8
     end
 end
 
-% Now we can generate the TPM
-TPM = nan(8,8);
-for i = 1:8
+%% Now we can generate the TPM
     % given the state at time t, what is the probability that binarizedData
     % will be in each of the possible states at time t+1.
-    
+TPM = nan(8,8);
+for i = 1:8
+    % for each state, we find the timepoints that that state occurs
+    timeThatState_i_Occurs = find(indexOfStates(i,:));
+    % We get the number of times this state occurs in the data
+    numberOfStatePresentations = length(timeThatState_i_Occurs);
+    % Then we get the state at time t+1
+    timePointPlus1 = timeThatState_i_Occurs + 1;
+    try
+        stateAtTimePointPlus1 = indexOfStates(:,timePointPlus1);
+    catch
+        stateAtTimePointPlus1 = indexOfStates(:,timePointPlus1(1:end-1));
+    end
+    % Now we calculate the porportion that each state happens at t+1
+    numberOfStatePresentationsAtTimePlus1 = sum(stateAtTimePointPlus1,2);
+    proportionEachStateAppearsAtTimePlus1 = numberOfStatePresentationsAtTimePlus1./numberOfStatePresentations;
+    TPM(i,:) = proportionEachStateAppearsAtTimePlus1;
+
+end
+
+%% Save TPM output
+saveName = 'TPM_211008_B_bmcBRFS001';
+save(saveName,"TPM")
