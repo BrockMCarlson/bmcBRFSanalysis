@@ -60,6 +60,10 @@ for dt = 1:7
     box off
     xlabel('Number of samples: 1 sample / ms')
     
+    %How often is the data in the "on-state"?
+    numberofCellsInData = size(binarizedData,1)*size(binarizedData,2);
+    timesDataIsOn = sum(binarizedData,'all');
+    percentOfSamplesInOnState = timesDataIsOn / numberofCellsInData;
     
     possibleStates = combvec([0 1],[0 1],[0 1]);
     
@@ -91,7 +95,7 @@ for dt = 1:7
     %% Now we can generate a state-by-state TPM
         % given the state at time t, what is the probability that binarizedData
         % will be in each of the possible states at time t+1.
-    TPM.(dataType{dt}) = nan(8,8);
+    TPM = nan(8,8);
     for i = 1:8
         % for each state, we find the timepoints that that state occurs
         timeThatState_i_Occurs = find(indexOfStates(i,:));
@@ -107,18 +111,19 @@ for dt = 1:7
         % Now we calculate the porportion that each state happens at t+1
         numberOfStatePresentationsAtTimePlus1 = sum(stateAtTimePointPlus1,2);
         proportionEachStateAppearsAtTimePlus1 = numberOfStatePresentationsAtTimePlus1./numberOfStatePresentations;
-        TPM.(dataType{dt})(i,:) = proportionEachStateAppearsAtTimePlus1;
+        TPM(i,:) = proportionEachStateAppearsAtTimePlus1;
     end
     
     nexttile([2 1])
-    heatmap(TPM.(dataType{dt}))
+    heatmap(TPM)
     title('TPM')
     colormap('parula');
     xlabel('State of substrate')
     ylabel('State of substrate')
 
+    %% Save TPM output
+    saveName = strcat('TPM_bmcBRFS001_',dataType{dt});
+    save(saveName,"TPM")
+
 end
 
-    %% Save TPM output
-    saveName = 'TPM_211008_B_bmcBRFS001_allDataTypes';
-    save(saveName,"TPM")
