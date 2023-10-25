@@ -34,6 +34,7 @@ for ch = 1:15
     end
 end
 %trl avg
+PS_avg = nanmean(PS_CHxMSxTRL,3);
 
 Depth1_NS = [98;97.5;97.9;98.1;97.9];
 Depth2_NS = [120;111;119;117;116];
