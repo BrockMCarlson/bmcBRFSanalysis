@@ -20,6 +20,8 @@ probeLength = size(IDX(cond).LFP_bb{1,1},2);
 timeLength = length(STIM(1).sdftm);
 trlLength = size(IDX(cond).LFP_bb,1);
 xAxisTime = STIM(1).sdftm;
+idxPS = 12;
+idxNS = 11;
 
 %% Create timetable
 % Organize matrix, (15ch,timeseries) for each stimulus
@@ -28,17 +30,16 @@ NS = nan(15,1001);
 
 % Create matrix of all trials (ch x time x trial)
 psTrlLength = size(IDX(12).correctTrialIndex,1);
-for ch = 1:15
-    for psTrl = 1:psTrlLength
-        PS_CHxMSxTRL(ch,:,psTrl) = IDX(12).MUAe{psTrl,2}(:,ch);
-    end
+for psTrl = 1:psTrlLength
+    PS_CHxMSxTRL(:,:,psTrl) = IDX(idxPS).MUAe{psTrl,2}(:,:);
 end
 %trl avg
-PS_avg = nanmean(PS_CHxMSxTRL,3);
+PS_avg = mean(PS_CHxMSxTRL,3);
 
-Depth1_NS = [98;97.5;97.9;98.1;97.9];
-Depth2_NS = [120;111;119;117;116];
-NS_table = table(Depth1,Depth2);
+%Now convert PS_avg (a double array) into a table
+% The goal is to have 32 variables, each as a column, representing a
+% different depth. 
+youAreHere
 
 Time = [milliseconds(-200):milliseconds(1):milliseconds(800)];
 PS_TT = table2timetable(PS_table,'RowTimes',Time);
