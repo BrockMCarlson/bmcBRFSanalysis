@@ -7,9 +7,9 @@ clear
 sessionLabel = '211008_B_bmcBRFS001';
 
 % Directories
-codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
+codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis'; 
 cd(codeDir)
-outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+outputDir = 'C:\Users\Brock Carlson\Documents\MATLAB\FormattedDataOutputs';
 
 cd(outputDir)
 load(strcat('sortedData_',sessionLabel,'.mat'))
@@ -57,6 +57,7 @@ for i = 1:5
         e.Label.Rotation = 270;
     elseif i == 4
         e.Label.String = '';
+    end
     vline(0)
     xlim(xAxisLim)
     xlabel('Time (ms)');
