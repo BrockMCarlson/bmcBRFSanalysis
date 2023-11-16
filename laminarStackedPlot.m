@@ -4,30 +4,36 @@
 clear
 
 %% Setup
-sessionLabel = '211008_B_bmcBRFS001';
+sessionLabel = '221202_J_bmcBRFS001';
 
 % Directories
 codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
 cd(codeDir)
 outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
-
 cd(outputDir)
+
+%% load data
 load(strcat('sortedData_',sessionLabel,'.mat'))
 
-% Variables
+%% Variables
 cond = 1; % Using most excitatory stimulus, condition 1, 'Simult. Dioptic. PO'
 probeLength = size(IDX(cond).LFP_bb{1,1},2);
 timeLength = length(STIM(1).sdftm);
 trlLength = size(IDX(cond).LFP_bb,1);
 xAxisTime = STIM(1).sdftm;
-idxps = 12;
-idxns = 11;
-granBtm = 24; % channel corresponding to the bottom of layer 4c
+% idxps = 9;
+% idxns = 10;
+idxps = 20;
+idxns = 19;
+granBtm = 27; % channel corresponding to the bottom of layer 4c
+
+% granBtm = 10; % channel corresponding to the bottom of layer 4c
 
 %% Calculate V1 ch boundaries
 v1Top = granBtm - 9;
 v1Btm = granBtm + 5;
 v1Ch = v1Top:v1Btm;
+v1Ch = v1Btm:-1:v1Top;
 
 
 %% Create timetable
