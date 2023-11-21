@@ -3,9 +3,9 @@
 
 %% Setup
 clear
-% sessionLabel = '211008_B_bmcBRFS001';
+sessionLabel = '211008_B_bmcBRFS001';
 % sessionLabel = '221206_J_bmcBRFS003';
-sessionLabel = '221102_J_bmcBRFS001'; % the problem session
+% sessionLabel = '221102_J_bmcBRFS001'; % the problem session
 
 % Directories
 codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
@@ -17,10 +17,7 @@ cd(outputDir)
 load(strcat('sortedData_',sessionLabel,'.mat'))
 
 
-%% start with monocular
-clearvars -except IDX
-close all
-% ch = [6:10,13:16,23:25];
+%% bl Sub at average level (better for plotting)
 ch = 1:32;
 
 % Monocular
@@ -29,52 +26,48 @@ monoc_2 = [8, 10, 16, 18]; % PO LeftEye
 monoc_3 = [7, 9, 15, 17];  % NPO RightEye
 monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
 
-% convert from cell to double for single condition
+% convert from cell to double and combine monocular conditions
 count = 0;
 for cond = monoc_1
-    count = count + 1;
     for trl = 1:length(IDX(cond).correctTrialIndex)
-        array_ofCond(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
-        avg_ofCond(:,count) = median(median(array_ofCond,3),2);
+        count = count + 1;
+        array_ofMonoc1(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); % 1000 x 32
     end
 end
-avg_ofMonoc1 = median(avg_ofCond,2);
-clear cond count trl array_ofCond avg_ofCond
+avg_ofMonoc1 = median(median(array_ofMonoc1,3),2); 
+clear cond count trl 
 
 count = 0;
 for cond = monoc_2
-    count = count + 1;
     for trl = 1:length(IDX(cond).correctTrialIndex)
-        array_ofCond(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
-        avg_ofCond(:,count) = median(median(array_ofCond,3),2);
+        count = count + 1;
+        array_ofMonoc2(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
     end
 end
-avg_ofMonoc2 = median(avg_ofCond,2);
-clear cond count trl array_ofCond avg_ofCond
+avg_ofMonoc2 = median(median(array_ofMonoc2,3),2); 
+clear cond count trl 
 
 
 count = 0;
 for cond = monoc_3
-    count = count + 1;
     for trl = 1:length(IDX(cond).correctTrialIndex)
-        array_ofCond(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
-        avg_ofCond(:,count) = median(median(array_ofCond,3),2);
+        count = count + 1;
+        array_ofMonoc3(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
     end
 end
-avg_ofMonoc3 = median(avg_ofCond,2);
-clear cond count trl array_ofCond avg_ofCond
+avg_ofMonoc3 = median(median(array_ofMonoc3,3),2);
+clear cond count trl 
 
 
 count = 0;
 for cond = monoc_4
-    count = count + 1;
     for trl = 1:length(IDX(cond).correctTrialIndex)
-        array_ofCond(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
-        avg_ofCond(:,count) = median(median(array_ofCond,3),2);
+        count = count + 1;
+        array_ofMonoc4(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
     end
 end
-avg_ofMonoc4 = median(avg_ofCond,2);
-clear cond count trl array_ofCond avg_ofCond
+avg_ofMonoc4 = median(median(array_ofMonoc4,3),2);
+clear cond count trl 
 
 % Baseline subtractions
 bl_1 = median(avg_ofMonoc1(100:200,1));
@@ -87,10 +80,10 @@ blSub3 = avg_ofMonoc3 - bl_3;
 blSub4 = avg_ofMonoc4 - bl_4;
 
 % Smooth data
-smooth_ofMonoc1 = smoothdata(blSub1);
-smooth_ofMonoc2 = smoothdata(blSub2);
-smooth_ofMonoc3 = smoothdata(blSub3);
-smooth_ofMonoc4 = smoothdata(blSub4);
+smooth_ofMonoc1 = smoothdata(blSub1,"gaussian",20);
+smooth_ofMonoc2 = smoothdata(blSub2,"gaussian",20);
+smooth_ofMonoc3 = smoothdata(blSub3,"gaussian",20);
+smooth_ofMonoc4 = smoothdata(blSub4,"gaussian",20);
 
 % Plot
 figure
@@ -108,6 +101,53 @@ legend('PO RightEye','PO LeftEye','NPO RightEye','NPO LeftEye')
 title('Monocular')
 box off
 
+%% Test for monocular preference with anova
+% The anova function ignores NaN values, <undefined> values, empty 
+% characters, and empty strings in y. If factors or tbl contains NaN or 
+% <undefined> values, or empty characters or strings, the function ignores 
+% the corresponding observations in y. The ANOVA is balanced if each factor 
+% value has the same number of observations after the function disregards 
+% empty or NaN values. Otherwise, the function performs an unbalanced 
+% ANOVA. (We will be doing an unbalanced ANOVA).
+
+% preallocate array with nan - running an unbalanced ANOVA)
+A = [size(array_ofMonoc1,3),...
+    size(array_ofMonoc2,3),...
+    size(array_ofMonoc3,3),...
+    size(array_ofMonoc4,3)];
+maxTrls = max(A);
+minTrls = min(A);
+tuned = nan(length(ch),1);
+prefMonoc = nan(length(ch),1);
+
+% FOR each individual unit 
+for i = ch
+    % preallocate y based on trial count
+    y = nan(maxTrls,4);
+    % create an array of each trial's median response for each monoc 
+    % condition (trl x 4 monoc)
+    y(1:size(array_ofMonoc1,3),1) = median(squeeze(array_ofMonoc1(200:450,i,:)),1)'; % median of each trial after stim onset
+    y(1:size(array_ofMonoc2,3),2) = median(squeeze(array_ofMonoc2(200:450,i,:)),1)'; % median of each trial after stim onset
+    y(1:size(array_ofMonoc3,3),3) = median(squeeze(array_ofMonoc3(200:450,i,:)),1)'; % median of each trial after stim onset
+    y(1:size(array_ofMonoc4,3),4) = median(squeeze(array_ofMonoc4(200:450,i,:)),1)'; % median of each trial after stim onset
+    % Now we perform baseline subtraction
+    % First we get the blAvg for this contact across all trials
+    y_bl(1,1) = median(median(squeeze(array_ofMonoc1(100:200,i,:)),1)');
+    y_bl(1,2) = median(median(squeeze(array_ofMonoc2(100:200,i,:)),1)');
+    y_bl(1,3) = median(median(squeeze(array_ofMonoc3(100:200,i,:)),1)');
+    y_bl(1,4) = median(median(squeeze(array_ofMonoc4(100:200,i,:)),1)');
+    y_blSub = y - median(y_bl);
+    p = anova1(y_blSub,[],'off');
+    if p < .05
+        tuned(i,1) = true;
+    else
+        tuned(i,1) = false;
+    end
+    % Now we find the maximum response
+    [M,maxRespIdx] = max(median(y_bl,1));
+    prefMonoc(i,1) = maxRespIdx;
+
+end
 
 %% binocular dioptic
 % concatenate two timecourses into array
@@ -132,8 +172,8 @@ bl_bi_dioptic_PO = avg_bi_dioptic_PO - median(avg_bi_dioptic_PO(100:200,1));
 bl_bi_dioptic_NPO = avg_bi_dioptic_NPO - median(avg_bi_dioptic_NPO(100:200,1));
 
 % Smooth data
-smooth_bi_dioptic_PO = smoothdata(bl_bi_dioptic_PO);
-smooth_bi_dioptic_NPO = smoothdata(bl_bi_dioptic_NPO);
+smooth_bi_dioptic_PO = smoothdata(bl_bi_dioptic_PO,"gaussian",20);
+smooth_bi_dioptic_NPO = smoothdata(bl_bi_dioptic_NPO,"gaussian",20);
 
 % plot
 nexttile
@@ -162,8 +202,8 @@ bl_bi_dichoptic_1 = avg_bi_dichoptic_1 - median(avg_bi_dichoptic_1(100:200,1));
 bl_bi_dichoptic_2 = avg_bi_dichoptic_2 - median(avg_bi_dichoptic_2(100:200,1));
 
 % Smooth data
-smooth_bi_dichoptic_1 = smoothdata(bl_bi_dichoptic_1);
-smooth_bi_dichoptic_2 = smoothdata(bl_bi_dichoptic_2);
+smooth_bi_dichoptic_1 = smoothdata(bl_bi_dichoptic_1,"gaussian",20);
+smooth_bi_dichoptic_2 = smoothdata(bl_bi_dichoptic_2,"gaussian",20);
 
 % plot
 nexttile
@@ -190,7 +230,7 @@ for cond = [5,6,7,8]
     % and average across whole electrode
     avg_diopticAdapted(:,count) = median(median(array_diopticAdapted,3),2); % average across trials and average across electrode
     bl_diopticAdapted(:,count) = avg_diopticAdapted(:,count) - median(avg_diopticAdapted(100:200,count));
-    smooth_diopticAdapted(:,count) = smoothdata(bl_diopticAdapted(:,count));
+    smooth_diopticAdapted(:,count) = smoothdata(bl_diopticAdapted(:,count),"gaussian",20);
     plot(tm_full,smooth_diopticAdapted(:,count)); hold on
 end
 vline(0); vline(800)
@@ -213,7 +253,7 @@ for cond = [9,10,11,12]
     % and average across whole electrode
     avg_dichopticAdapted(:,count) = median(median(array_dichopticAdapted,3),2); % output is 1001x1, indexted into 1001 x 4 array for condition
     bl_dichopticAdapted(:,count) = avg_dichopticAdapted(:,count) - median(avg_dichopticAdapted(100:200,count));
-    smooth_dichopticAdapted(:,count) = smoothdata(bl_dichopticAdapted(:,count));
+    smooth_dichopticAdapted(:,count) = smoothdata(bl_dichopticAdapted(:,count),"gaussian",20);
     plot(tm_full,smooth_dichopticAdapted(:,count)); hold on
 end
 vline(0); vline(800)
@@ -235,7 +275,7 @@ for cond = [13,14,15,16]
     % and average across whole electrode
     avg_diopticMonocAlt(:,count) = median(median(array_diopticMonocAlt,3),2); % output is 1001x1, indexted into 1001 x 4 array for condition
     bl_diopticMonocAlt(:,count) = avg_diopticMonocAlt(:,count) - median(avg_diopticMonocAlt(100:200,count));
-    smooth_diopticMonocAlt(:,count) = smoothdata(bl_diopticMonocAlt(:,count));
+    smooth_diopticMonocAlt(:,count) = smoothdata(bl_diopticMonocAlt(:,count),"gaussian",20);
     plot(tm_full,smooth_diopticMonocAlt(:,count)); hold on
 end
 vline(0); vline(800);
@@ -258,7 +298,7 @@ for cond = [17,18,19,20]
     % and average across whole electrode
     avg_dichopticMonocAlt(:,count) = median(median(array_dichopticMonocAlt,3),2); % output is 1001x1, indexted into 1001 x 4 array for condition
     bl_dichopticMonocAlt(:,count) = avg_dichopticMonocAlt(:,count) - median(avg_dichopticMonocAlt(100:200,count));
-    smooth_dichopticMonocAlt(:,count) = smoothdata(bl_dichopticMonocAlt(:,count));
+    smooth_dichopticMonocAlt(:,count) = smoothdata(bl_dichopticMonocAlt(:,count),"gaussian",20);
     plot(tm_full,smooth_dichopticMonocAlt(:,count)); hold on
 end
 vline(0); vline(800);
@@ -268,7 +308,7 @@ xlim([-200 1600])
 box off
 
 %% Figure title and axis
-title(t,'Jo MUAe - example of data filled with artifacts','Interpreter','none')
+title(t,sessionLabel,'Interpreter','none')
 xlabel(t,'Time (ms)')
 ylabel(t,'Neural reponse (uV)')
 
