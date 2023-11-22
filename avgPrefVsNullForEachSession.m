@@ -3,19 +3,25 @@
 
 %% Setup
 clear
-% sessionLabel = '211008_B_bmcBRFS001';
-sessionLabel = '221206_J_bmcBRFS003';
-% sessionLabel = '221102_J_bmcBRFS001'; % the problem session
+
 
 % Directories
 codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
 cd(codeDir)
+plotDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_231121\tunedUnits';
+
+
+%% For loop
 outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
 cd(outputDir)
-
+allDataFiles = dir('**/*sortedData*.mat');
+for file = 1:length(allDataFiles)
 % load data
-load(strcat('sortedData_',sessionLabel,'.mat'))
-
+clearvars -except allDataFiles outputDir plotDir file
+cd(outputDir)
+fileToLoad = allDataFiles(file).name;
+load(fileToLoad)
+sessionLabel = allDataFiles(file).name(12:end-4);
 
 %% bl Sub at average level (better for plotting)
 ch = 1:32;
@@ -127,6 +133,11 @@ for i = ch
     nullMonoc(i,1) = nullRespIdx;
 end
 
+% Skip this file if no tuned units are found
+if sum(tuned) == 0
+    continue
+end
+
 % Creat channel array to use in subsequent steps - only plot tuned units.
 chTuned = ch(logical(tuned));
 
@@ -136,9 +147,9 @@ avg_ofMonoc(:,:,2) = median(array_ofMonoc2,3);
 avg_ofMonoc(:,:,3) = median(array_ofMonoc3,3); 
 avg_ofMonoc(:,:,4) = median(array_ofMonoc4,3); 
 
-for i = chTuned
-    sorted_ofMonoc_pref(:,i) = avg_ofMonoc(:,i,prefMonoc(i,1));
-    sorted_ofMonoc_null(:,i) = avg_ofMonoc(:,i,nullMonoc(i,1));
+for i = 1:length(chTuned)
+    sorted_ofMonoc_pref(:,i) = avg_ofMonoc(:,i,prefMonoc(chTuned(i),1));
+    sorted_ofMonoc_null(:,i) = avg_ofMonoc(:,i,nullMonoc(chTuned(i),1));
 end
 
 % Average over all contacts
@@ -511,3 +522,10 @@ title(t,titleText,'Interpreter','none')
 xlabel(t,'Time (ms)')
 ylabel(t,'Neural reponse (uV)')
 
+%% Save fig
+cd(plotDir)
+figName = strcat('allCondForTunedUnits_',sessionLabel,'.png');
+saveas(t,figName)
+close all
+
+end
