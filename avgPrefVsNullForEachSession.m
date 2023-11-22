@@ -17,14 +17,14 @@ cd(outputDir)
 allDataFiles = dir('**/*sortedData*.mat');
 for file = 1:length(allDataFiles)
 % load data
-clearvars -except allDataFiles outputDir plotDir file
+clearvars -except allDataFiles outputDir plotDir file DATAOUT
 cd(outputDir)
 fileToLoad = allDataFiles(file).name;
 load(fileToLoad)
 sessionLabel = allDataFiles(file).name(12:end-4);
 
 %% bl Sub at average level (better for plotting)
-ch = 1:32;
+ch = 1:size(IDX(1).MUAe{1,1},2);
 
 % Monocular
 monoc_1 = [5, 11, 13, 19]; % PO RightEye
@@ -46,7 +46,7 @@ count = 0;
 for cond = monoc_2
     for trl = 1:length(IDX(cond).correctTrialIndex)
         count = count + 1;
-        array_ofMonoc2(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
+        array_ofMonoc2(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
     end
 end
 clear cond count trl 
@@ -56,7 +56,7 @@ count = 0;
 for cond = monoc_3
     for trl = 1:length(IDX(cond).correctTrialIndex)
         count = count + 1;
-        array_ofMonoc3(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
+        array_ofMonoc3(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
     end
 end
 clear cond count trl 
@@ -66,7 +66,7 @@ count = 0;
 for cond = monoc_4
     for trl = 1:length(IDX(cond).correctTrialIndex)
         count = count + 1;
-        array_ofMonoc4(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
+        array_ofMonoc4(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
     end
 end
 clear cond count trl 
@@ -100,10 +100,10 @@ for i = ch
     y = nan(maxTrls,4);
     % create an array of each trial's median response for each monoc 
     % condition (trl x 4 monoc)
-    y(1:size(array_ofMonoc1,3),1) = median(squeeze(array_ofMonoc1(200:300,i,:)),1)'; % median of each trial after stim onset
-    y(1:size(array_ofMonoc2,3),2) = median(squeeze(array_ofMonoc2(200:300,i,:)),1)'; % median of each trial after stim onset
-    y(1:size(array_ofMonoc3,3),3) = median(squeeze(array_ofMonoc3(200:300,i,:)),1)'; % median of each trial after stim onset
-    y(1:size(array_ofMonoc4,3),4) = median(squeeze(array_ofMonoc4(200:300,i,:)),1)'; % median of each trial after stim onset
+    y(1:size(array_ofMonoc1,3),1) = median(squeeze(array_ofMonoc1(200:800,i,:)),1)'; % median of each trial after stim onset
+    y(1:size(array_ofMonoc2,3),2) = median(squeeze(array_ofMonoc2(200:800,i,:)),1)'; % median of each trial after stim onset
+    y(1:size(array_ofMonoc3,3),3) = median(squeeze(array_ofMonoc3(200:800,i,:)),1)'; % median of each trial after stim onset
+    y(1:size(array_ofMonoc4,3),4) = median(squeeze(array_ofMonoc4(200:800,i,:)),1)'; % median of each trial after stim onset
     % Now we perform baseline subtraction
     % First we get the blAvg for this contact across all trials
     y_bl(1,1) = median(median(squeeze(array_ofMonoc1(100:200,i,:)),1)');
@@ -134,6 +134,7 @@ for i = ch
 end
 
 % Skip this file if no tuned units are found
+DATAOUT(file).numberOFUnits = sum(tuned);
 if sum(tuned) == 0
     continue
 end
@@ -161,6 +162,9 @@ bl_pref = median(GrandAvg_Monoc_pref(100:200,1));
 bl_null = median(GrandAvg_Monoc_null(100:200,1));
 blSub_pref = GrandAvg_Monoc_pref - bl_pref;
 blSub_null = GrandAvg_Monoc_null - bl_null;
+
+DATAOUT(file).monoc_pref = blSub_pref;
+DATAOUT(file).monoc_null = blSub_null;
 
 % Smooth data
 smooth_ofMonoc_pref = smoothdata(blSub_pref,"gaussian",20);
@@ -227,6 +231,8 @@ bl_Binoc_pref = median(GrandAvg_Binoc_pref(100:200,1));
 bl_Binoc_null = median(GrandAvg_Binoc_null(100:200,1));
 blSub_Binoc_pref = GrandAvg_Binoc_pref - bl_Binoc_pref;
 blSub_Binoc_null = GrandAvg_Binoc_null - bl_Binoc_null;
+DATAOUT(file).binoc_dioptic_pref = blSub_Binoc_pref;
+DATAOUT(file).binoc_dioptic_null = blSub_Binoc_null;
 
 % Smooth data
 smooth_Binoc_pref = smoothdata(blSub_Binoc_pref,"gaussian",20);
@@ -284,6 +290,9 @@ bl_bi_dichoptic_pref = median(GrandAvg_bi_dichoptic_pref(100:200,1));
 bl_bi_dichoptic_null = median(GrandAvg_bi_dichoptic_null(100:200,1));
 blSub_bi_dichoptic_pref = GrandAvg_bi_dichoptic_pref - bl_bi_dichoptic_pref;
 blSub_bi_dichoptic_null = GrandAvg_bi_dichoptic_null - bl_bi_dichoptic_null;
+
+DATAOUT(file).binoc_dichoptic_pref = blSub_bi_dichoptic_pref;
+DATAOUT(file).binoc_dichoptic_null = blSub_bi_dichoptic_null;
 
 % Smooth data
 smooth_bi_dichoptic_pref = smoothdata(blSub_bi_dichoptic_pref,"gaussian",20);
@@ -348,6 +357,9 @@ title('BRFS-like adaptation - dioptic')
 xlim([-200 1600])
 box off
 
+DATAOUT(file).adapted_dioptic_pref = bl_diopticAdapted_pref;
+DATAOUT(file).adapted_dioptic_null = bl_diopticAdapted_null;
+
 %% BRFS (dichoptic)
 nexttile(6)
 % preallocate
@@ -403,6 +415,8 @@ title('BRFS')
 xlim([-200 1600])
 box off
 
+DATAOUT(file).adapted_dichoptic_pref = bl_dichopticAdapted_pref;
+DATAOUT(file).adapted_dichoptic_null = bl_dichopticAdapted_null;
 
 %% Monocular alternation dioptic
 nexttile(8)
@@ -460,6 +474,8 @@ title('Monocular alternation - dioptic')
 xlim([-200 1600])
 box off
 
+DATAOUT(file).alternate_dioptic_pref = bl_diopticMonocAlt_pref;
+DATAOUT(file).alternate_dioptic_null = bl_diopticMonocAlt_null;
 %% Monocular alternation dichoptic
 nexttile(9)
 
@@ -516,6 +532,8 @@ title('Monocular alternation - dichoptic')
 xlim([-200 1600])
 box off
 
+DATAOUT(file).alternate_dichoptic_pref = bl_dichopticMonocAlt_pref;
+DATAOUT(file).alternate_dichoptic_null = bl_dichopticMonocAlt_null;
 %% Figure title and axis
 titleText = {sessionLabel,strcat('Number of tuned units =',string(length(chTuned)))};
 title(t,titleText,'Interpreter','none')
@@ -529,3 +547,121 @@ saveas(t,figName)
 close all
 
 end
+
+%% Plot grand average of tuned units
+for i = [1:14,16:31]
+    monoc_pref(:,i) = DATAOUT(i).monoc_pref;
+    monoc_null(:,i) = DATAOUT(i).monoc_null;
+    binoc_dioptic_pref(:,i) = DATAOUT(i).binoc_dioptic_pref;
+    binoc_dioptic_null(:,i) = DATAOUT(i).binoc_dioptic_null;
+    binoc_dichoptic_pref(:,i) = DATAOUT(i).binoc_dichoptic_pref;
+    binoc_dichoptic_null(:,i) = DATAOUT(i).binoc_dichoptic_null;
+    adapted_dioptic_pref(:,i) = DATAOUT(i).adapted_dioptic_pref;
+    adapted_dioptic_null(:,i) = DATAOUT(i).adapted_dioptic_null;
+    adapted_dichoptic_pref(:,i) = DATAOUT(i).adapted_dichoptic_pref;
+    adapted_dichoptic_null(:,i) = DATAOUT(i).adapted_dichoptic_null;
+    alternate_dioptic_pref(:,i) = DATAOUT(i).alternate_dioptic_pref;
+    alternate_dioptic_null(:,i) = DATAOUT(i).alternate_dioptic_null;   
+    alternate_dichoptic_pref(:,i) = DATAOUT(i).alternate_dichoptic_pref;
+    alternate_dichoptic_null(:,i) = DATAOUT(i).alternate_dichoptic_null;   
+end
+
+avg_monoc_pref = smoothdata(median(monoc_pref,2),"gaussian",20);
+avg_monoc_null = smoothdata(median(monoc_null,2),"gaussian",20);
+avg_binoc_dioptic_pref = smoothdata(median(binoc_dioptic_pref,2),"gaussian",20);
+avg_binoc_dioptic_null = smoothdata(median(binoc_dioptic_null,2),"gaussian",20);
+avg_binoc_dichoptic_pref = smoothdata(median(binoc_dichoptic_pref,2),"gaussian",20);
+avg_binoc_dichoptic_null = smoothdata(median(binoc_dichoptic_null,2),"gaussian",20);
+avg_adapted_dioptic_pref = smoothdata(median(adapted_dioptic_pref,2),"gaussian",20);
+avg_adapted_dioptic_null = smoothdata(median(adapted_dioptic_null,2),"gaussian",20);
+avg_adapted_dichoptic_pref = smoothdata(median(adapted_dichoptic_pref,2),"gaussian",20);
+avg_adapted_dichoptic_null = smoothdata(median(adapted_dichoptic_null,2),"gaussian",20);
+avg_alternate_dioptic_pref = smoothdata(median(alternate_dioptic_pref,2),"gaussian",20);
+avg_alternate_dioptic_null = smoothdata(median(alternate_dioptic_null,2),"gaussian",20);   
+avg_alternate_dichoptic_pref = smoothdata(median(alternate_dichoptic_pref,2),"gaussian",20);
+avg_alternate_dichoptic_null = smoothdata(median(alternate_dichoptic_null,2),"gaussian",20);   
+
+
+
+
+% Plot
+figure
+set(gcf,"Position",[17.6667 59 2.5313e+03 1.2813e+03])
+t2 = tiledlayout(3,3,'TileSpacing','compact');
+set(0, 'DefaultLineLineWidth', 1.5);
+nexttile
+tm = -200:800;
+plot(tm,avg_monoc_pref); hold on
+plot(tm,avg_monoc_null); hold on
+vline(0)
+legend('Preferred stimulus','Null stimulus')
+title('Average of preferred and null monocular stimulus across units')
+box off
+
+% plot
+nexttile
+plot(tm_full,avg_binoc_dioptic_pref); hold on
+plot(tm_full,avg_binoc_dioptic_null); hold on
+vline(0); vline(800)
+legend('binoc dioptic PO','binoc dioptic NPO')
+title('Binocular onset - dioptic')
+xlim([-200 1600])
+box off
+
+% plot
+nexttile
+plot(tm_full,avg_binoc_dichoptic_pref); hold on
+plot(tm_full,avg_binoc_dichoptic_null); hold on
+vline(0); vline(800)
+legend('binoc dichoptic 1','binoc dichoptic 2')
+title('Binocular onset - dichoptic')
+xlim([-200 1600])
+box off
+
+nexttile(5)
+plot(tm_full,avg_adapted_dioptic_pref); hold on
+plot(tm_full,avg_adapted_dioptic_null); hold on
+vline(0); vline(800)
+legend('Preferred condition flashed','Same ori other eye flashed')
+title('BRFS-like adaptation - dioptic')
+xlim([-200 1600])
+box off
+
+nexttile(6)
+plot(tm_full,avg_adapted_dichoptic_pref); hold on
+plot(tm_full,avg_adapted_dichoptic_null); hold on
+vline(0); vline(800)
+legend('Preferred condition flashed','Null condition flashed')
+title('BRFS')
+xlim([-200 1600])
+box off
+
+nexttile(8)
+plot(tm_full,avg_alternate_dioptic_pref); hold on
+plot(tm_full,avg_alternate_dioptic_null); hold on
+vline(0); vline(800)
+legend('Preferred condition flashed','Same ori other eye flashed')
+title('Physical alternation - dioptic')
+xlim([-200 1600])
+box off
+
+nexttile(9)
+plot(tm_full,avg_alternate_dichoptic_pref); hold on
+plot(tm_full,avg_alternate_dichoptic_null); hold on
+vline(0); vline(800)
+legend('Preferred condition flashed','Null condition flashed')
+title('Physical alternation - dichoptic')
+xlim([-200 1600])
+box off
+
+% Figure title and axis
+title(t2,'Grand Average of Tuned Units','Interpreter','none')
+xlabel(t2,'Time (ms)')
+ylabel(t2,'Neural reponse (uV)')
+
+% Save fig
+cd(plotDir)
+figName = strcat('grandAverageOfTunedUnits.png');
+saveas(t2,figName)
+close all
+

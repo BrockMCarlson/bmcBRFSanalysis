@@ -46,7 +46,7 @@ count = 0;
 for cond = monoc_2
     for trl = 1:length(IDX(cond).correctTrialIndex)
         count = count + 1;
-        array_ofMonoc2(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
+        array_ofMonoc2(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
     end
 end
 clear cond count trl 
@@ -56,7 +56,7 @@ count = 0;
 for cond = monoc_3
     for trl = 1:length(IDX(cond).correctTrialIndex)
         count = count + 1;
-        array_ofMonoc3(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
+        array_ofMonoc3(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
     end
 end
 clear cond count trl 
@@ -66,7 +66,7 @@ count = 0;
 for cond = monoc_4
     for trl = 1:length(IDX(cond).correctTrialIndex)
         count = count + 1;
-        array_ofMonoc4(:,:,trl) = IDX(cond).MUAe{trl,1}(:,ch); 
+        array_ofMonoc4(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
     end
 end
 clear cond count trl 
