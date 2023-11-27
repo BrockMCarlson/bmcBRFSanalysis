@@ -26,19 +26,35 @@ xAxisTime = sdftm;
 %% Demonstrate monocular preference
 % BRFS-like Congruent Adapted Flash is my condition of interest
 % IDX [5:8] 
+% Desired output is (1001ms X 32ch X __trls)
 timeWindow = 1; % first 800 ms
-ms = 1:1000;
-ch = 3:17;
-for cond = 5:8
-    for trl = size(IDX(cond).MUAe,1)
-        monocular(cond,trl,ms,ch) = IDX(cond).MUAe{trl,timeWindow}(ms,ch);
-    end
+ms = 1:500;
+ch = 10:13;
+for trl = size(IDX(5).MUAe,1)
+    monocular.Ori1_RightEye(ms,ch,trl) = IDX(5).MUAe{trl,timeWindow}(ms,ch);
+end
+for trl = size(IDX(6).MUAe,1)
+    monocular.Ori2_LeftEye(ms,ch,trl) = IDX(6).MUAe{trl,timeWindow}(ms,ch);
+end
+for trl = size(IDX(7).MUAe,1)
+    monocular.Ori2_RightEye(ms,ch,trl) = IDX(7).MUAe{trl,timeWindow}(ms,ch);
+end
+for trl = size(IDX(8).MUAe,1)
+    monocular.Ori1_LeftEye(ms,ch,trl) = IDX(8).MUAe{trl,timeWindow}(ms,ch);
 end
 
-You are here: figure out how to simply this system for not and in the future.
-4-D variables are untennable. size of monocular returns [1,9] ??
+monocularAvg.Ori1_RightEye = mean(mean(monocular.Ori1_RightEye,3),2) ;   % end result should be 1001 x ch
+monocularAvg.Ori2_LeftEye = mean(mean(monocular.Ori2_LeftEye,3),2) ;   % end result should be 1001 x ch
+monocularAvg.Ori2_RightEye = mean(mean(monocular.Ori2_RightEye,3),2) ;   % end result should be 1001 x ch
+monocularAvg.Ori1_LeftEye = mean(mean(monocular.Ori1_LeftEye,3),2) ;   % end result should be 1001 x ch
 
-monocularAvg = mean(thingToAverage,"all") ;   % end result should be 1001 x 32
+figure
+plot(ms,monocularAvg.Ori1_RightEye); hold on
+plot(ms,monocularAvg.Ori2_LeftEye); hold on
+plot(ms,monocularAvg.Ori2_RightEye); hold on
+plot(ms,monocularAvg.Ori1_LeftEye); hold on
+
+hmm.... This is pretty noisy. It does not look like the MUA tells a clear preference averaged over the units
 
 %% Plot response timecourse
 % Preferred MUA response is PO_RE for ch [3:17]
