@@ -7,10 +7,12 @@ clear
 sessionLabel = '221202_J_bmcBRFS001';
 
 % Directories
-codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
+codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis'; 
 cd(codeDir)
-outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+% outputDir = 'C:\Users\Brock Carlson\Documents\MATLAB\formattedDataOutputs';
+outputDir = 'S:\bmcBRFS_sortedData';
 cd(outputDir)
+allDataFiles = dir('**/*sortedData*.mat');
 
 %% load data
 load(strcat('sortedData_',sessionLabel,'.mat'))
