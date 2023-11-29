@@ -1,62 +1,36 @@
-%% Laminar - stimulus type comparison
+%% Laminar - all electrodes
 
 
 %% Setup
 clear
 % Directories
-codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
+path1 = strcat(getenv('HOMEDRIVE'),getenv("HOMEPATH"));
+path2 = 'Documents\GitHub\bmcBRFSanalysis';
+codeDir = strcat(path1,filesep,path2);
 cd(codeDir)
-plotDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_231128';
-
-%Import laminar assignments
-officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "Sheet1", [2, Inf]);
+path3 = 'Documents\MATLAB\formattedDataOutputs';
+plotDir = strcat(path1,filesep,path3);
 
 %% For loop
-outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
-cd(outputDir)
+dataDir = 'S:\bmcBRFS_sortedData';
+cd(dataDir)
 allDataFiles = dir('**/*sortedData*.mat');
 for file = 1:length(allDataFiles)
 
-    if isnan(officLamAssign.Probe11stFold4c(file))
-        warning(strcat(officLamAssign.SessionProbe(file),'No sink observed'))
-        continue
-    end
-    
     % load data
-    cd(outputDir)
+    cd(dataDir)
     fileToLoad = allDataFiles(file).name;
     load(fileToLoad)
     sessionLabel = allDataFiles(file).name(12:end-4);
 
-    % Variables
-    % cond = 1; % Using most excitatory stimulus, condition 1, 'Simult. Dioptic. PO'
-    % probeLength = size(IDX(cond).LFP_bb{1,1},2);
-    % timeLength = length(STIM(1).sdftm);
-    % trlLength = size(IDX(cond).LFP_bb,1);
-    % xAxisTime = STIM(1).sdftm;
-    % idxps = 9;
-    % idxns = 10;
-    % idxps = 20;
-    % idxns = 19;
-    granBtm = officLamAssign.Probe11stFold4c(file); % channel corresponding to the bottom of layer 4c
-    
-    
-    % Calculate V1 ch boundaries
-    v1Top = granBtm - 9;
-    v1Btm = granBtm + 5;
-    v1Ch = v1Top:v1Btm;
-    % limit ch to cortex only
-    columnNames = {'sg_1','sg_2','sg_3','sg_4','sg_5','g_1','g_2','g_3','g_4','g_5','ig_1','ig_2','ig_3','ig_4','ig_5'};
-    if any(v1Ch > 32) || any(v1Ch < 1)
-        columnNames = columnNames((v1Ch >= 1) & (v1Ch<=32));
-        v1Ch        = v1Ch((v1Ch >= 1) & (v1Ch<=32));
+
+    % bl Sub at average level (better for plotting)
+    ch = 1:size(IDX(1).MUAe{1,1},2);
+    if ch > 32
+        error(['Congrats! You made it to the 2 electrode days...' ...
+            ' Time to adjust your code!'])
     end
-    
-    
-    %% bl Sub at average level (better for plotting)
-    ch = v1Ch;
-    clear array_ofMonoc1 array_ofMonoc2 array_ofMonoc3 array_ofMonoc4
-    
+
     % Monocular
     monoc_1 = [5, 11, 13, 19]; % PO RightEye
     monoc_2 = [8, 10, 16, 18]; % PO LeftEye
@@ -72,7 +46,6 @@ for file = 1:length(allDataFiles)
         end
     end
     clear cond count trl 
-    
     count = 0;
     for cond = monoc_2
         for trl = 1:length(IDX(cond).correctTrialIndex)
@@ -80,9 +53,7 @@ for file = 1:length(allDataFiles)
             array_ofMonoc2(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
         end
     end
-    clear cond count trl 
-    
-    
+    clear cond count trl     
     count = 0;
     for cond = monoc_3
         for trl = 1:length(IDX(cond).correctTrialIndex)
@@ -90,9 +61,7 @@ for file = 1:length(allDataFiles)
             array_ofMonoc3(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
         end
     end
-    clear cond count trl 
-    
-    
+    clear cond count trl     
     count = 0;
     for cond = monoc_4
         for trl = 1:length(IDX(cond).correctTrialIndex)
@@ -101,12 +70,8 @@ for file = 1:length(allDataFiles)
         end
     end
     clear cond count trl 
-    
-    
-    
-    
-    
-    %% Test for monocular preference with anova
+   
+    % Test for monocular preference with anova
     % The anova function ignores NaN values, <undefined> values, empty 
     % characters, and empty strings in y. If factors or tbl contains NaN or 
     % <undefined> values, or empty characters or strings, the function ignores 
@@ -170,14 +135,10 @@ for file = 1:length(allDataFiles)
         warning(strcat('No tuned channels on',sessionLabel))
         continue
     end
-    
-    % % % Creat channel array to use in subsequent steps - only plot tuned units.
-    % % chTuned = ch(logical(tuned));
-    % % 
-    % % 
 
 
-    %% Create array of preference-based data
+
+    % Create array of preference-based data
     % concatenate two timecourses into array
     tm_full = -200:1600; % 1801 total timepoints
     tm1 = 1:801;
@@ -221,22 +182,7 @@ for file = 1:length(allDataFiles)
         end
     end
     
-    % % % and average across whole electrode to see grand average
-    % % avg_dichopticAdapted_pref = median(median(array_dichopticAdapted_pref,3,"omitmissing"),2,"omitmissing"); % average across trials and average across electrode
-    % % bl_dichopticAdapted_pref(:,1) = avg_dichopticAdapted_pref(:,1) - median(avg_dichopticAdapted_pref(100:200,1));
-    % % smooth_dichopticAdapted_pref(:,1) = smoothdata(bl_dichopticAdapted_pref(:,1),"gaussian",20);
-    % % figure
-    % % plot(tm_full,smooth_dichopticAdapted_pref); hold on
-    % % avg_dichopticAdapted_null= median(median(array_dichopticAdapted_null,3,"omitmissing"),2,"omitmissing");% average across trials and average across electrode
-    % % bl_dichopticAdapted_null(:,1) = avg_dichopticAdapted_null(:,1) - median(avg_dichopticAdapted_null(100:200,1));
-    % % smooth_dichopticAdapted_null(:,1) = smoothdata(bl_dichopticAdapted_null(:,1),"gaussian",20);
-    % % plot(tm_full,smooth_dichopticAdapted_null); hold on
-    % % 
-    % % vline(0); vline(800)
-    % % legend('Preferred condition flashed','Same simulus, but null flashed')
-    % % title('BRFS')
-    % % xlim([-200 1600])
-    % % box off
+
     
     %% Create stackedLinePlot
     % Create matrix of all trials (time x ch x trial)
@@ -258,40 +204,58 @@ for file = 1:length(allDataFiles)
     % %Ch = 100 * -------------
     %                 avgBl
 
-    
+
 
     % smooth data
     ps_smooth = smoothdata(ps_avg,1,"gaussian",20);
     ns_smooth = smoothdata(ns_avg,1,"gaussian",20);
 
     % convert to table
-    ps_table = array2table(ps_smooth);
-    ns_table = array2table(ns_smooth);
-
+    ps_table_1 = array2table(ps_smooth(:,1:16));
+    ns_table_1 = array2table(ns_smooth(:,1:16));
+    ps_table_2 = array2table(ps_smooth(:,17:32));
+    ns_table_2 = array2table(ns_smooth(:,17:32));
     
     %Now convert ps_avg (a double array) into a table (input to timetable must
     %be a table)
     % The goal is to have 32 variables, each as a column, representing a
     % different depth. 
     Time = milliseconds(-200):milliseconds(1):milliseconds(1600);
-    ps_TT = table2timetable(ps_table,'RowTimes',Time);
-    preferredStimFlash = renamevars(ps_TT,ps_TT.Properties.VariableNames,columnNames);
-    ns_TT = table2timetable(ns_table,'RowTimes',Time);
-    nullStimFlash = renamevars(ns_TT,ns_TT.Properties.VariableNames,columnNames);
-    
+    % electrodes 1-16
+    elName_1 = {'el1','el2','el3','el4','el5','el6','el7','el8','el9',...
+        'el10','el11','el12','el13','el14','el15','el16'};
+    ps_TT_1 = table2timetable(ps_table_1,'RowTimes',Time);
+    preferredStimFlash_1 = renamevars(ps_TT_1,ps_TT_1.Properties.VariableNames,elName_1);
+    ns_TT_1 = table2timetable(ns_table_1,'RowTimes',Time);
+    nullStimFlash_1 = renamevars(ns_TT_1,ns_TT_1.Properties.VariableNames,elName_1);
+    % electrodes 17-32
+    elName_2 = {'el17','el18','el19','el20','el21','el22','el23','el24',...
+        'el25','el26','el27','el28','el29','el30','el31','el32'};
+    ps_TT_2 = table2timetable(ps_table_2,'RowTimes',Time);
+    preferredStimFlash_2 = renamevars(ps_TT_2,ps_TT_2.Properties.VariableNames,elName_2);
+    ns_TT_2 = table2timetable(ns_table_2,'RowTimes',Time);
+    nullStimFlash_2 = renamevars(ns_TT_2,ns_TT_2.Properties.VariableNames,elName_2);    
     
     %% stackedplot()
-    stk = figure;
-    set(stk,"Position",[1000 60.3333 560 1.2933e+03])
-    s = stackedplot(preferredStimFlash,nullStimFlash);
-    titleText = {'BRFS, same stimulus different history';sessionLabel};
-    s.Title = titleText;
-    s.LineWidth = 1;
+    f = figure;
+    set(f,"Position", [-1902 -58 1157 904])
+    tl = tiledlayout(3,2);
+    
+    nexttile(tl,[3 1])
+    s_1 = stackedplot(preferredStimFlash_1,nullStimFlash_1);
+    s_1.LineWidth = 1;
+
+    nexttile(tl,[3 1])
+    s_2 = stackedplot(preferredStimFlash_2,nullStimFlash_2);
+    s_2.LineWidth = 1;
+
+    title(tl,sessionLabel,'Interpreter','none')
+
     
     %save fig
     cd(plotDir)
     figName = strcat('stackedPlot_',sessionLabel,'.png');
-    saveas(stk,figName)
+    saveas(f,figName)
     close all
 
 
