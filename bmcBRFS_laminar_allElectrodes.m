@@ -8,14 +8,15 @@ path1 = strcat(getenv('HOMEDRIVE'),getenv("HOMEPATH"));
 path2 = 'Documents\GitHub\bmcBRFSanalysis';
 codeDir = strcat(path1,filesep,path2);
 cd(codeDir)
-path3 = 'Documents\MATLAB\formattedDataOutputs';
+path3 = 'Documents\MATLAB\formattedDataOutputs\figures_231129';
 plotDir = strcat(path1,filesep,path3);
 
 %% For loop
-dataDir = 'S:\bmcBRFS_sortedData';
+dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
 cd(dataDir)
 allDataFiles = dir('**/*sortedData*.mat');
-for file = 1:length(allDataFiles)
+% for file = 1:length(allDataFiles)
+for file = 1:3
 
     % load data
     cd(dataDir)
@@ -254,7 +255,7 @@ for file = 1:length(allDataFiles)
     
     %save fig
     cd(plotDir)
-    figName = strcat('stackedPlot_',sessionLabel,'.png');
+    figName = strcat('stackedPlot_',sessionLabel,'_MUAe.png');
     saveas(f,figName)
     close all
 
