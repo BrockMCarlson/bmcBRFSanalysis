@@ -1,43 +1,46 @@
 %% Laminar - stimulus type comparison
 
 
+datetime
+
 %% Setup
 clear
 % Directories
-codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
+path1 = strcat(getenv('HOMEDRIVE'),getenv("HOMEPATH"));
+path2 = 'Documents\GitHub\bmcBRFSanalysis';
+codeDir = strcat(path1,filesep,path2);
 cd(codeDir)
-plotDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_231128';
+path3 = 'Documents\MATLAB\formattedDataOutputs\figures_231201';
+plotDir = strcat(path1,filesep,path3);
 
 %Import laminar assignments
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "Sheet1", [2, Inf]);
 
 %% For loop
-outputDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
-cd(outputDir)
+dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+cd(dataDir)
 allDataFiles = dir('**/*sortedData*.mat');
-for file = 1:length(allDataFiles)
 
-    if isnan(officLamAssign.Probe11stFold4c(file))
-        warning(strcat(officLamAssign.SessionProbe(file),'No sink observed'))
-        continue
-    end
+% signalTypeList = {'LFP_bb','LFP_delta','LFP_theta','LFP_alpha','LFP_beta1',...
+%     'LFP_beta2','LFP_beta3','LFP_gamma1','LFP_gamma2',...
+%     'CSD_bb','CSD_delta','CSD_theta','CSD_alpha','CSD_beta1','CSD_beta2',...
+%     'CSD_beta3','CSD_gamma1','CSD_gamma2','MUAe'};
+signalTypeList = {'LFP_bb','LFP_alpha','LFP_beta1',...
+    'LFP_beta2','LFP_beta3','LFP_gamma1','LFP_gamma2',...
+    'CSD_bb','CSD_alpha','CSD_beta1','CSD_beta2',...
+    'CSD_beta3','CSD_gamma1','CSD_gamma2','MUAe'};
+
+for file = 1:length(allDataFiles)
     
     % load data
-    cd(outputDir)
+    cd(dataDir)
     fileToLoad = allDataFiles(file).name;
     load(fileToLoad)
     sessionLabel = allDataFiles(file).name(12:end-4);
 
-    % Variables
-    % cond = 1; % Using most excitatory stimulus, condition 1, 'Simult. Dioptic. PO'
-    % probeLength = size(IDX(cond).LFP_bb{1,1},2);
-    % timeLength = length(STIM(1).sdftm);
-    % trlLength = size(IDX(cond).LFP_bb,1);
-    % xAxisTime = STIM(1).sdftm;
-    % idxps = 9;
-    % idxns = 10;
-    % idxps = 20;
-    % idxns = 19;
+    for st = 1:length(signalTypeList)
+        signalType = signalTypeList{st};
+    
     granBtm = officLamAssign.Probe11stFold4c(file); % channel corresponding to the bottom of layer 4c
     
     
@@ -64,11 +67,12 @@ for file = 1:length(allDataFiles)
     monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
     
     % convert from cell to double and combine monocular conditions
+    warning('taking abs() of IDX value')
     count = 0;
     for cond = monoc_1
         for trl = 1:length(IDX(cond).correctTrialIndex)
             count = count + 1;
-            array_ofMonoc1(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); % 1000 x 32
+            array_ofMonoc1(:,:,count) = abs(IDX(cond).CSD_bb{trl,1}(:,ch)); % 1000 x 32
         end
     end
     clear cond count trl 
@@ -77,7 +81,7 @@ for file = 1:length(allDataFiles)
     for cond = monoc_2
         for trl = 1:length(IDX(cond).correctTrialIndex)
             count = count + 1;
-            array_ofMonoc2(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
+            array_ofMonoc2(:,:,count) = abs(IDX(cond).CSD_bb{trl,1}(:,ch)); 
         end
     end
     clear cond count trl 
@@ -87,7 +91,7 @@ for file = 1:length(allDataFiles)
     for cond = monoc_3
         for trl = 1:length(IDX(cond).correctTrialIndex)
             count = count + 1;
-            array_ofMonoc3(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
+            array_ofMonoc3(:,:,count) = abs(IDX(cond).CSD_bb{trl,1}(:,ch)); 
         end
     end
     clear cond count trl 
@@ -97,7 +101,7 @@ for file = 1:length(allDataFiles)
     for cond = monoc_4
         for trl = 1:length(IDX(cond).correctTrialIndex)
             count = count + 1;
-            array_ofMonoc4(:,:,count) = IDX(cond).MUAe{trl,1}(:,ch); 
+            array_ofMonoc4(:,:,count) = abs(IDX(cond).CSD_bb{trl,1}(:,ch)); 
         end
     end
     clear cond count trl 
@@ -141,7 +145,7 @@ for file = 1:length(allDataFiles)
         y_bl(1,2) = median(median(squeeze(array_ofMonoc2(100:200,i,:)),1)');
         y_bl(1,3) = median(median(squeeze(array_ofMonoc3(100:200,i,:)),1)');
         y_bl(1,4) = median(median(squeeze(array_ofMonoc4(100:200,i,:)),1)');
-        y_blSub = y - median(y_bl);
+        y_blSub = abs(y - median(y_bl));
         p = anova1(y_blSub,[],'off');
         if p < .05
             tuned(i,1) = true;
@@ -165,12 +169,12 @@ for file = 1:length(allDataFiles)
     end
     
     % Skip this file if no tuned units are found
-    DATAOUT(file).numberOFUnits = sum(tuned);
-    if sum(tuned) == 0
-        warning(strcat('No tuned channels on',sessionLabel))
-        continue
-    end
-    
+    % % DATAOUT(file).numberOFUnits = sum(tuned);
+    % % if sum(tuned) == 0
+    % %     warning(strcat('No tuned channels on',sessionLabel))
+    % %     continue
+    % % end
+    % % 
     % % % Creat channel array to use in subsequent steps - only plot tuned units.
     % % chTuned = ch(logical(tuned));
     % % 
@@ -212,12 +216,12 @@ for file = 1:length(allDataFiles)
     
         % convert cell to array
         for trl = 1:length(IDX(prefCondOnFlash).correctTrialIndex)
-            array_dichopticAdapted_pref(tm1,i,trl) = IDX(prefCondOnFlash).MUAe{trl,1}(tm1,i); % now we index the cell for the second 800ms
-            array_dichopticAdapted_pref(tm2_concat,i,trl) = IDX(prefCondOnFlash).MUAe{trl,2}(tm2,i); % now we index the cell for the second 800ms
+            array_dichopticAdapted_pref(tm1,i,trl) = abs(IDX(prefCondOnFlash).CSD_bb{trl,1}(tm1,i)); % now we index the cell for the second 800ms
+            array_dichopticAdapted_pref(tm2_concat,i,trl) = abs(IDX(prefCondOnFlash).CSD_bb{trl,2}(tm2,i)); % now we index the cell for the second 800ms
         end
         for trl = 1:length(IDX(nullCondOnFlash).correctTrialIndex)
-            array_dichopticAdapted_null(tm1,i,trl) = IDX(nullCondOnFlash).MUAe{trl,1}(tm1,i); % now we index the cell for the second 800ms
-            array_dichopticAdapted_null(tm2_concat,i,trl) = IDX(nullCondOnFlash).MUAe{trl,2}(tm2,i); % now we index the cell for the second 800ms
+            array_dichopticAdapted_null(tm1,i,trl) = abs(IDX(nullCondOnFlash).CSD_bb{trl,1}(tm1,i)); % now we index the cell for the second 800ms
+            array_dichopticAdapted_null(tm2_concat,i,trl) = abs(IDX(nullCondOnFlash).CSD_bb{trl,2}(tm2,i)); % now we index the cell for the second 800ms
         end
     end
     
@@ -239,30 +243,33 @@ for file = 1:length(allDataFiles)
     % % box off
     
     %% Create stackedLinePlot
-    % Create matrix of all trials (time x ch x trial)
-    % % IDX(CONDITION).MUAe{TRIAL,TRIAL PERIOD}(TIME,CHANNEL)
-    % % psTrlLength = size(IDX(idxps).correctTrialIndex,1);
-    % % for psTrl = 1:psTrlLength
-    % %     ps_msXchXtrl(:,:,psTrl) = IDX(idxps).MUAe{psTrl,2}(:,v1Ch); % MUA output is time x ch
-    % % end
-    % % nsTrlLength = size(IDX(idxns).correctTrialIndex,1);
-    % % for nsTrl = 1:nsTrlLength
-    % %     ns_msXchXtrl(:,:,nsTrl) = IDX(idxns).MUAe{nsTrl,2}(:,v1Ch); % MUA output is time x ch
-    % % end
-    %trl avg
+  
     ps_avg = median(array_dichopticAdapted_pref,3,"omitmissing"); % input is (tm,ch,trl)
     ns_avg = median(array_dichopticAdapted_null,3,"omitmissing");
+
 
     % Calculate as Percent Change
     %              X(t) - avgBl
     % %Ch = 100 * -------------
     %                 avgBl
+    psBl = median(ps_avg(100:200,:));
+    ps_PercentC = 100*((ps_avg-psBl)./psBl);
+    DATAOUT(file).alternate_dichoptic_pref = bl_dichopticMonocAlt_pref;
+    nsBl = median(ns_avg(100:200,:));
+    ns_PercentC = 100*((ns_avg-nsBl)./nsBl);    
+
+    % % % bl Subtract
+    % % psBl = median(ps_avg(100:200,:));
+    % % ps_blSub = abs(ps_avg - psBl);
+    % % nsBl = median(ns_avg(100:200,:));
+    % % ns_blSub = abs(ns_avg - nsBl);
+
 
     
 
     % smooth data
-    ps_smooth = smoothdata(ps_avg,1,"gaussian",20);
-    ns_smooth = smoothdata(ns_avg,1,"gaussian",20);
+    ps_smooth = smoothdata(ps_PercentC,1,"gaussian",20);
+    ns_smooth = smoothdata(ns_PercentC,1,"gaussian",20);
 
     % convert to table
     ps_table = array2table(ps_smooth);
@@ -284,15 +291,16 @@ for file = 1:length(allDataFiles)
     stk = figure;
     set(stk,"Position",[1000 60.3333 560 1.2933e+03])
     s = stackedplot(preferredStimFlash,nullStimFlash);
-    titleText = {'BRFS, same stimulus different history';sessionLabel};
+    titleText = {sessionLabel,signalType};
     s.Title = titleText;
     s.LineWidth = 1;
     
     %save fig
     cd(plotDir)
-    figName = strcat('stackedPlot_',sessionLabel,'.png');
+    figName = strcat('stackedPlot_',sessionLabel,'_',signalType,'.png');
     saveas(stk,figName)
     close all
 
+    end
 
 end

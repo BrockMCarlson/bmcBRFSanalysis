@@ -25,11 +25,7 @@ signalTypeList = {'LFP_bb','LFP_alpha','LFP_beta1',...
     'CSD_bb','CSD_alpha','CSD_beta1','CSD_beta2',...
     'CSD_beta3','CSD_gamma1','CSD_gamma2','MUAe'};
 
-for file = 15:length(allDataFiles)
-    if file == 5 || file == 14
-        warning('211027_B_bmcBRFS001 and 221028_J_bmcBRFS001 have low (or no) trial count')
-        continue
-    end
+for file = 28
     
     % load data
     cd(dataDir)
@@ -43,8 +39,9 @@ for file = 15:length(allDataFiles)
         % bl Sub at average level (better for plotting)
         ch = 1:size(IDX(1).(signalType){1,1},2);
         if ch > 32
-            error(['Congrats! You made it to the 2 electrode days...' ...
-                ' Time to adjust your code!'])
+            ch = 1:32;
+            warning(['Congrats! You made it to the 2 electrode days...' ...
+                ' Time to adjust your code to include the 2nd probe!'])
         end
     
         % Monocular
@@ -255,7 +252,7 @@ for file = 15:length(allDataFiles)
         %% stackedplot()
         close all
         f = figure;
-        set(f,"Position", [-1902 -58 1157 904])
+        set(f,"Position",[1000 54.3333 1213 1.1833e+03])
         tl = tiledlayout(3,2);
         
         nexttile(tl,[3 1])
