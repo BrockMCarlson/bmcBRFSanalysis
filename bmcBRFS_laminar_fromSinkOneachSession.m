@@ -56,7 +56,7 @@ for file = 1:length(allDataFiles)
     end
     
     
-    %% bl Sub at average level (better for plotting)
+    %% test for monocular preference
     ch = v1Ch;
     clear array_ofMonoc1 array_ofMonoc2 array_ofMonoc3 array_ofMonoc4
     
@@ -107,10 +107,7 @@ for file = 1:length(allDataFiles)
     clear cond count trl 
     
     
-    
-    
-    
-    %% Test for monocular preference with anova
+    % Test for monocular preference with anova
     % The anova function ignores NaN values, <undefined> values, empty 
     % characters, and empty strings in y. If factors or tbl contains NaN or 
     % <undefined> values, or empty characters or strings, the function ignores 
