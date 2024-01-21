@@ -183,12 +183,36 @@ f2 = figure;
 cond = 12;
 trl = 1;
 ch = 10;
-x  = IDX(cond).LFP_gamma{trl,1}(:,ch);
+x  = IDX(cond).LFP_gamma{trl,2}(:,ch);
 [c,lags] = xcorr(x,80,'normalized');
 stem(lags,c)
 xlabel('lag in ms')
 ylabel('Auto-Correlation')
 title('LFP gamma-band auto-correlation for ch 10')
+
+
+% Fields to loop through
+fields_to_plot = {'LFP_gamma', 'LFP_alphaBeta', 'LFP_bb', 'CSD_gamma', 'MUAe'};
+
+% Parameters for auto-correlation plot
+max_lag = 80;
+
+% Loop through each field
+close all
+for field_idx = 1:length(fields_to_plot)
+    current_field = fields_to_plot{field_idx};
+    
+    % Create a new figure for each field
+    figure
+    x  = IDX(cond).(current_field){trl,1}(:,ch);
+    [c,lags] = xcorr(x,80,'normalized');
+    stem(lags,c)
+    xlabel('lag in ms')
+    ylabel('Auto-Correlation')
+    title('LFP gamma-band auto-correlation for ch 10')
+    % Adjust layout for better visualization
+    title(['Auto-correlation for ' current_field]);
+end
 
 % There does not to be a clear linear effect accross depth, althoug there
 % are differences. Perhaps similar to differences seen trial-to-trial.
