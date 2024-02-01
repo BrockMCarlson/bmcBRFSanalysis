@@ -9,10 +9,17 @@ path2 = 'Documents\GitHub\bmcBRFSanalysis';
 codeDir = strcat(path1,filesep,path2);
 cd(codeDir)
 path3 = 'Documents\MATLAB\formattedDataOutputs\figures_231201';
-plotDir = strcat(path1,filesep,path3);
 
 %% For loop
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+if contains(path1,'Brock Carlson')
+    dataDir = 'S:\bmcBRFS_sortedData_Nov23';
+    plotDir = 'S:\formattedDataOutputs';
+elseif contains(path1,'Neuropoixel')
+    dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+    plotDir = strcat(path1,filesep,path3);
+else
+    error('wrong Home Dir')
+end
 cd(dataDir)
 allDataFiles = dir('**/*sortedData*.mat');
 
@@ -25,7 +32,7 @@ signalTypeList = {'LFP_bb','LFP_alpha','LFP_beta1',...
     'CSD_bb','CSD_alpha','CSD_beta1','CSD_beta2',...
     'CSD_beta3','CSD_gamma1','CSD_gamma2','MUAe'};
 
-for file = 28
+for file = 1:length(allDataFiles)
     
     % load data
     cd(dataDir)

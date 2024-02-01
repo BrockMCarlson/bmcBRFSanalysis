@@ -8,18 +8,14 @@ datetime
 %% Setup
 clear
 % Directories
-path1 = strcat(getenv('HOMEDRIVE'),getenv("HOMEPATH"));
-path2 = 'Documents\GitHub\bmcBRFSanalysis';
-codeDir = strcat(path1,filesep,path2);
-cd(codeDir)
-path3 = 'Documents\MATLAB\formattedDataOutputs\figures_231204';
-plotDir = strcat(path1,filesep,path3);
 
-%Import laminar assignments
-officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "Sheet1", [2, Inf]);
+codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
+cd(codeDir)
+plotDir = strcat('S:\formattedDataOutputs');
+officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "Sheet1", [2, Inf]);
 
 %% For loop
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
 allDataFiles = dir('**/*sortedData*.mat');
 

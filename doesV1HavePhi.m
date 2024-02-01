@@ -5,10 +5,19 @@
 % TPM for PhPhi application
 
 clear
-close all
-cd('C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs')
+% Directories
+path1 = strcat(getenv('HOMEDRIVE'),getenv("HOMEPATH"),filesep);
+path2 = 'Documents\GitHub\bmcBRFSanalysis';
+codeDir = strcat(path1,path2);
+cd(codeDir)
+path3 = 'Documents\MATLAB\formattedDataOutputs';
+plotDir = strcat(path1,filesep,path3);
+%sortedDataDir -- need to run new sorted data on home pc
+filteredDataDir = 'S:\bmcBRFS_filteredData';
 
-input = load('filteredData_211008_B_bmcBRFS001.mat');
+%% Choose inidividual file to explore
+cd(filteredDataDir)
+load('filteredData_211008_B_bmcBRFS001.mat')
 
 % Channels are chosen from laminarBoundaryCalculations.xlsx from SfN work
 upperCh = 8:19;
@@ -122,8 +131,8 @@ for dt = 1:7
     ylabel('State of substrate')
 
     %% Save TPM output
-    saveName = strcat('TPM_bmcBRFS001_',dataType{dt});
-    save(saveName,"TPM")
+%     saveName = strcat('TPM_bmcBRFS001_',dataType{dt});
+%     save(saveName,"TPM")
 
 end
 

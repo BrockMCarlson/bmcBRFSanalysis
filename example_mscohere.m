@@ -44,7 +44,7 @@ ylabel('Channel');
 
 
 %% Compare conditions
-close all
+
 clearvars -except IDX
 % Default parameter values
 windowSize = 256;  % Window size for computing the coherence
