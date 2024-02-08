@@ -1,46 +1,54 @@
 % Example chatGPT mscohere code
 %% Coherence matrix across channels
 % Choose the condition
-conditionNumber = 12;
-
-% Get the number of trials for the chosen condition
-numTrials = size(IDX(conditionNumber).LFP_alphaBeta, 1);
-
-% Parameters for mscohere
-fs = 1000;  % Sampling frequency in Hz
-windowSize = 256;  % Window size for computing the coherence
-overlap = windowSize/2;  % Overlap between windows
-
-% Initialize coherence matrix
-coherenceMatrix = zeros(32, 32, numTrials);
-
-% Loop through all trials and compute coherence for each channel pair
-for trialNumber = 1:numTrials
-    for channel1 = 1:32
-        for channel2 = 1:32
-            % Extract the LFP_alphaBeta data for the chosen channels and trial
-            lfpGammaData1 = IDX(conditionNumber).LFP_alphaBeta{trialNumber, 2}(:, channel1);
-            lfpGammaData2 = IDX(conditionNumber).LFP_alphaBeta{trialNumber, 2}(:, channel2);
-
-            % Compute coherence
-            [coherence, ~] = mscohere(lfpGammaData1, lfpGammaData2, windowSize, overlap, [], fs);
-
-            % Store coherence in the matrix
-            coherenceMatrix(channel1, channel2, trialNumber) = mean(coherence);  % You can use mean or any other aggregation method
+% close all
+titleString = {'Binoc PS','Binoc NS', 'Monoc PS'};
+count = 0;
+for conditionNumber = [1 2 11]
+    % conditionNumber = 11;
+    
+    % Get the number of trials for the chosen condition
+    numTrials = size(IDX(conditionNumber).LFP_gamma1, 1);
+    
+    % Parameters for mscohere
+    fs = 1000;  % Sampling frequency in Hz
+    windowSize = 256;  % Window size for computing the coherence
+    overlap = 10;  % Overlap between windows
+    
+    % Initialize coherence matrix
+    coherenceMatrix = zeros(32, 32, numTrials);
+    % Loop through all trials and compute coherence for each channel pair
+    for trialNumber = 1:numTrials
+        for channel1 = 3:30
+            for channel2 = 3:30
+                % Extract the LFP_gamma1 data for the chosen channels and trial
+                lfpGammaData1 = IDX(conditionNumber).LFP_gamma1{trialNumber, 1}(350:1001, channel1);
+                lfpGammaData2 = IDX(conditionNumber).LFP_gamma1{trialNumber, 1}(350:1001, channel2);
+    
+                % Compute coherence
+                [coherence, ~] = mscohere(lfpGammaData1, lfpGammaData2, windowSize, overlap, [], fs);
+    
+                % Store coherence in the matrix
+                coherenceMatrix(channel1, channel2, trialNumber) = mean(coherence);  % You can use mean or any other aggregation method
+            end
         end
     end
+    
+    % Average across trials (optional)
+    averageCoherenceMatrix = mean(coherenceMatrix(3:30,3:30,:),3);
+    
+    % Visualize the coherence matrix
+    figure;
+    imagesc(averageCoherenceMatrix);
+    colormap('jet');
+    clim([.5 .65])
+    colorbar;
+    title('Coherence Matrix across Channels');
+    xlabel('Channel');
+    ylabel('Channel');
+    count = count+1;
+    title(titleString{count});
 end
-
-% Average across trials (optional)
-averageCoherenceMatrix = mean(coherenceMatrix, 3);
-
-% Visualize the coherence matrix
-figure;
-imagesc(averageCoherenceMatrix);
-colorbar;
-title('Coherence Matrix across Channels');
-xlabel('Channel');
-ylabel('Channel');
 
 
 %% Compare conditions
@@ -63,7 +71,7 @@ freqRange = [1 100];
 % Loop through condition numbers
 for conditionNumber = [12, 11]
     % Get the number of trials for the chosen condition
-    numTrials = size(IDX(conditionNumber).LFP_alphaBeta, 1);
+    numTrials = size(IDX(conditionNumber).LFP_gamma1, 1);
 
     % Initialize freqLimValues outside the loop
     [~, freqLimValues] = mscohere(zeros(windowSize, 1), zeros(windowSize, 1), windowSize, overlap, nfft, fs);
@@ -75,10 +83,10 @@ for conditionNumber = [12, 11]
 
     % Loop through all trials and compute coherence for each layer pair
     for trialNumber = 1:numTrials
-        % Extract the LFP_alphaBeta data for each layer
-        lfpSupragranular = IDX(conditionNumber).LFP_alphaBeta{trialNumber, 2}(:, supragranularChannels);
-        lfpGranular = IDX(conditionNumber).LFP_alphaBeta{trialNumber, 2}(:, granularChannels);
-        lfpInfragranular = IDX(conditionNumber).LFP_alphaBeta{trialNumber, 2}(:, infragranularChannels);
+        % Extract the LFP_gamma1 data for each layer
+        lfpSupragranular = IDX(conditionNumber).LFP_gamma1{trialNumber, 2}(:, supragranularChannels);
+        lfpGranular = IDX(conditionNumber).LFP_gamma1{trialNumber, 2}(:, granularChannels);
+        lfpInfragranular = IDX(conditionNumber).LFP_gamma1{trialNumber, 2}(:, infragranularChannels);
 
         % Compute coherence for each layer pair
         [coherenceGranularSupragranularTrial, freq] = mscohere(lfpGranular, lfpSupragranular, windowSize, overlap, nfft, fs);

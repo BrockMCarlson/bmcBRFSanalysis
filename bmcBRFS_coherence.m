@@ -23,7 +23,7 @@ cd(codeDir)
 path3 = 'Documents\MATLAB\formattedDataOutputs';
 plotDir = strcat(path1,filesep,path3);
 %sortedDataDir -- need to run new sorted data on home pc
-sortedDataDir = 'S:\bmcBRFS_sortedData';
+sortedDataDir = 'S:\bmcBRFS_sortedData_Nov23';
 
 %% Choose inidividual file to explore
 cd(sortedDataDir)
@@ -183,7 +183,7 @@ f2 = figure;
 cond = 12;
 trl = 1;
 ch = 10;
-x  = IDX(cond).LFP_gamma{trl,2}(:,ch);
+x  = IDX(cond).LFP_gamma1{trl,2}(:,ch);
 [c,lags] = xcorr(x,80,'normalized');
 stem(lags,c)
 xlabel('lag in ms')
@@ -192,7 +192,7 @@ title('LFP gamma-band auto-correlation for ch 10')
 
 
 % Fields to loop through
-fields_to_plot = {'LFP_gamma', 'LFP_alphaBeta', 'LFP_bb', 'CSD_gamma', 'MUAe'};
+fields_to_plot = {'LFP_gamma1', 'LFP_alpha', 'LFP_bb', 'CSD_gamma1', 'MUAe'};
 
 % Parameters for auto-correlation plot
 max_lag = 80;
@@ -221,9 +221,9 @@ end
 close all
 for cond = 1:size(IDX,1)
     figure; 
-    for trl = 1:length(IDX(cond).LFP_gamma)
-        x  = IDX(cond).LFP_gamma{trl,2}(:,10);
-        y = IDX(cond).LFP_gamma{trl,2}(:,15);
+    for trl = 1:length(IDX(cond).LFP_gamma1)
+        x  = IDX(cond).LFP_gamma1{trl,2}(:,10);
+        y = IDX(cond).LFP_gamma1{trl,2}(:,15);
         [c(:,trl),lags] = xcorr(x,y,80,'normalized');
     end
     c_avg = mean(c,2);
