@@ -9,7 +9,7 @@ datetime
 clear
 % Directories
 
-codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
+codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis');
 cd(codeDir)
 plotDir = strcat('S:\formattedDataOutputs');
 officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "Sheet1", [2, Inf]);
