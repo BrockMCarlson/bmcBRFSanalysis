@@ -1,10 +1,6 @@
-%% laminarLabeling.m
+%% laminarLabeling_SingleFileEdit.m
 % Brock M. Carlson
-% July 26th, 2023,
-% This is a draft analysis for bmcBRFSanalysist to find the laminar 
-% profile of a single bmcBRFS.ns2 file 
-
-% LFP, CSD, PSD, Gamma/Beta, MUAe. All by depth
+% Feburary 13th, 2024
 
 clear
 
@@ -13,18 +9,19 @@ clear
 % Directories
 codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
 cd(codeDir)
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
 plotDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\laminarLabeling';
 
-%% Create dir loop
+dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
-sortedDataFiles = dir('*sortedData*');
+allDataFiles = dir('**/*sortedData*.mat');
+
+%% For Loop
 for i = 1:length(sortedDataFiles)
     fileToLoad = sortedDataFiles(i).name;
     load(fileToLoad)
     % Variables
     cond = 1; % Using most excitatory stimulus, condition 1, 'Simult. Dioptic. PO'
-    sdftm = -200:1:800;
+    sdftm = STIM(1).sdftm;
     timeLength = length(sdftm);
     trlLength = size(IDX(cond).LFP_bb,1);
     xAxisTime = sdftm;
@@ -41,7 +38,8 @@ for i = 1:length(sortedDataFiles)
             yAxisChannels = 1:32;
             yAxisLim =      [1 32];
         elseif probes == 2
-            error('solve 2 probes plots')
+            yAxisChannels = 33:64;
+            yAxisLim =      [33 64];
         end
 
         %% Figure settings
@@ -102,10 +100,10 @@ for i = 1:length(sortedDataFiles)
         counter = 0;
         clear csd_allLFPdata
         for cond = 1:20
-            trlLength = size(IDX(cond).CSD_gamma1,1);
+            trlLength = size(IDX(cond).CSD_gamma,1);
             for trl = 1:trlLength
                 counter = counter + 1;
-                csd_allLFPdata(:,:,counter) = IDX(cond).CSD_gamma1{trl,1};
+                csd_allLFPdata(:,:,counter) = IDX(cond).CSD_gamma{trl,1};
             end
         end
         
@@ -294,7 +292,7 @@ for i = 1:length(sortedDataFiles)
         %% Save figure
         cd(plotDir)
         figName = strcat('laminarFig',sortedDataFiles(i).name(12:end-4),'_Probe#',string(probes),'.png');
-        saveas(gcf,figName)
+        % saveas(gcf,figName)
     
         close
     end
