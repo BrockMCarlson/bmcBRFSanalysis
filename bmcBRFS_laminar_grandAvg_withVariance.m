@@ -9,7 +9,7 @@ datetime
 clear
 % Directories
 
-codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis');
+codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
 cd(codeDir)
 plotDir = strcat('S:\formattedDataOutputs');
 officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "Sheet1", [2, Inf]);
@@ -19,14 +19,12 @@ dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
 allDataFiles = dir('**/*sortedData*.mat');
 
-% signalTypeList = {'LFP_bb','LFP_delta','LFP_theta','LFP_alpha','LFP_beta1',...
-%     'LFP_beta2','LFP_beta3','LFP_gamma1','LFP_gamma2',...
-%     'CSD_bb','CSD_delta','CSD_theta','CSD_alpha','CSD_beta1','CSD_beta2',...
-%     'CSD_beta3','CSD_gamma1','CSD_gamma2','MUAe'};
-signalTypeList = {'LFP_bb','LFP_alpha','LFP_beta1',...
-    'LFP_beta2','LFP_beta3','LFP_gamma1','LFP_gamma2',...
-    'CSD_bb','CSD_alpha','CSD_beta1','CSD_beta2',...
-    'CSD_beta3','CSD_gamma1','CSD_gamma2','MUAe'};
+
+% % signalTypeList = {'LFP_bb','LFP_alpha','LFP_beta1',...
+% %     'LFP_beta2','LFP_beta3','LFP_gamma1','LFP_gamma2',...
+% %     'CSD_bb','CSD_alpha','CSD_beta1','CSD_beta2',...
+% %     'CSD_beta3','CSD_gamma1','CSD_gamma2','MUAe'};
+signalTypeList = {'LFP_bb','MUAe'};
 
 for file = 1:length(allDataFiles)
     
@@ -50,7 +48,7 @@ for file = 1:length(allDataFiles)
     columnNames = {'sg_1','sg_2','sg_3','sg_4','sg_5','g_1','g_2','g_3','g_4','g_5','ig_1','ig_2','ig_3','ig_4','ig_5'};
     if any(v1Ch > 32) || any(v1Ch < 1)
         warning('skipping session without full column for now')
-        disp(sessionLabel)
+        warning(strcat('full column not recorded on _',sessionLabel))
         continue
         % % columnNames = columnNames((v1Ch >= 1) & (v1Ch<=32));
         % % v1Ch        = v1Ch((v1Ch >= 1) & (v1Ch<=32));
@@ -254,7 +252,11 @@ for file = 1:length(allDataFiles)
          disp(strcat('finished processing _',sessionLabel))
 
 end
-
+load handel.mat
+sound(y,1.15*Fs);
+disp('Finished creating DATAOUT')
+cd(plotDir)
+save('DATAOUT.mat',"DATAOUT")
 datetime
 
 %% plot grand averages of whole probe
@@ -269,7 +271,11 @@ for st = 1:length(signalTypeList)
 
     ps_grandAvg = median(ps_NaNmatrix,3,"omitmissing");
     ns_grandAvg = median(ns_NaNmatrix,3,"omitmissing");
-    
+
+    % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data));  
+    ps_SEM = std(ps_NaNmatrix,0,3)/sqrt(size(ps_NaNmatrix,3)); 
+    ns_SEM = std(ns_NaNmatrix,0,3)/sqrt(size(ns_NaNmatrix,3)); 
+
     % smooth data
     ps_smooth_grandAvg = smoothdata(ps_grandAvg,1,"gaussian",20);
     ns_smooth_grandAvg = smoothdata(ns_grandAvg,1,"gaussian",20);
@@ -320,6 +326,10 @@ for st = 1:length(signalTypeList)
     ps_grandAvg = median(ps_NaNmatrix,3,"omitmissing");
     ns_grandAvg = median(ns_NaNmatrix,3,"omitmissing");
 
+    % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data));  
+    ps_SEM = std(ps_NaNmatrix,0,3)/sqrt(size(ps_NaNmatrix,3)); 
+    ns_SEM = std(ns_NaNmatrix,0,3)/sqrt(size(ns_NaNmatrix,3)); 
+
     %Now convert grand average array into laminar compartments
     ps_S = median(ps_grandAvg(:,1:5),2); 
     ps_G = median(ps_grandAvg(:,6:10),2); 
@@ -327,6 +337,7 @@ for st = 1:length(signalTypeList)
     ns_S = median(ns_grandAvg(:,1:5),2); 
     ns_G = median(ns_grandAvg(:,6:10),2); 
     ns_I = median(ns_grandAvg(:,11:15),2); 
+
 
     % smooth data
     ps_S_smooth = smoothdata(ps_S,1,"gaussian",20);
