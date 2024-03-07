@@ -3,7 +3,7 @@
 codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis';
 cd(codeDir)
 
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+dataDir = 'D:\sortedData_240229';
 cd(dataDir)
 
 %% For loop

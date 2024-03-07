@@ -34,7 +34,7 @@ officLamAssign = importLaminarAssignments( path1 + ...
     "Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx",...
     "Sheet1", [2, Inf]);
 
-granBtm = officLamAssign.Probe11stFold4c(1); % channel corresponding to the bottom of layer 4c
+granBtm = officLamAssign.Probe11stFold4c(19); % channel corresponding to the bottom of layer 4c
 
 
 % Calculate V1 ch boundaries
@@ -164,7 +164,7 @@ ns_table = array2table(ns_avg);
 %be a table)
 % The goal is to have 32 variables, each as a column, representing a
 % different depth. 
-Time = milliseconds(-200):milliseconds(1):milliseconds(800);
+Time = milliseconds(-200):milliseconds(1):milliseconds(1000);
 ps_TT = table2timetable(ps_table,'RowTimes',Time);
 ps_TT2 = renamevars(ps_TT,ps_TT.Properties.VariableNames,columnNames);
 ns_TT = table2timetable(ns_table,'RowTimes',Time);

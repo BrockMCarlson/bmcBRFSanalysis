@@ -68,6 +68,9 @@ infragranularChannels = 13:17;
 % Frequency range of interest
 freqRange = [1 100];
 
+% Time window of interest
+tm = 350:1000;
+
 % Loop through condition numbers
 for conditionNumber = [12, 11]
     % Get the number of trials for the chosen condition
@@ -84,9 +87,9 @@ for conditionNumber = [12, 11]
     % Loop through all trials and compute coherence for each layer pair
     for trialNumber = 1:numTrials
         % Extract the LFP_bb data for each layer
-        lfpSupragranular = IDX(conditionNumber).LFP_bb{trialNumber, 2}(:, supragranularChannels);
-        lfpGranular = IDX(conditionNumber).LFP_bb{trialNumber, 2}(:, granularChannels);
-        lfpInfragranular = IDX(conditionNumber).LFP_bb{trialNumber, 2}(:, infragranularChannels);
+        lfpSupragranular = IDX(conditionNumber).LFP_bb{trialNumber, 2}(tm, supragranularChannels);
+        lfpGranular = IDX(conditionNumber).LFP_bb{trialNumber, 2}(tm, granularChannels);
+        lfpInfragranular = IDX(conditionNumber).LFP_bb{trialNumber, 2}(tm, infragranularChannels);
 
         % Compute coherence for each layer pair
         [coherenceGranularSupragranularTrial, freq] = mscohere(lfpGranular, lfpSupragranular, windowSize, overlap, nfft, fs);

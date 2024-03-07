@@ -1,9 +1,8 @@
 % load('S:\bmcBRFS_sortedData_Nov23\sortedData_221123_J_bmcBRFS001.mat')
 
-% Create a table of data to look at in the data cleaner
 % Ideal dimension for a variable are ch x tm x trial
 LEcond = 9;
-LEdat = nan(32,1001,length(IDX(LEcond).LFP_alpha));
+LEdat = nan(32,1201,length(IDX(LEcond).LFP_alpha));
 for ch = 1:32
     for trl = 1:length(IDX(LEcond).LFP_alpha)
         LEdat(ch,:,trl) = IDX(LEcond).LFP_alpha{trl,2}(:,ch);
@@ -13,14 +12,14 @@ LEavgBRFS = mean(LEdat,3);
 blAvg = mean(LEavgBRFS(:,1:200),2);
 LEblSubBRFS = LEavgBRFS - blAvg;
 figure
-plot(-200:800,LEblSubBRFS)
+plot(-200:1000,LEblSubBRFS)
 title(IDX(LEcond).conditionString)
 % ylim([-200 25])
 vline(0)
 vline(250)
 
 REcond = 10;
-REdat = nan(32,1001,length(IDX(REcond).LFP_alpha));
+REdat = nan(32,1201,length(IDX(REcond).LFP_alpha));
 for ch = 1:32
     for trl = 1:length(IDX(REcond).LFP_alpha)
         REdat(ch,:,trl) = IDX(REcond).LFP_alpha{trl,2}(:,ch);
@@ -30,7 +29,7 @@ REavgBRFS = mean(REdat,3);
 blAvg = mean(REavgBRFS(:,1:200),2);
 REblSubBRFS = REavgBRFS - blAvg;
 figure
-plot(-200:800,REblSubBRFS)
+plot(-200:1000,REblSubBRFS)
 title(IDX(REcond).conditionString)
 % ylim([-200 25])
 vline(0)
@@ -42,7 +41,7 @@ x = [-200:1000];
 y = 1:32;
 % trial-types
 LEcond = 1;
-LEdat = nan(32,1001,length(IDX(LEcond).CSD_bb));
+LEdat = nan(32,1201,length(IDX(LEcond).CSD_bb));
 for ch = 1:32
     for trl = 1:length(IDX(LEcond).CSD_bb)
         LEdat(ch,:,trl) = IDX(LEcond).CSD_bb{trl,1}(:,ch);
@@ -59,7 +58,7 @@ title(IDX(LEcond).conditionString)
 vline(0)
 
 REcond = 2;
-REdat = nan(32,1001,length(IDX(REcond).CSD_bb));
+REdat = nan(32,1201,length(IDX(REcond).CSD_bb));
 for ch = 1:32
     for trl = 1:length(IDX(REcond).CSD_bb)
         REdat(ch,:,trl) = IDX(REcond).CSD_bb{trl,1}(:,ch);
@@ -175,8 +174,8 @@ for conditionNumber = [9 10 11 12]
         for channel1 = 1:32
             for channel2 = 1:32
                 % Extract the LFP_bb data for the chosen channels and trial
-                lfpGammaData1 = IDX(conditionNumber).LFP_bb{trialNumber, 2}(:, channel1);
-                lfpGammaData2 = IDX(conditionNumber).LFP_bb{trialNumber, 2}(:, channel2);
+                lfpGammaData1 = IDX(conditionNumber).MUAe{trialNumber, 2}(:, channel1);
+                lfpGammaData2 = IDX(conditionNumber).MUAe{trialNumber, 2}(:, channel2);
     
                 % Compute coherence
                 [coherence, freq] = mscohere(lfpGammaData1, lfpGammaData2, windowSize, overlap, [], fs);
@@ -187,40 +186,42 @@ for conditionNumber = [9 10 11 12]
         end
         % Visualize individual trials
         % Single contact
-        figure
-        set(gcf,"Position",[-1850 -10 1759 610])
-        subplot(1,2,1)
-        plot(-200:800,IDX(conditionNumber).LFP_bb{trialNumber, 2}(:, 10))
-        hold on
-        plot(-200:800,IDX(conditionNumber).LFP_bb{trialNumber, 2}(:, 11))
-        vline(0)
-        title('contact 10 and contact 11')
-        subplot(1,2,2)
-        [coherence, freq] = mscohere(...
-            IDX(conditionNumber).LFP_bb{trialNumber, 2}(400:1001, 10),...
-            IDX(conditionNumber).LFP_bb{trialNumber, 2}(400:1001, 11),...
-            windowSize, overlap, [], fs);
-        plot(freq,coherence)
-        hline(median(coherence))
-        title('Coherence between signals, with median as output')
-
-        %Whole electrode
-        figure
-        set(gcf,"Position",[-1850 -10 1759 610])
-        % Data 1
-        subplot(1,2,1)
-        plot(-200:800,IDX(conditionNumber).LFP_bb{trialNumber, 2}(:,:))
-        vline(0)
-        % imagesc Coherence
-        subplot(1,2,2)
-        imagesc(coherenceMatrix(:,:,trialNumber));
-        colormap('jet');
-        % clim([.5 .65])
-        colorbar;
-        sgtitle('Single trial example of raw LFP');
-        xlabel('Channel');
-        ylabel('Channel');
-        pause(1)
+        % % error('remov')
+        % % figure
+        % % set(gcf,"Position",[-1850 -10 1759 610])
+        % % subplot(1,2,1)
+        % % plot(-200:1000,IDX(conditionNumber).LFP_bb{trialNumber, 2}(:, 10))
+        % % hold on
+        % % plot(-200:1000,IDX(conditionNumber).LFP_bb{trialNumber, 2}(:, 11))
+        % % vline(0)
+        % % title('contact 10 and contact 11')
+        % % subplot(1,2,2)
+        % % [coherence, freq] = mscohere(...
+        % %     IDX(conditionNumber).LFP_bb{trialNumber, 2}(400:1001, 10),...
+        % %     IDX(conditionNumber).LFP_bb{trialNumber, 2}(400:1001, 11),...
+        % %     windowSize, overlap, [], fs);
+        % % plot(freq,coherence)
+        % % hline(median(coherence))
+        % % title('Coherence between signals, with median as output')
+        % % 
+        % % %Whole electrode
+        % % 
+        % % figure
+        % % set(gcf,"Position",[-1850 -10 1759 610])
+        % % % Data 1
+        % % subplot(1,2,1)
+        % % plot(-200:1000,IDX(conditionNumber).LFP_bb{trialNumber, 2}(:,:))
+        % % vline(0)
+        % % % imagesc Coherence
+        % % subplot(1,2,2)
+        % % imagesc(coherenceMatrix(:,:,trialNumber));
+        % % colormap('jet');
+        % % % clim([.5 .65])
+        % % colorbar;
+        % % sgtitle('Single trial example of raw LFP');
+        % % xlabel('Channel');
+        % % ylabel('Channel');
+        % % pause(1)
     end
     
     % Average across trials (optional)
