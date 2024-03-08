@@ -14,12 +14,12 @@ officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscript
 averageCoherenceMatrix = nan(15,15,2,length(allDataFiles));
 
 
-for file = 1:length(officLamAssign)
+for file = 1:size(officLamAssign,1)
     
     % load data
     cd(dataDir)
     name = char(officLamAssign.SessionProbe(file,1));
-    fileToLoad = strcat('sortedData_',name(3:end-1),'.mat');
+    fileToLoad = strcat('sortedData_',name(2:end-1),'.mat');
     load(fileToLoad)
     sessionLabel = allDataFiles(file).name(12:end-4);
 
