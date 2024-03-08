@@ -1,7 +1,8 @@
 %% bmcBRFS_coherenceMatrix
 % Are there observable differences between trial-types with LFP coherence?
 % initialize variables
-
+clear
+close all
 tic
 
 %% For loop
@@ -17,8 +18,8 @@ for file = 1:length(officLamAssign)
     
     % load data
     cd(dataDir)
-    name = officLamAssign.SessionProbe(file,1);
-    fileToLoad = strcat('sortedData_',name,'.mat');
+    name = char(officLamAssign.SessionProbe(file,1));
+    fileToLoad = strcat('sortedData_',name(3:end-1),'.mat');
     load(fileToLoad)
     sessionLabel = allDataFiles(file).name(12:end-4);
 
