@@ -219,11 +219,11 @@ for file = 1:length(allDataFiles)
         
             % convert cell to array
             for trl = 1:length(IDX(prefCondOnFlash).correctTrialIndex)
-                array_dichopticAdapted_pref(tm1,i,trl) = abs(IDX(prefCondOnFlash).(signalType){trl,1}(tm1,i)); % now we index the cell for the second 800ms
+                array_dichopticAdapted_pref(tm1,i,trl) = abs(IDX(prefCondOnFlash).(signalType){trl,1}(tm1,i)); % now we index the cell for the first 800ms
                 array_dichopticAdapted_pref(tm2_concat,i,trl) = abs(IDX(prefCondOnFlash).(signalType){trl,2}(tm2,i)); % now we index the cell for the second 800ms
             end
             for trl = 1:length(IDX(nullCondOnFlash).correctTrialIndex)
-                array_dichopticAdapted_null(tm1,i,trl) = abs(IDX(nullCondOnFlash).(signalType){trl,1}(tm1,i)); % now we index the cell for the second 800ms
+                array_dichopticAdapted_null(tm1,i,trl) = abs(IDX(nullCondOnFlash).(signalType){trl,1}(tm1,i)); % now we index the cell for the first 800ms
                 array_dichopticAdapted_null(tm2_concat,i,trl) = abs(IDX(nullCondOnFlash).(signalType){trl,2}(tm2,i)); % now we index the cell for the second 800ms
             end
         end
