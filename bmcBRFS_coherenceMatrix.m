@@ -3,7 +3,7 @@
 % initialize variables
 clear
 close all
-tic
+
 
 %% For loop
 dataDir = 'S:\bmcBRFS_sortedData_Nov23';
@@ -58,7 +58,7 @@ for file = 1:size(officLamAssign,1)
     for cond = monoc_1
         for trl = 1:length(IDX(cond).correctTrialIndex)
             count = count + 1;
-            array_ofMonoc1(:,:,count) = abs(IDX(cond).(signalType){trl,1}(:,ch)); % 1000 x 32
+            array_ofMonoc1(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); % 1000 x 32
         end
     end
     clear cond count trl 
@@ -67,7 +67,7 @@ for file = 1:size(officLamAssign,1)
     for cond = monoc_2
         for trl = 1:length(IDX(cond).correctTrialIndex)
             count = count + 1;
-            array_ofMonoc2(:,:,count) = abs(IDX(cond).(signalType){trl,1}(:,ch)); 
+            array_ofMonoc2(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -77,7 +77,7 @@ for file = 1:size(officLamAssign,1)
     for cond = monoc_3
         for trl = 1:length(IDX(cond).correctTrialIndex)
             count = count + 1;
-            array_ofMonoc3(:,:,count) = abs(IDX(cond).(signalType){trl,1}(:,ch)); 
+            array_ofMonoc3(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -87,7 +87,7 @@ for file = 1:size(officLamAssign,1)
     for cond = monoc_4
         for trl = 1:length(IDX(cond).correctTrialIndex)
             count = count + 1;
-            array_ofMonoc4(:,:,count) = abs(IDX(cond).(signalType){trl,1}(:,ch)); 
+            array_ofMonoc4(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -109,11 +109,11 @@ for file = 1:size(officLamAssign,1)
         size(array_ofMonoc4,3)];
     maxTrls = max(A);
     minTrls = min(A);
-    tuned = nan(length(ch),1);
-    prefMonoc = nan(length(ch),1);
+    tuned = nan(length(v1Ch),1);
+    prefMonoc = nan(length(v1Ch),1);
     
     % FOR each individual unit 
-    for i = 1:length(ch)
+    for i = 1:length(v1Ch)
         % preallocate y based on trial count
         y = nan(maxTrls,4);
         % create an array of each trial's median response for each monoc 
@@ -176,9 +176,9 @@ for file = 1:size(officLamAssign,1)
         length(IDX(10).correctTrialIndex),...
         length(IDX(11).correctTrialIndex),...
         length(IDX(12).correctTrialIndex)]);
-    array_dichopticAdapted_pref = nan(1801,length(ch),maxTrlLength);
-    array_dichopticAdapted_null = nan(1801,length(ch),maxTrlLength);
-    for i = 1:length(ch)
+    array_dichopticAdapted_pref = nan(1801,length(v1Ch),maxTrlLength);
+    array_dichopticAdapted_null = nan(1801,length(v1Ch),maxTrlLength);
+    for i = 1:length(v1Ch)
         % % monoc_1 = [5, 11, 13, 19]; % PO RightEye
         % % monoc_2 = [8, 10, 16, 18]; % PO LeftEye
         % % monoc_3 = [7, 9, 15, 17];  % NPO RightEye
@@ -291,7 +291,7 @@ ylabel('Channel');
 title('Diff of Pref vs Null');
 
 
-toc
+
 
 
 %% Compare laminar compartments
