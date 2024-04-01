@@ -227,8 +227,8 @@ for file = 1:length(allDataFiles)
     
     
         % smooth data
-        ps_smooth = smoothdata(ps_avg,1,"gaussian",20);
-        ns_smooth = smoothdata(ns_avg,1,"gaussian",20);
+        ps_smooth = smoothdata(ps_avg',1,"gaussian",20);
+        ns_smooth = smoothdata(ns_avg',1,"gaussian",20);
     
         % convert to table
         ps_table_1 = array2table(ps_smooth(:,1:16));
@@ -240,7 +240,7 @@ for file = 1:length(allDataFiles)
         %be a table)
         % The goal is to have 32 variables, each as a column, representing a
         % different depth. 
-        Time = milliseconds(-200):milliseconds(1):milliseconds(1600);
+        Time = milliseconds(-200):milliseconds(1):milliseconds(800);
         % electrodes 1-16
         elName_1 = {'el1','el2','el3','el4','el5','el6','el7','el8','el9',...
             'el10','el11','el12','el13','el14','el15','el16'};

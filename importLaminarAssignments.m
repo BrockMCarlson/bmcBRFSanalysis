@@ -32,19 +32,19 @@ if nargin <= 2
 end
 
 %% Set up the Import Options and import the data
-opts = spreadsheetImportOptions("NumVariables", 5);
+opts = spreadsheetImportOptions("NumVariables", 3);
 
 % Specify sheet and range
 opts.Sheet = sheetName;
 opts.DataRange = dataLines(1, :);
 
 % Specify column names and types
-opts.VariableNames = ["SessionProbe", "Probe11stFold4c", "Probe12ndFold", "Probe21stFold", "Probe22ndFold"];
-opts.VariableTypes = ["string", "double", "categorical", "categorical", "categorical"];
+opts.VariableNames = ["SessionProbe", "Probe11stFold4c", "ChtoUse"];
+opts.VariableTypes = ["string", "double", "string"];
 
 % Specify variable properties
 opts = setvaropts(opts, "SessionProbe", "WhitespaceRule", "preserve");
-opts = setvaropts(opts, ["SessionProbe", "Probe12ndFold", "Probe21stFold", "Probe22ndFold"], "EmptyFieldRule", "auto");
+opts = setvaropts(opts, ["SessionProbe", "Probe11stFold4c", "ChtoUse"], "EmptyFieldRule", "auto");
 
 % Import the data
 officialLaminarAssignmentbmcBRFS = readtable(workbookFile, opts, "UseExcel", false);
