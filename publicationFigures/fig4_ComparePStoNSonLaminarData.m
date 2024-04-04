@@ -9,245 +9,25 @@ datetime
 clear
 % Directories
 
-codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
+% codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
+codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
 cd(codeDir)
-outDir = 'S:\formattedDataOutputs';
-dataDir = 'S:\bmcBRFS_sortedData_Nov23';
+% outDir = 'S:\formattedDataOutputs';
+outDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_240402';
+% dataDir = 'S:\bmcBRFS_sortedData_Nov23';
+dataDir = 'D:\sortedData_240229';
 cd(dataDir)
-officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-
-%% For loop
-dataDir = 'S:\bmcBRFS_sortedData_Nov23';
-cd(dataDir)
-
-
-
-for file = 1:size(officLamAssign,1)
-    
-    % load data
-    cd(dataDir)
-    probeName = char(officLamAssign.SessionProbe(1,1));
-    fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
-    load(fileToLoad)
-
-
-
-    
-        %% bl Sub at average level (better for plotting)
-        clear array_ofMonoc1 array_ofMonoc2 array_ofMonoc3 array_ofMonoc4
-        
-        % Monocular
-        monoc_1 = [5, 11, 13, 19]; % PO RightEye
-        monoc_2 = [8, 10, 16, 18]; % PO LeftEye
-        monoc_3 = [7, 9, 15, 17];  % NPO RightEye
-        monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
-        
-        % convert from cell to double and combine monocular conditions
-        count = 0;
-        for cond = monoc_1
-            for trl = 1:length(IDX(cond).correctTrialIndex)
-                count = count + 1;
-                array_ofMonoc1(:,:,count) = abs(IDX(cond).MUAe{trl,1}(:,ch)); % 1000 x 32
-            end
-        end
-        clear cond count trl 
-        
-        count = 0;
-        for cond = monoc_2
-            for trl = 1:length(IDX(cond).correctTrialIndex)
-                count = count + 1;
-                array_ofMonoc2(:,:,count) = abs(IDX(cond).MUAe{trl,1}(:,ch)); 
-            end
-        end
-        clear cond count trl 
-        
-        
-        count = 0;
-        for cond = monoc_3
-            for trl = 1:length(IDX(cond).correctTrialIndex)
-                count = count + 1;
-                array_ofMonoc3(:,:,count) = abs(IDX(cond).MUAe{trl,1}(:,ch)); 
-            end
-        end
-        clear cond count trl 
-        
-        
-        count = 0;
-        for cond = monoc_4
-            for trl = 1:length(IDX(cond).correctTrialIndex)
-                count = count + 1;
-                array_ofMonoc4(:,:,count) = abs(IDX(cond).MUAe{trl,1}(:,ch)); 
-            end
-        end
-        clear cond count trl 
-        
-        
-        
-        
-        
-        %% Test for monocular preference with anova
-        % The anova function ignores NaN values, <undefined> values, empty 
-        % characters, and empty strings in y. If factors or tbl contains NaN or 
-        % <undefined> values, or empty characters or strings, the function ignores 
-        % the corresponding observations in y. The ANOVA is balanced if each factor 
-        % value has the same number of observations after the function disregards 
-        % empty or NaN values. Otherwise, the function performs an unbalanced 
-        % ANOVA. (We will be doing an unbalanced ANOVA).
-        
-        % preallocate array with nan - running an unbalanced ANOVA)
-        A = [size(array_ofMonoc1,3),...
-            size(array_ofMonoc2,3),...
-            size(array_ofMonoc3,3),...
             size(array_ofMonoc4,3)];
-        maxTrls = max(A);
-        minTrls = min(A);
-        tuned = nan(length(ch),1);
-        prefMonoc = nan(length(ch),1);
-        
-        % FOR each individual unit 
-        for i = 1:length(ch)
-            % preallocate y based on trial count
-            y = nan(maxTrls,4);
-            % create an array of each trial's median response for each monoc 
-            % condition (trl x 4 monoc)
-            y(1:size(array_ofMonoc1,3),1) = median(squeeze(array_ofMonoc1(200:450,i,:)),1)'; % median of each trial after stim onset
-            y(1:size(array_ofMonoc2,3),2) = median(squeeze(array_ofMonoc2(200:450,i,:)),1)'; % median of each trial after stim onset
-            y(1:size(array_ofMonoc3,3),3) = median(squeeze(array_ofMonoc3(200:450,i,:)),1)'; % median of each trial after stim onset
-            y(1:size(array_ofMonoc4,3),4) = median(squeeze(array_ofMonoc4(200:450,i,:)),1)'; % median of each trial after stim onset
-            % Now we perform baseline subtraction
-            % First we get the blAvg for this contact across all trials
-            y_bl(1,1) = median(median(squeeze(array_ofMonoc1(100:200,i,:)),1)');
-            y_bl(1,2) = median(median(squeeze(array_ofMonoc2(100:200,i,:)),1)');
-            y_bl(1,3) = median(median(squeeze(array_ofMonoc3(100:200,i,:)),1)');
-            y_bl(1,4) = median(median(squeeze(array_ofMonoc4(100:200,i,:)),1)');
-            y_blSub = y - median(y_bl);
-            p = anova1(y_blSub,[],'off');
-            if p < .05
-                tuned(i,1) = true;
-            else
-                tuned(i,1) = false;
-            end
-            % Now we find the maximum response
-            [M,maxRespIdx] = max(median(y_blSub,1,"omitmissing"));
-            prefMonoc(i,1) = maxRespIdx;
-            % And assign the null condition
-            if maxRespIdx == 1
-                nullRespIdx = 4;
-            elseif maxRespIdx == 2
-                nullRespIdx = 3;
-            elseif maxRespIdx == 3
-                nullRespIdx = 2;
-            elseif maxRespIdx == 4
-                nullRespIdx = 1;
-            end
-            nullMonoc(i,1) = nullRespIdx;
-        end
-        
-        % Skip this file if no tuned units are found
-        % % DATAOUT(file).numberOFUnits = sum(tuned);
-        % % if sum(tuned) == 0
-        % %     warning(strcat('No tuned channels on',sessionLabel))
-        % %     continue
-        % % end
-        % % 
-        % % % Creat channel array to use in subsequent steps - only plot tuned units.
-        % % chTuned = ch(logical(tuned));
-        % % 
-        % % 
-    
-    
-        %% Create array of preference-based data
-        % concatenate two timecourses into array
-        tm_full = -200:1600; % 1801 total timepoints
-        tm1 = 1:801;
-        tm2 = 1:1001;
-        tm2_concat = 801:1801;
-    
-        % pre allocate
-        maxTrlLength = max([length(IDX(9).correctTrialIndex),...
-            length(IDX(10).correctTrialIndex),...
-            length(IDX(11).correctTrialIndex),...
-            length(IDX(12).correctTrialIndex)]);
-        array_dichopticAdapted_pref = nan(1801,length(ch),maxTrlLength);
-        array_dichopticAdapted_null = nan(1801,length(ch),maxTrlLength);
-        for i = 1:length(ch)
-            % % monoc_1 = [5, 11, 13, 19]; % PO RightEye
-            % % monoc_2 = [8, 10, 16, 18]; % PO LeftEye
-            % % monoc_3 = [7, 9, 15, 17];  % NPO RightEye
-            % % monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
-            if prefMonoc(i,1) == 1
-                prefCondOnFlash = 12;
-                nullCondOnFlash = 11;
-            elseif prefMonoc(i,1) == 2
-                prefCondOnFlash = 9;
-                nullCondOnFlash = 10;
-            elseif prefMonoc(i,1) == 3
-                prefCondOnFlash = 10;
-                nullCondOnFlash = 9;
-            elseif prefMonoc(i,1) == 4
-                prefCondOnFlash = 11;
-                nullCondOnFlash = 12;
-            end
-        
-            % convert cell to array
-            for trl = 1:length(IDX(prefCondOnFlash).correctTrialIndex)
-                array_dichopticAdapted_pref(tm1,i,trl) = abs(IDX(prefCondOnFlash).MUAe{trl,1}(tm1,i)); % now we index the cell for the second 800ms
-                array_dichopticAdapted_pref(tm2_concat,i,trl) = abs(IDX(prefCondOnFlash).MUAe{trl,2}(tm2,i)); % now we index the cell for the second 800ms
-            end
-            for trl = 1:length(IDX(nullCondOnFlash).correctTrialIndex)
-                array_dichopticAdapted_null(tm1,i,trl) = abs(IDX(nullCondOnFlash).MUAe{trl,1}(tm1,i)); % now we index the cell for the second 800ms
-                array_dichopticAdapted_null(tm2_concat,i,trl) = abs(IDX(nullCondOnFlash).MUAe{trl,2}(tm2,i)); % now we index the cell for the second 800ms
-            end
-        end
-        
-        
-        %% Save data into structure array
-      
-        ps_avg = median(array_dichopticAdapted_pref,3,"omitmissing"); % input is (tm,ch,trl)
-        ns_avg = median(array_dichopticAdapted_null,3,"omitmissing");
-    
-    
-        % Calculate as Percent Change
-        %              X(t) - avgBl
-        % %Ch = 100 * -------------
-        %                 avgBl
-        psBl = median(ps_avg(100:200,:));
-        ps_PercentC = 100*((ps_avg-psBl)./psBl);
-        nsBl = median(ns_avg(100:200,:));
-        ns_PercentC = 100*((ns_avg-nsBl)./nsBl);  
-        
-        % Save this output
-        DATAOUT.MUAe.ps_PercentC(:,:,file) = ps_PercentC;
-        DATAOUT.MUAe.ns_PercentC(:,:,file) = ns_PercentC;
-       
+% officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
-    
-        % Calculate V1 ch boundaries
-        granBtm = officLamAssign.Probe11stFold4c(file); % channel corresponding to the bottom of layer 4c
-        v1Top_old = granBtm-9;
-        v1Btm_old = granBtm+5;
-        v1Ch_old = v1Top_old:v1Btm_old;
 
-        numPenetrations = 30;
-        laminarAligned = nan(1801,64,numPenetrations);
-        alignDiff = 32-granBtm;
-        v1Top_new = v1Top_old+alignDiff;
-        v1Btm_new = v1Btm_old+alignDiff;
-        v1Ch_new = v1Top_new:v1Btm_new;
-
-        MUAe.ps_PercentC(v1Ch_new,:,file) = ps_PercentC(:,v1Ch_old);
-        MUAe.ns_PercentC(v1Ch_new,:,file) = ns_PercentC(:,v1Ch_old);
-        
-    
-         disp(strcat('finished processing _',sessionLabel))
-
-end
-load handel.mat
-sound(y,1.15*Fs);
-disp('Finished creating DATAOUT')
+%% load DATAOUT
 cd(outDir)
-save('DATAOUT.mat',"DATAOUT")
-datetime
+load("DATAOUT.mat")
+
+%% Align to sink bottom
+This is where you need to work
 
 %% plot grand averages of whole probe
 
@@ -268,12 +48,16 @@ datetime
     % smooth data
     ps_smooth_grandAvg = smoothdata(ps_grandAvg,1,"gaussian",20);
     ns_smooth_grandAvg = smoothdata(ns_grandAvg,1,"gaussian",20);
-    
+
     % convert to table
     ps_table_grandAvg = array2table(ps_smooth_grandAvg);
     ns_table_grandAvg = array2table(ns_smooth_grandAvg);
-    
-    
+
+    % columnNames
+    columnNames = {'1','2','3','4','5','6','7','8','9','10','11','12',...
+        '13','14','15','16','17','18','19','20','21','22','23','24',...
+        '25','26','27','28','29','30','31','32'};
+
     %Now convert ps_avg (a double array) into a table (input to timetable must
     %be a table)
     % The goal is to have 32 variables, each as a column, representing a
@@ -283,8 +67,8 @@ datetime
     preferredStimFlash_grandAvg = renamevars(ps_TT_grandAvg,ps_TT_grandAvg.Properties.VariableNames,columnNames);
     ns_TT_grandAvg = table2timetable(ns_table_grandAvg,'RowTimes',Time);
     nullStimFlash_grandAvg = renamevars(ns_TT_grandAvg,ns_TT_grandAvg.Properties.VariableNames,columnNames);
-    
-    
+
+
     % stackedplot()
     close all
     stk_grandAvg = figure;
@@ -294,7 +78,7 @@ datetime
     s_grandAvg.Title = titleText_grandAvg;
     s_grandAvg.LineWidth = 1;
     % s_grandAvg.DisplayLabels = ["% Change"];
-    
+
     %save fig
     cd(outDir)
     figName_grandAvg = strcat('stackedPlot_','_grandAvg_','.png');
@@ -334,7 +118,7 @@ datetime
     ns_S_smooth = smoothdata(ns_S,1,"gaussian",20);
     ns_G_smooth = smoothdata(ns_G,1,"gaussian",20);
     ns_I_smooth = smoothdata(ns_I,1,"gaussian",20);
-    
+
     % Ok, the data is together for plotting, now lets run statistics on
     % each laminar compartment to see if perceptual modulation occurs. The
     % goal here is to run a t-test to see if the average response between
@@ -390,29 +174,30 @@ datetime
 
 
 %% Notes
-% What is currently working: 
-% Step 0 - load in penetration list to analyze:
-officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-% Currently checking data quality for 211219_B - looks like noise
+%
+%
+%
 
-%% Quick pull out of data for individual session
-% Note this was turned into the OrganizeData m file.
-% Step 1 = load IDX
+% What is currently working: 
+
+
+
+%% Step 1 = load IDX
 % Step 2 = chose NS and PS for BRFS
 % Step 3, trial average
-ps = 9;
-ns = 10;
+ps = 12; % 9;
+ns = 11 ; % 10;
 j = ps;
 for trlNum = 1:length(IDX(j).correctTrialIndex)
     MUAe_ps(1:32,1:1001,trlNum) =  IDX(j).MUAe{trlNum,2}(1:1001,1:32)';
 end
-ps_avg = mean(MUAe_ps,3);
+ps_avg = median(MUAe_ps,3);
 
 k = ns;
 for trlNum = 1:length(IDX(k).correctTrialIndex)
     MUAe_ns(1:32,1:1001,trlNum) =  IDX(k).MUAe{trlNum,2}(1:1001,1:32)';
 end
-ns_avg = mean(MUAe_ns,3);
+ns_avg = median(MUAe_ns,3);
 
 %% Laminar align data
 cd('C:\Users\Brock Carlson\Box\Manuscripts\Maier')
@@ -439,10 +224,10 @@ end
 
 
 
-%% Step 4, table organize
+%% Step 4, Show variance with SEM
 % Average data
-ps_avg = median(DATAOUT_ps,3,"omitmissing"); % Avrage acros penetrations (other steps were done with median
-ns_avg = median(DATAOUT_ns,3,"omitmissing");
+ps_avg = mean(DATAOUT_ps,3,"omitmissing"); % Avrage acros penetrations (other steps were done with median
+ns_avg = mean(DATAOUT_ns,3,"omitmissing");
 
 % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data));  
 % % ps_SEM = std(DATAOUT_ps,0,3,"omitmissing")/sqrt(size(DATAOUT_ps,3)); 
@@ -526,3 +311,4 @@ nexttile(tl,[3 1])
 s_2 = stackedplot(preferredStimFlash_2_mean,nullStimFlash_2_mean,...
     ps_mps_2,ps_mms_2,ns_mps_2,ns_mms_2);
 s_2.LineWidth = 1;
+
