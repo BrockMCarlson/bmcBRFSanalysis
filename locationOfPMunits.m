@@ -1,10 +1,3 @@
-%% fig4
-% The goal of this script is to average together data from each laminar
-% compartment to see if differential perceptual modulations occur
-
-
-datetime
-
 %% Setup
 clear
 % Directories
@@ -23,7 +16,37 @@ officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\M
 
 %% load DATAOUT
 cd(dataDir)
-load("DATAOUT.mat")
+load("DATAOUT_trials.mat")
+
+%% statistics
+% Find perceptually modulated units. 
+for i = 1:32 % penetrations
+    if i == 12 || i == 13 || i == 32
+        continue
+    end
+    trlNum = size(DATAOUT_ps{i},3);
+    clear h_trans p_trans h_susta p_susta
+    for j = 1:32 % individual channel on each penetration
+        clear trans_ps trans_ns susta_ps susta_ns
+        for k = 1:trlNum
+            trans_ps(k) = mean(DATAOUT_ps{i}(1051:1151,j,k));
+            trans_ns(k) = mean(DATAOUT_ns{i}(1051:1151,j,k));
+            susta_ps(k) = mean(DATAOUT_ps{i}(1400:1801,j,k));
+            susta_ns(k) = mean(DATAOUT_ns{i}(1400:1801,j,k));
+        end
+        [h_trans(j,1),p_trans(j,1)] = ttest2(trans_ps,trans_ns);
+        [h_susta(j,1),p_susta(j,1)] = ttest2(susta_ps,susta_ns);
+    end
+    tuned_trans(:,i) = h_trans;
+    tuned_susta(:,i) = h_susta;
+end
+figure
+spy(tuned_trans)
+title('significnt difference in transient')
+
+figure 
+spy(tuned_susta)
+title('significant different in sustained')
 
 %% Laminar align data
 aligned_100_ps = nan(1801,100,size(officLamAssign,1));
@@ -91,31 +114,6 @@ ns_S_mms = mean(ns_mms(:,1:5),2);
 ns_G_mms = mean(ns_mms(:,6:10),2); 
 ns_I_mms = mean(ns_mms(:,11:15),2); 
 
-%% statistics
-% Ok, the data is together for plotting, now lets run statistics on
-% each laminar compartment to see if perceptual modulation occurs. The
-% goal here is to run a t-test to see if the average response between
-% 1200 and 1600ms significantly differs between ps and ns
-useIdx = squeeze(~isnan(aligned_ps(1,1,:))); 
-tInput_ps_S_trans = reshape(squeeze(mean(aligned_ps(1050:1200,1:5,useIdx),1)),[],1);
-tInput_ps_G_trans = reshape(squeeze(mean(aligned_ps(1050:1200,6:10,useIdx),1)),[],1);
-tInput_ps_I_trans = reshape(squeeze(mean(aligned_ps(1050:1200,11:15,useIdx),1)),[],1);
-tInput_ns_S_trans = reshape(squeeze(mean(aligned_ns(1050:1200,1:5,useIdx),1)),[],1);
-tInput_ns_G_trans = reshape(squeeze(mean(aligned_ns(1050:1200,6:10,useIdx),1)),[],1);
-tInput_ns_I_trans = reshape(squeeze(mean(aligned_ns(1050:1200,11:15,useIdx),1)),[],1);
-tInput_ps_S_susta = reshape(squeeze(mean(aligned_ps(1400:1801,1:5,useIdx),1)),[],1);
-tInput_ps_G_susta = reshape(squeeze(mean(aligned_ps(1400:1801,6:10,useIdx),1)),[],1);
-tInput_ps_I_susta = reshape(squeeze(mean(aligned_ps(1400:1801,11:15,useIdx),1)),[],1);
-tInput_ns_S_susta = reshape(squeeze(mean(aligned_ns(1400:1801,1:5,useIdx),1)),[],1);
-tInput_ns_G_susta = reshape(squeeze(mean(aligned_ns(1400:1801,6:10,useIdx),1)),[],1);
-tInput_ns_I_susta = reshape(squeeze(mean(aligned_ns(1400:1801,11:15,useIdx),1)),[],1);
-
-[h_S_trans,p_S_trans] = ttest2(tInput_ps_S_trans,tInput_ns_S_trans);
-[h_G_trans,p_G_trans] = ttest2(tInput_ps_G_trans,tInput_ns_G_trans);
-[h_I_trans,p_I_trans] = ttest2(tInput_ps_I_trans,tInput_ns_I_trans);
-[h_S_susta,p_S_susta] = ttest2(tInput_ps_S_susta,tInput_ns_S_susta);
-[h_G_susta,p_G_susta] = ttest2(tInput_ps_G_susta,tInput_ns_G_susta);
-[h_I_susta,p_I_susta] = ttest2(tInput_ps_I_susta,tInput_ns_I_susta);
 
 
 %% Figure generation! 
@@ -123,7 +121,7 @@ tInput_ns_I_susta = reshape(squeeze(mean(aligned_ns(1400:1801,11:15,useIdx),1)),
 close all
 tm_full = -200:1600; % 1801 total timepoints
 lamCom = figure;
-set(gcf,"Position",[1000 503 560 734.6667])
+set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
 t = tiledlayout(3,1);
 nexttile
     plot(tm_full,ps_S_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
@@ -176,9 +174,9 @@ title(t,titleText,'Interpreter','none')
 
 %save fig
 cd(outDir)
-figName_lamCom = strcat('laminarCompartment_','_grandAvg_','.png');
+figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.png');
 saveas(lamCom,figName_lamCom)
-figName_lamCom = strcat('laminarCompartment_','_grandAvg_','.svg');
+figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.svg');
 saveas(lamCom,figName_lamCom)
 
 
