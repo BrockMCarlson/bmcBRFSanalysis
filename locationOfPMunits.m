@@ -10,8 +10,8 @@ outDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_2404
 % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
 cd(dataDir)
-% officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+% officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 
 %% load DATAOUT
@@ -36,9 +36,15 @@ for i = 1:32 % penetrations
         end
         [h_trans(j,1),p_trans(j,1)] = ttest2(trans_ps,trans_ns);
         [h_susta(j,1),p_susta(j,1)] = ttest2(susta_ps,susta_ns);
+        dOut_trans = meanEffectSize(trans_ps,trans_ns,Effect="cohen");
+        d_trans(j,1) = dOut_trans.Effect;
+        dOut_susta = meanEffectSize(susta_ps,susta_ns,Effect="cohen");
+        d_susta(j,1) = dOut_susta.Effect;
     end
     tuned_trans(:,i) = h_trans;
     tuned_susta(:,i) = h_susta;
+    effect_trans(:,i) = d_trans;
+    effect_susta(:,i) = d_susta;
 end
 figure
 spy(tuned_trans)
@@ -49,9 +55,11 @@ spy(tuned_susta)
 title('significant different in sustained')
 
 %% Laminar align data
-aligned_100_ps = nan(1801,100,size(officLamAssign,1));
-aligned_100_ns = nan(1801,100,size(officLamAssign,1));
-for i = 1:size(officLamAssign,1)
+aligned_100_trans_h = zeros(100,size(officLamAssign,1));
+aligned_100_susta_h = zeros(100,size(officLamAssign,1));
+aligned_100_trans_d = nan(100,size(officLamAssign,1));
+aligned_100_susta_d = nan(100,size(officLamAssign,1));
+for i = 1:size(officLamAssign,1)-1
 
     % Calculate V1 ch boundaries
     granBtm = officLamAssign.Probe11stFold4c(i); % channel corresponding to the bottom of layer 4c
@@ -60,16 +68,64 @@ for i = 1:size(officLamAssign,1)
     v1Btm_new = 50+(32-granBtm);
     v1Ch_new = v1Top_new:v1Btm_new;
     
-    aligned_100_ps(:,v1Ch_new,i) = DATAOUT_ps(:,1:32,i);
-    aligned_100_ns(:,v1Ch_new,i) = DATAOUT_ns(:,1:32,i);
+    aligned_100_trans_h(v1Ch_new,i) = tuned_trans(1:32,i);
+    aligned_100_susta_h(v1Ch_new,i) = tuned_susta(1:32,i); 
+    aligned_100_trans_d(v1Ch_new,i) = effect_trans(1:32,i);
+    aligned_100_susta_d(v1Ch_new,i) = effect_susta(1:32,i);
 end
-% Now we cut down to just 15 channels
-aligned_ps = aligned_100_ps(:,41:55,:);
-aligned_ns = aligned_100_ns(:,41:55,:);
+figure
+subplot(1,2,1)
+spy(aligned_100_trans_h)
+hline(35)
+hline(45)
+hline(50)
+hline(60)
+xlabel('penetration')
+ylabel('electrode depth')
+ylim([34 61])
+title('significnt difference in transient')
 
+subplot(1,2,2)
+mes_trans = mean(aligned_100_trans_d,2,"omitmissing");
+plot(mes_trans)
+xlim([34 61])
+ylim([-.1 1])
+view([90 90])
+vline(35)
+vline(45)
+vline(50)
+vline(60)
+xlabel('electrode depth')
+ylabel('effect size')
+title('effect size by depth in transient window')
 
+figure 
+subplot(1,2,1)
+spy(aligned_100_susta_h)
+hline(35)
+hline(45)
+hline(50)
+hline(60)
+xlabel('penetration')
+ylabel('electrode depth')
+ylim([34 61])
+title('significant different in sustained')
 
-%% grand averages oand SEM
+subplot(1,2,2)
+mes_susta = mean(aligned_100_susta_d,2,"omitmissing");
+plot(mes_susta)
+xlim([34 61])
+ylim([-.1 1])
+view([90 90])
+vline(35)
+vline(45)
+vline(50)
+vline(60)
+xlabel('electrode depth')
+ylabel('effect size')
+title('effect size by depth in sustained window')
+
+%% grand averages of tuned units
 ps_grandAvg = mean(aligned_ps,3,"omitmissing");
 ns_grandAvg = mean(aligned_ns,3,"omitmissing");
 

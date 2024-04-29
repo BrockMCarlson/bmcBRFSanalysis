@@ -9,20 +9,35 @@ datetime
 clear
 % Directories
 
-% codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
-codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
+% % % % codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
+% % % codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
+% % % cd(codeDir)
+% % % % outDir = 'S:\formattedDataOutputs';
+% % % outDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_240404';
+% % % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
+% % % dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+% % % cd(dataDir)
+% % % % officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+% % % officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+
+
+% Directories
+
+codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
 cd(codeDir)
-% outDir = 'S:\formattedDataOutputs';
-outDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_240404';
-% dataDir = 'S:\bmcBRFS_sortedData_Nov23';
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+outDir = 'S:\formattedDataOutputs';
+dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
-% officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+
+%% For loop
+dataDir = 'S:\bmcBRFS_sortedData_Nov23';
+cd(dataDir)
+
 
 
 %% load DATAOUT
-cd(dataDir)
+cd('C:\Users\Brock Carlson\Box\Manuscripts\Maier')
 load("DATAOUT.mat")
 
 %% Laminar align data
