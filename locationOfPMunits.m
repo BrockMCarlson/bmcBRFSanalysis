@@ -1,5 +1,6 @@
 %% Setup
 clear
+close all
 % Directories
 
 % codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
@@ -10,8 +11,8 @@ outDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_2404
 % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
 cd(dataDir)
-officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-% officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+% officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 
 %% load DATAOUT
@@ -34,15 +35,15 @@ for i = 1:32 % penetrations
             susta_ps(k) = mean(DATAOUT_ps{i}(1400:1801,j,k));
             susta_ns(k) = mean(DATAOUT_ns{i}(1400:1801,j,k));
         end
-        [h_trans(j,1),p_trans(j,1)] = ttest2(trans_ps,trans_ns);
-        [h_susta(j,1),p_susta(j,1)] = ttest2(susta_ps,susta_ns);
+        [h_trans(j,1),p_trans(j,1)] = ttest2(trans_ns,trans_ps,"Tail","left");
+        [h_susta(j,1),p_susta(j,1)] = ttest2(susta_ns,susta_ps,"Tail","left");
         dOut_trans = meanEffectSize(trans_ps,trans_ns,Effect="cohen");
         d_trans(j,1) = dOut_trans.Effect;
         dOut_susta = meanEffectSize(susta_ps,susta_ns,Effect="cohen");
         d_susta(j,1) = dOut_susta.Effect;
     end
     tuned_trans(:,i) = h_trans;
-    tuned_susta(:,i) = h_susta;
+    tuned_susta(:,i) = h_susta; % output is in 32ch x 31 penetrations
     effect_trans(:,i) = d_trans;
     effect_susta(:,i) = d_susta;
 end
@@ -126,13 +127,43 @@ ylabel('effect size')
 title('effect size by depth in sustained window')
 
 %% grand averages of tuned units
-ps_grandAvg = mean(aligned_ps,3,"omitmissing");
-ns_grandAvg = mean(aligned_ns,3,"omitmissing");
+% Laminar align continuous data
+
+data_ps = nan(32,1801,31);
+data_ns = nan(32,1801,31);
+aligned_100_data_ps = nan(100,1801,31);
+aligned_100_data_ns = nan(100,1801,31);
+for i = 1:size(officLamAssign,1)-1 % penetrations
+    if i == 12 || i == 13 || i == 32
+        continue
+    end
+    for j = 1:32 % individual channel on each penetration
+        if tuned_susta(j,i) == 1  % tuned_susta is in 32ch x 31 penetrations
+            data_ps(j,:,i) = mean(DATAOUT_ps{i}(:,j,:),3,"omitmissing");
+            data_ns(j,:,i) = mean(DATAOUT_ns{i}(:,j,:),3,"omitmissing");
+        end
+    end
+
+    % Calculate V1 ch boundaries
+    granBtm = officLamAssign.Probe11stFold4c(i); % channel corresponding to the bottom of layer 4c
+
+    v1Top_new = 50-granBtm+1;
+    v1Btm_new = 50+(32-granBtm);
+    v1Ch_new = v1Top_new:v1Btm_new;
+    
+    aligned_100_data_ps(v1Ch_new,:,i) = data_ps(:,:,i);
+    aligned_100_data_ns(v1Ch_new,:,i) = data_ns(:,:,i); 
+
+end
+
+
+ps_grandAvg = mean(aligned_100_data_ps,3,"omitmissing")';
+ns_grandAvg = mean(aligned_100_data_ns,3,"omitmissing")';
 
 % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
-penetrationNumber = sum(~isnan(aligned_ps(1,1,:)));
-ps_SEM = std(aligned_ps,0,3,"omitmissing")/sqrt(penetrationNumber); 
-ns_SEM = std(aligned_ns,0,3,"omitmissing")/sqrt(penetrationNumber); 
+penetrationNumber = 28;
+ps_SEM = std(aligned_100_data_ps,0,3,"omitmissing")'/sqrt(penetrationNumber); 
+ns_SEM = std(aligned_100_data_ns,0,3,"omitmissing")'/sqrt(penetrationNumber); 
 
 % Smooth Data
 ps_smooth_mean = smoothdata(ps_grandAvg,1,"gaussian",20);
@@ -147,34 +178,34 @@ ns_mps = ns_smooth_mean + ns_smooth_sem; %pref stim -- mean plus sem 1
 ns_mms = ns_smooth_mean - ns_smooth_sem; %pref stim -- mean minus sem 1 
 
 %% Now convert grand average array into laminar compartments
-ps_S_mean = mean(ps_smooth_mean(:,1:5),2); 
-ps_G_mean = mean(ps_smooth_mean(:,6:10),2); 
-ps_I_mean = mean(ps_smooth_mean(:,11:15),2); 
-ns_S_mean = mean(ns_smooth_mean(:,1:5),2); 
-ns_G_mean = mean(ns_smooth_mean(:,6:10),2); 
-ns_I_mean = mean(ns_smooth_mean(:,11:15),2); 
+
+ps_S_mean = mean(ps_smooth_mean(:,41:45),2,"omitmissing"); 
+ps_G_mean = mean(ps_smooth_mean(:,46:50),2,"omitmissing");
+ps_I_mean = mean(ps_smooth_mean(:,51:55),2,"omitmissing");
+ns_S_mean = mean(ns_smooth_mean(:,41:45),2,"omitmissing");
+ns_G_mean = mean(ns_smooth_mean(:,46:50),2,"omitmissing"); 
+ns_I_mean = mean(ns_smooth_mean(:,51:55),2,"omitmissing");
 
 % Mean plus sem
-ps_S_mps = mean(ps_mps(:,1:5),2); 
-ps_G_mps = mean(ps_mps(:,6:10),2); 
-ps_I_mps = mean(ps_mps(:,11:15),2); 
-ns_S_mps = mean(ns_mps(:,1:5),2); 
-ns_G_mps = mean(ns_mps(:,6:10),2); 
-ns_I_mps = mean(ns_mps(:,11:15),2); 
+ps_S_mps = mean(ps_mps(:,41:45),2,"omitmissing");
+ps_G_mps = mean(ps_mps(:,46:50),2,"omitmissing");
+ps_I_mps = mean(ps_mps(:,51:55),2,"omitmissing");
+ns_S_mps = mean(ns_mps(:,41:45),2,"omitmissing");
+ns_G_mps = mean(ns_mps(:,46:50),2,"omitmissing");
+ns_I_mps = mean(ns_mps(:,51:55),2,"omitmissing");
 
 % Mean minus sem
-ps_S_mms = mean(ps_mms(:,1:5),2); 
-ps_G_mms = mean(ps_mms(:,6:10),2); 
-ps_I_mms = mean(ps_mms(:,11:15),2); 
-ns_S_mms = mean(ns_mms(:,1:5),2); 
-ns_G_mms = mean(ns_mms(:,6:10),2); 
-ns_I_mms = mean(ns_mms(:,11:15),2); 
+ps_S_mms = mean(ps_mms(:,41:45),2,"omitmissing");
+ps_G_mms = mean(ps_mms(:,46:50),2,"omitmissing");
+ps_I_mms = mean(ps_mms(:,51:55),2,"omitmissing");
+ns_S_mms = mean(ns_mms(:,41:45),2,"omitmissing");
+ns_G_mms = mean(ns_mms(:,46:50),2,"omitmissing");
+ns_I_mms = mean(ns_mms(:,51:55),2,"omitmissing");
 
 
 
 %% Figure generation! 
 % tiledLayout plot
-close all
 tm_full = -200:1600; % 1801 total timepoints
 lamCom = figure;
 set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
@@ -186,14 +217,14 @@ nexttile
     plot(tm_full,ns_S_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
     plot(tm_full,ns_S_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     plot(tm_full,ns_S_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    ylim([0 40])
+    % ylim([0 40])
     vline(0)
     vline(800)
     xregion(850,1000)
     xregion(1200,1600)
     ylabel({'Supragranular','% Change'})
-    title({strcat('Significant transient modulation?_',string(h_S_trans),'_pVal =',string(p_S_trans)),...
-       strcat('Significant sustained modulation?_',string(h_S_susta),'_pVal =',string(p_S_susta))},'Interpreter','none')
+    % title({strcat('Significant transient modulation?_',string(h_S_trans),'_pVal =',string(p_S_trans)),...
+    %    strcat('Significant sustained modulation?_',string(h_S_susta),'_pVal =',string(p_S_susta))},'Interpreter','none')
 nexttile
     plot(tm_full,ps_G_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
     plot(tm_full,ps_G_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
@@ -201,14 +232,14 @@ nexttile
     plot(tm_full,ns_G_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
     plot(tm_full,ns_G_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     plot(tm_full,ns_G_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    ylim([0 40])
+    % ylim([0 40])
     vline(0)
     vline(800)
     xregion(850,1000)
     xregion(1200,1600)
     ylabel({'Granular','% Change'})
-    title({strcat('Significant transient modulation?_',string(h_G_trans),'_pVal =',string(p_G_trans)),...
-       strcat('Significant sustained modulation?_',string(h_G_susta),'_pVal =',string(p_G_susta))},'Interpreter','none')
+    % title({strcat('Significant transient modulation?_',string(h_G_trans),'_pVal =',string(p_G_trans)),...
+    %    strcat('Significant sustained modulation?_',string(h_G_susta),'_pVal =',string(p_G_susta))},'Interpreter','none')
 nexttile
     plot(tm_full,ps_I_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
     plot(tm_full,ps_I_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
@@ -216,16 +247,16 @@ nexttile
     plot(tm_full,ns_I_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
     plot(tm_full,ns_I_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     plot(tm_full,ns_I_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':');
-    ylim([0 40])
+    % ylim([0 40])
     vline(0)
     vline(800)
     xregion(850,1000)
     xregion(1200,1600)
     ylabel({'Infragranular','% Change'})
-    title({strcat('Significant transient modulation?_',string(h_I_trans),'_pVal =',string(p_I_trans)),...
-       strcat('Significant sustained modulation?_',string(h_I_susta),'_pVal =',string(p_I_susta))},'Interpreter','none')
+    % title({strcat('Significant transient modulation?_',string(h_I_trans),'_pVal =',string(p_I_trans)),...
+    %    strcat('Significant sustained modulation?_',string(h_I_susta),'_pVal =',string(p_I_susta))},'Interpreter','none')
 
-titleText = {'Grand average of 140 multi-units (28 penetrations) per laminar compartment'};
+titleText = {'Grand average of units that show tuning in the sustained window'};
 title(t,titleText,'Interpreter','none')
 
 %save fig
