@@ -13,28 +13,34 @@ cd(codeDir)
 path3 = 'Documents\MATLAB\formattedDataOutputs';
 plotDir = strcat(path1,filesep,path3);
 %sortedDataDir -- need to run new sorted data on home pc
-filteredDataDir = 'S:\bmcBRFS_filteredData';
+dataDir = 'D:\';
+
+officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+
 
 %% Choose inidividual file to explore
-cd(filteredDataDir)
-load('filteredData_211008_B_bmcBRFS001.mat')
+cd(dataDir)
+load('DATAOUT_trials.mat')
+penetrationNum = 8;
+granBtm = table2array(officLamAssign(8,"Probe11stFold4c"));
+
 
 % Channels are chosen from laminarBoundaryCalculations.xlsx from SfN work
-upperCh = 8:19;
-middleCh = 20:25;
-lowerCh = 26:32;
+upperCh = granBtm-11:granBtm-6;
+middleCh = granBtm-5:granBtm;
+lowerCh = granBtm+1:granBtm+6;
 
-chA = 10;
-chB = 20;
-chC = 30;
+chA = granBtm-8;
+chB = granBtm;
+chC = granBtm + 5;
 
-dataType = {'bb','alphaBeta','gamma','LFP_bb','LFP_alphaBeta','LFP_gamma','MUAe'};
+dataType = {'CSD_bb','CSD_beta1','CSD_gamma1','LFP_bb','LFP_beta1','LFP_gamma1','MUAe'};
 for dt = 1:7
     figure
     if dt == 1 || dt == 2 || dt == 3
-        smallChSelection(1,:) = input.CSD.(dataType{dt})(:,chA)';
-        smallChSelection(2,:) = input.CSD.(dataType{dt})(:,chB)';
-        smallChSelection(3,:) = input.CSD.(dataType{dt})(:,chC)';
+        smallChSelection(1,:) = IDX.(dataType{dt})(:,chA)';
+        smallChSelection(2,:) = input.(dataType{dt})(:,chB)';
+        smallChSelection(3,:) = input.(dataType{dt})(:,chC)';
     elseif dt >= 4 
         smallChSelection(1,:) = input.(dataType{dt})(:,chA)';
         smallChSelection(2,:) = input.(dataType{dt})(:,chB)';
