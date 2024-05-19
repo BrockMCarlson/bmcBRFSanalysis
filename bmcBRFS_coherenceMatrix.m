@@ -6,10 +6,11 @@ close all
 
 
 %% For loop
-dataDir = 'S:\bmcBRFS_sortedData_Nov23';
+dataDir = 'D:\sortedData_240229';
+% dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
 allDataFiles = dir('**/*sortedData*.mat');
-officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "Sheet1", [2, Inf]);
+officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 averageCoherenceMatrix = nan(15,15,2,length(allDataFiles));
 
@@ -18,9 +19,10 @@ for file = 1:size(officLamAssign,1)
     
     % load data
     cd(dataDir)
-    name = char(officLamAssign.SessionProbe(file,1));
-    fileToLoad = strcat('sortedData_',name(2:end-1),'.mat');
+    probeName = char(officLamAssign.SessionProbe(file,1));
+    fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
     load(fileToLoad)
+
     sessionLabel = allDataFiles(file).name(12:end-4);
 
     granBtm = officLamAssign.Probe11stFold4c(file); % channel corresponding to the bottom of layer 4c

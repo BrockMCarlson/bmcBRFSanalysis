@@ -2,7 +2,7 @@
 % ex: load('sortedData_221214_J_bmcBRFS001.mat')
 close all
 
-% Parameters for mscohere
+%% Parameters for mscohere
 fs = 1000;  % Sampling frequency in Hz
 windowSize = 256;  % Window size for computing the coherence
 overlap = windowSize/2;  % Overlap between windows
@@ -49,7 +49,7 @@ averageCoherenceMatrix = median(coherenceMatrix1,3);
 
 % Visualize the coherence matrix
 f = figure;
-set(f,"Position",[-1882 -65 1860 894])
+% set(f,"Position",[-1882 -65 1860 894])
 ax(1) = subplot(1,4,1);
 imagesc(averageCoherenceMatrix);
 colormap(ax(1),'jet');
