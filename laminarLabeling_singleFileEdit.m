@@ -11,7 +11,7 @@ codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis';
 cd(codeDir)
 plotDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\laminarLabeling';
 
-dataDir = 'S:\bmcBRFS_sortedData_Nov23';
+dataDir = 'D:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
 allDataFiles = dir('**/*sortedData*.mat');
 

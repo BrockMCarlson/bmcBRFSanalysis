@@ -22,7 +22,8 @@ for file = 1:size(officLamAssign,1)
     probeName = char(officLamAssign.SessionProbe(file,1));
     fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
     load(fileToLoad)
-    sessionLabel = allDataFiles(file).name(12:end-4);
+    sessionLabelCell = table2cell(officLamAssign(file,1));
+    sessionLabel = sessionLabelCell{1};
     chStr = officLamAssign.ChtoUse(file,1);
     if strcmp(chStr,"1:32")
         ch = 1:32;
