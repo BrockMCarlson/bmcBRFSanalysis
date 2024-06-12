@@ -1,33 +1,33 @@
 %% bmcBRFS_coherenceMatrix
 % Are there observable differences between trial-types with LFP coherence?
 % initialize variables
-clear
-close all
+% % clear
+% % close all
 
 
 %% For loop
-dataDir = 'D:\sortedData_240229';
-% dataDir = 'S:\bmcBRFS_sortedData_Nov23';
+% % dataDir = 'D:\sortedData_240229';
+dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
-allDataFiles = dir('**/*sortedData*.mat');
-officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+% officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
-averageCoherenceMatrix = nan(15,15,2,length(allDataFiles));
+averageCoherenceMatrix = nan(15,15,2,size(officLamAssign,1));
 
 
 for file = 1:size(officLamAssign,1)
-    
+    if isnan(officLamAssign.stFold4c(file))
+        continue
+    end
     % load data
     cd(dataDir)
-    probeName = char(officLamAssign.SessionProbe(file,1));
+    probeName = char(officLamAssign.Session_probe_(file,1));
     fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
     load(fileToLoad)
 
-    sessionLabel = allDataFiles(file).name(12:end-4);
 
-    granBtm = officLamAssign.Probe11stFold4c(file); % channel corresponding to the bottom of layer 4c
+    granBtm = officLamAssign.stFold4c(file); % channel corresponding to the bottom of layer 4c
     if isnan(granBtm)
-        warning(strcat('no sink found on _',sessionLabel))
+        warning(strcat('no sink found on _',fileToLoad))
         continue
     end
     
@@ -39,7 +39,7 @@ for file = 1:size(officLamAssign,1)
     columnNames = {'sg_1','sg_2','sg_3','sg_4','sg_5','g_1','g_2','g_3','g_4','g_5','ig_1','ig_2','ig_3','ig_4','ig_5'};
     if any(v1Ch > 32) || any(v1Ch < 1)
         warning('skipping session without full column for now')
-        disp(sessionLabel)
+        disp(fileToLoad)
         continue
         % % columnNames = columnNames((v1Ch >= 1) & (v1Ch<=32));
         % % v1Ch        = v1Ch((v1Ch >= 1) & (v1Ch<=32));
@@ -156,7 +156,7 @@ for file = 1:size(officLamAssign,1)
     % Skip this file if no tuned units are found
     % % DATAOUT(file).numberOFUnits = sum(tuned);
     % % if sum(tuned) == 0
-    % %     warning(strcat('No tuned channels on',sessionLabel))
+    % %     warning(strcat('No tuned channels on',fileToLoad))
     % %     continue
     % % end
     % % 
@@ -248,6 +248,7 @@ for file = 1:size(officLamAssign,1)
         averageCoherenceMatrix(:,:,count,file) = median(coherenceMatrix,3);
         
     end
+    dat_LFP{file} = IDX.LFP_bb;
     disp(strcat('Done with file number: ',string(file)))
 end
 
