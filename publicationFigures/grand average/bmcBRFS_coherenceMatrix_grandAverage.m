@@ -299,6 +299,47 @@ ylabel('Channel');
 title('Diff of Pref vs Null');
 
 
+%% Difference plot
+coherenceMatrix1 = squeeze(averageCoherenceMatrix(:,:,1,:));
+coherenceMatrix2 = squeeze(averageCoherenceMatrix(:,:,2,:));
+for ch1 = 1:32
+    for ch2 = 1:ch1
+        [h(ch1,ch2),p(ch1,ch2),ci(ch1,ch2,:),stats(ch1,ch2)]...
+            = ttest2(...
+            coherenceMatrix1(ch1,ch2,:),...
+            coherenceMatrix2(ch1,ch2,:));
+        tStat(ch1,ch2) = stats(ch1,ch2).tstat;
+    end
+end
+
+% Visualize the coherence matrix
+ax(3) = subplot(1,4,3);
+imagesc(tStat);
+colormap(ax(3),'bone');
+e = colorbar;
+e.Label.String = "tStat";
+e.Label.Rotation = 270;
+xlabel('Channel');
+ylabel('Channel');
+title('Dioptic vs Dichoptic tScoreMap');
+
+% Visualize the coherence matrix
+ax(4) = subplot(1,4,4);
+imagesc(h);
+colormap(ax(4),'bone');
+e = colorbar;
+e.Label.String = "h = 1 or 0";
+e.Label.Rotation = 270;
+xlabel('Channel');
+ylabel('Channel');
+title('Dioptic vs Dichoptic Hypothesis test');
+sgtitle(probeName(1:end-1),"Interpreter","none")
+cd(plotDir)
+saveName = strcat('coherence_',probeName(1:end-1),'.png');
+saveas(f,saveName) 
+close all
+
+
 
 
 
