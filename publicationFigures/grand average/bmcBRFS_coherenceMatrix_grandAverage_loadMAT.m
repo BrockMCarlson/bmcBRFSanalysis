@@ -9,40 +9,35 @@ close all
 dataDir = 'D:\sortedData_240229';
 % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
+load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 averageCoherenceMatrix = nan(15,15,2,size(officLamAssign,1));
 
 
-for file = 1:size(officLamAssign,1)
-    % load data
-    cd(dataDir)
-    probeName = char(officLamAssign.Session_probe_(file,1));
+for penetration = 1:size(LFP_trials,2)
+    
+    probeName = char(officLamAssign.Session_probe_(penetration,1));
     fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
-    load(fileToLoad)
-    LFP_trials{file} = {IDX.LFP_bb}.';
-    MUA_trials{file} = {IDX.MUAe}.';
 
-    if isnan(officLamAssign.stFold4c(file))
+    granBtm = officLamAssign.stFold4c(penetration); % channel corresponding to the bottom of layer 4c
+    if isnan(granBtm)
         warning(strcat('no sink found on _',fileToLoad))
         continue
     end
-
-    granBtm = officLamAssign.stFold4c(file); % channel corresponding to the bottom of layer 4c
-    
     % Calculate V1 ch boundaries
     v1Top = granBtm - 9;
     v1Btm = granBtm + 5;
     v1Ch = v1Top:v1Btm;
     % limit ch to cortex only
     columnNames = {'sg_1','sg_2','sg_3','sg_4','sg_5','g_1','g_2','g_3','g_4','g_5','ig_1','ig_2','ig_3','ig_4','ig_5'};
-    if strcmp(string(officLamAssign.ChToUse(file)),"1:32")
+    if strcmp(string(officLamAssign.ChToUse(penetration)),"1:32")
         if any(v1Ch > 32) || any(v1Ch < 1)
             warning('skipping session without full column for now')
             disp(fileToLoad)
             continue
         end
-    elseif strcmp(string(officLamAssign.ChToUse(file)),"33:64")
+    elseif strcmp(string(officLamAssign.ChToUse(penetration)),"33:64")
         if any(v1Ch > 64) || any(v1Ch < 33)
             warning('skipping session without full column for now')
             disp(fileToLoad)
@@ -63,18 +58,18 @@ for file = 1:size(officLamAssign,1)
     % convert from cell to double and combine monocular conditions
     count = 0;
     for cond = monoc_1
-        for trl = 1:length(IDX(cond).correctTrialIndex)
+        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
             count = count + 1;
-            array_ofMonoc1(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); % 1000 x 32
+            array_ofMonoc1(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); % 1000 x 32
         end
     end
     clear cond count trl 
     
     count = 0;
     for cond = monoc_2
-        for trl = 1:length(IDX(cond).correctTrialIndex)
+        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
             count = count + 1;
-            array_ofMonoc2(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); 
+            array_ofMonoc2(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -82,9 +77,9 @@ for file = 1:size(officLamAssign,1)
     
     count = 0;
     for cond = monoc_3
-        for trl = 1:length(IDX(cond).correctTrialIndex)
+        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
             count = count + 1;
-            array_ofMonoc3(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); 
+            array_ofMonoc3(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -92,9 +87,9 @@ for file = 1:size(officLamAssign,1)
     
     count = 0;
     for cond = monoc_4
-        for trl = 1:length(IDX(cond).correctTrialIndex)
+        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
             count = count + 1;
-            array_ofMonoc4(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); 
+            array_ofMonoc4(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -158,6 +153,25 @@ for file = 1:size(officLamAssign,1)
         nullMonoc(i,1) = nullRespIdx;
     end
     
+    % Skip this file if no tuned units are found
+    % % DATAOUT(file).numberOFUnits = sum(tuned);
+    % % if sum(tuned) == 0
+    % %     warning(strcat('No tuned channels on',fileToLoad))
+    % %     continue
+    % % end
+    % % 
+    % % % Creat channel array to use in subsequent steps - only plot tuned units.
+    % % chTuned = ch(logical(tuned));
+    % % 
+    % % 
+
+
+    % Create array of preference-based data
+    % concatenate two timecourses into array
+    tm_full = -200:1600; % 1801 total timepoints
+    tm1 = 1:801;
+    tm2 = 1:1001;
+    tm2_concat = 801:1801;
 
     for i = 1:length(v1Ch)
         % % monoc_1 = [5, 11, 13, 19]; % PO RightEye
@@ -182,23 +196,21 @@ for file = 1:size(officLamAssign,1)
         
     overallPref = mode(prefCondOnFlash);
     overallNull = mode(nullCondOnFlash);
-    prefOutput{file} = [overallPref overallNull];
     %% Coherence matrix across channels
     % Choose the condition
     close all
     count = 0;
-    % for conditionNumber = [overallPref overallNull]
-    for conditionNumber = [1 3] % Dioptic vs dichoptic
+    for conditionNumber = [overallPref overallNull]
+    % % for conditionNumber = [1 3] % Dioptic vs dichoptic
         
         % Get the number of trials for the chosen condition
-        numTrials = size(IDX(conditionNumber).LFP_bb, 1);
+        numTrials = size(LFP_trials{1,penetration}{conditionNumber,1},1);
         
         % Parameters for mscohere
         fs = 1000;  % Sampling frequency in Hz
         windowSize = 256;  % Window size for computing the coherence
         overlap = windowSize/2;  % Overlap between windows
         tm_coher = 490:1001; % Time window of data. Last 512ms of trial. 
-        tm = 1:1001; % Time window of data. Omitting any data after 1001ms to avoid offset transient
         
         % Initialize coherence matrix
         coherenceMatrix = nan(15,15, numTrials);
@@ -207,8 +219,9 @@ for file = 1:size(officLamAssign,1)
             for channel1 = v1Ch
                 for channel2 = v1Ch(1):channel1
                     % Extract the LFP_bb data for the chosen channels and trial
-                    lfpGammaData1 = IDX(conditionNumber).LFP_bb{trialNumber, 2}(tm, channel1);
-                    lfpGammaData2 = IDX(conditionNumber).LFP_bb{trialNumber, 2}(tm, channel2);
+                    % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
+                    lfpGammaData1 = LFP_trials{1,penetration}{conditionNumber,1}{trialNumber,2}(:,channel1);
+                    lfpGammaData2 = LFP_trials{1,penetration}{conditionNumber,1}{trialNumber,2}(:,channel2);
                     %baseline subtract
                     bl1 = median(lfpGammaData1(1:200));
                     lfp_blsub_1 = lfpGammaData1 - bl1;
@@ -219,29 +232,28 @@ for file = 1:size(officLamAssign,1)
                     [coherence, freq] = mscohere(lfp_blsub_1(tm_coher), lfp_blsub_2(tm_coher), windowSize, overlap, [], fs);
         
                     % Store coherence in the matrix
-                    coherenceMatrix(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:8));  % You can use median or any other aggregation method
+                    coherenceMatrix(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:15));  % You can use median or any other aggregation method
                 end
             end
         end
         
         % Average across trials and save output
         count = count + 1; % for pref vs null
-        averageCoherenceMatrix(:,:,count,file) = median(coherenceMatrix,3);
+        averageCoherenceMatrix(:,:,count,penetration) = median(coherenceMatrix,3);
         
     end
-    disp(strcat('Done with file number: ',string(file)))
+    % % LFP_trials{file} = {IDX.LFP_bb}.';
+    disp(strcat('Done with file number: ',string(penetration)))
 end
-%% save LFP_trials output
-cd(dataDir)
-save('LFP_trials.mat','LFP_trials','-v7.3')
-save('MUA_trials.mat','MUA_trials','-v7.3')
-save('prefOutput.mat','prefOutput','-v7.3')
+% % % %% save LFP_trials output
+% % % cd(dataDir)
+% % % save('LFP_trials.mat','LFP_trials','-v7.3')
 
 %% plot
 grandAverageCoherence = median(averageCoherenceMatrix,4,"omitmissing");
 
 disp('analyzing freq')
-disp(freq(2:8))
+disp(freq(2:15))
 
 
 % Visualize the coherence matrix
@@ -267,7 +279,7 @@ title('Non-preferred stimulus BRFS flash Grand Average');
 % abs(cond9-cond10)
 % abs(cond12-cond11)
 differenceMatrix = nan(15,15);
-differenceMatrix(:,:) = grandAverageCoherence(:,:,1) - grandAverageCoherence(:,:,2);
+differenceMatrix(:,:) = abs(grandAverageCoherence(:,:,1) - grandAverageCoherence(:,:,2));
 
 % Visualize the diff  matrix
 figure;
@@ -283,21 +295,27 @@ title('Diff of Pref vs Null');
 %% Difference plot
 coherenceMatrix1 = squeeze(averageCoherenceMatrix(:,:,1,:));
 coherenceMatrix2 = squeeze(averageCoherenceMatrix(:,:,2,:));
-for ch1 = 1:15
-    for ch2 = 1:ch1
-        [h(ch1,ch2),p(ch1,ch2),ci(ch1,ch2,:),stats(ch1,ch2)]...
-            = ttest2(...
-            coherenceMatrix1(ch1,ch2,:),...
-            coherenceMatrix2(ch1,ch2,:));
-        tStat(ch1,ch2) = stats(ch1,ch2).tstat;
-    end
-end
+
+% % %lets test significance of just ch12 vs ch4 = the largest diff
+% % test1 = rmmissing(squeeze(averageCoherenceMatrix(12,4,1,:)));
+% % test2 = rmmissing(squeeze(averageCoherenceMatrix(12,4,2,:)));
+% % [h,p,ci,stats] = ttest2(test1,test2);
+% % 
+% % for ch1 = 1:15
+% %     for ch2 = 1:ch1
+% %         [h(ch1,ch2),p(ch1,ch2),ci(ch1,ch2,:),stats(ch1,ch2)]...
+% %             = ttest2(...
+% %             coherenceMatrix1(ch1,ch2,:),...
+% %             coherenceMatrix2(ch1,ch2,:));
+% %         tStat(ch1,ch2) = stats(ch1,ch2).tstat;
+% %     end
+% % end
 
 % Visualize the coherence matrix
 figure
-ax(1) = subplot(1,2,1);
+ax(3) = subplot(1,4,3);
 imagesc(tStat);
-colormap(ax(1),'bone');
+colormap(ax(3),'bone');
 e = colorbar;
 e.Label.String = "tStat";
 e.Label.Rotation = 270;
@@ -306,16 +324,16 @@ ylabel('Channel');
 title('Dioptic vs Dichoptic tScoreMap');
 
 % Visualize the coherence matrix
-ax(2) = subplot(1,2,2);
+subplot(1,4,4);
 imagesc(h);
-colormap(ax(2),'bone');
+colormap('bone');
 e = colorbar;
 e.Label.String = "h = 1 or 0";
 e.Label.Rotation = 270;
 xlabel('Channel');
 ylabel('Channel');
 title('Dioptic vs Dichoptic Hypothesis test');
-% sgtitle(probeName(1:end-1),"Interpreter","none")
+sgtitle(probeName(1:end-1),"Interpreter","none")
 % % cd(plotDir)
 % % saveName = strcat('coherence_',probeName(1:end-1),'.png');
 % % saveas(f,saveName) 
