@@ -3,10 +3,12 @@
 % initialize variables
 clear
 close all
-
+codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
+cd(codeDir)
 
 %% For loop
 dataDir = 'D:\sortedData_240229';
+% dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
 % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);

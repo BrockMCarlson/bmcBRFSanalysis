@@ -11,11 +11,12 @@ dataDir = 'D:\sortedData_240229';
 % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
 % % tic
-% % load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
+load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
 % % toc
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
-averageCoherenceMatrix = nan(15,15,2,size(officLamAssign,1));
+averageCoherenceMatrix_diopDichop = nan(15,15,2,size(officLamAssign,1));
+averageCoherenceMatrix_BRFS = nan(15,15,2,size(officLamAssign,1));
 
 
 for penetration = 1:size(LFP_trials,2)
@@ -307,6 +308,7 @@ disp(freq(2:27))
 
 % Visualize the coherence matrix
 f = figure;
+set(f,"Position",[345.6667 256.3333 1698 981.3333])
 ax(1) = subplot(2,3,1);
 imagesc(grandAverageCoherence_diopDichop(:,:,1));
 colormap(ax(1),'jet');
@@ -351,11 +353,15 @@ for ch1 = 1:15
             = ttest2(...
             coherenceMatrix1(ch1,ch2,:),...
             coherenceMatrix2(ch1,ch2,:)); % ttest taken across penetrations
-        tStat(ch1,ch2) = stats(ch1,ch2).tstat;
+        tStat_1(ch1,ch2) = stats(ch1,ch2).tstat;
     end
 end
 ax(3) = subplot(2,3,3);
-imagesc(tStat);
+imagesc(tStat_1);
+hline(5.5)
+hline(10.5)
+vline(5.5)
+vline(10.5)
 colormap(ax(3),'bone');
 e = colorbar;
 e.Label.String = "tStat";
@@ -382,17 +388,17 @@ title('tScoreMap of difference');
 grandAverageCoherence_BRFS = median(averageCoherenceMatrix_BRFS,4,"omitmissing"); % average across penetration
 
 % Visualize the coherence matrix
-ax(1) = subplot(2,3,4);
+ax(4) = subplot(2,3,4);
 imagesc(grandAverageCoherence_BRFS(:,:,1));
-colormap(ax(1),'jet');
+colormap(ax(4),'jet');
 colorbar;
 xlabel('Channel');
 ylabel('Channel');
 title('Preferred Stimulus BRFS flash');
 
-ax(2) = subplot(2,3,5);
+ax(5) = subplot(2,3,5);
 imagesc(grandAverageCoherence_BRFS(:,:,2));
-colormap(ax(2),'jet');
+colormap(ax(5),'jet');
 colorbar;
 xlabel('Channel');
 ylabel('Channel');
@@ -426,12 +432,16 @@ for ch1 = 1:15
             = ttest2(...
             coherenceMatrix1(ch1,ch2,:),...
             coherenceMatrix2(ch1,ch2,:)); % ttest taken across penetrations
-        tStat(ch1,ch2) = stats(ch1,ch2).tstat;
+        tStat_2(ch1,ch2) = stats(ch1,ch2).tstat;
     end
 end
-ax(3) = subplot(2,3,6);
-imagesc(tStat);
-colormap(ax(3),'bone');
+ax(6) = subplot(2,3,6);
+imagesc(tStat_2);
+hline(5.5)
+hline(10.5)
+vline(5.5)
+vline(10.5)
+colormap(ax(6),'bone');
 e = colorbar;
 e.Label.String = "tStat";
 e.Label.Rotation = 270;
@@ -451,25 +461,32 @@ title('tScoreMap of difference');
 % % title('Dioptic vs Dichoptic Hypothesis test');
 
 
-
-
-
-
-
-
-
-
-
-
 sgtitle('Coherence Penetration Average')
 cd(plotDir)
 saveName = strcat('coherencePenetrationAvg.png');
 saveas(f,saveName) 
-close all
 
 
+%% Statistical test - ANOVA between compartment comparisons
+SxS = tStat_2(1:5,1:5); %half block
+GxS = tStat_2(6:10,1:5);
+IxS = tStat_2(11:15,1:5);
+GxG = tStat_2(6:10,6:10); % half block
+IxG = tStat_2(11:15,6:10);
+IxI = tStat_2(11:15,11:15); % half block
 
+% aov = anova(y) performs a one-way ANOVA and returns the anova object...
+% aov for the response data in the matrix y. Each column of y is treated...
+% as a different factor value.
+% construct y for ANOVA
+holder_cross(:,1) = reshape(GxS,[25,1]);
+holder_cross(:,2) = reshape(IxS,[25,1]);
+holder_cross(:,3) = reshape(IxG,[25,1]);
+aov_cross = anova1(holder_cross);
+disp(aov_cross)
 
-
-
-
+holder_same(:,1) = reshape(SxS,[25,1]);
+holder_same(:,2) = reshape(GxG,[25,1]);
+holder_same(:,3) = reshape(IxI,[25,1]);
+aov_same = anova1(holder_same);
+disp(aov_same)

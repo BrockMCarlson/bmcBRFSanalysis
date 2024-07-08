@@ -34,7 +34,7 @@ clear
 % (here is hoping that the results did not change)
 codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
 cd(codeDir)
-outDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_240706';
+outDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig4_MUA';
 dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
 cd(dataDir)
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
@@ -58,16 +58,32 @@ for i = 1:size(officLamAssign,1)
     if i==5 || i==7
         continue
     end
+    
 
     % Calculate V1 ch boundaries
     granBtm = officLamAssign.stFold4c(i); % channel corresponding to the bottom of layer 4c
 
-    v1Top_new = 50-granBtm+1;
-    v1Btm_new = 50+(32-granBtm);
+    % Calculate V1 ch boundaries
+    v1Top = granBtm - 9;
+    v1Btm = granBtm + 5;
+    v1Ch = v1Top:v1Btm;
+    % limit ch to cortex only
+    columnNames = {'sg_1','sg_2','sg_3','sg_4','sg_5','g_1','g_2','g_3','g_4','g_5','ig_1','ig_2','ig_3','ig_4','ig_5'};
+    if strcmp(string(officLamAssign.ChToUse(i)),"1:32")
+        probeTop = 1;
+        probeBtm = 32;
+    elseif strcmp(string(officLamAssign.ChToUse(i)),"33:64")
+        probeTop = 33;
+        probeBtm = 64;
+    end
+    sinkToTopOfProbe = granBtm-probeTop+1;
+    sinkToBtmOfProbe = probeBtm-granBtm;
+    v1Top_new = 50-sinkToTopOfProbe+1;
+    v1Btm_new = 50+sinkToBtmOfProbe;
     v1Ch_new = v1Top_new:v1Btm_new;
     
-    aligned_100_ps(:,v1Ch_new,i) = DATAOUT_ps(:,1:32,i);
-    aligned_100_ns(:,v1Ch_new,i) = DATAOUT_ns(:,1:32,i);
+    aligned_100_ps(:,v1Ch_new,i) = DATAOUT_ps(:,:,i);
+    aligned_100_ns(:,v1Ch_new,i) = DATAOUT_ns(:,:,i);
 end
 % Now we cut down to just 15 channels
 aligned_ps = aligned_100_ps(:,41:55,:);
@@ -200,7 +216,7 @@ nexttile
     title({strcat('Significant transient modulation?_',string(h_I_trans),'_pVal =',string(p_I_trans)),...
        strcat('Significant sustained modulation?_',string(h_I_susta),'_pVal =',string(p_I_susta))},'Interpreter','none')
 
-titleText = {'Grand average of 140 multi-units (28 penetrations) per laminar compartment'};
+titleText = {'Grand average of 150 multi-units (29 penetrations) per laminar compartment'};
 title(t,titleText,'Interpreter','none')
 
 %save fig
