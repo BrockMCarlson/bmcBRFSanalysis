@@ -249,5 +249,5 @@ load handel.mat
 sound(y,1.15*Fs);
 disp('Finished creating DATAOUT')
 cd(outDir)
-save('DATAOUT_LFP.mat','DATAOUT_ps','DATAOUT_ns','DATAOUT_numTuned', '-v7.3')
+save('DATAOUT_LFP_trials.mat','DATAOUT_ps','DATAOUT_ns','DATAOUT_numTuned', '-v7.3')
 datetime

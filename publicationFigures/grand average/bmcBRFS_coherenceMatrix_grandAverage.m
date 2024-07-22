@@ -3,7 +3,7 @@
 % initialize variables
 clear
 close all
-codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
+codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average');
 cd(codeDir)
 
 %% For loop

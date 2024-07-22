@@ -49,7 +49,7 @@ cd(dataDir)
 
 %% load DATAOUT
 cd('C:\Users\neuropixel\Box\Manuscripts\Maier')
-load("DATAOUT.mat")
+load("DATAOUT_trials.mat")
 
 %% Laminar align data
 aligned_100_ps = nan(1801,100,size(officLamAssign,1));
