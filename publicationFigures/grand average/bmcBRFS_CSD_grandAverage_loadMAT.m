@@ -1,8 +1,8 @@
 %% bmcBRFS_CSD_grandAverage_loadMAT
 % Are there observable differences between trial-types with LFP CSD?
 % initialize variables
-% % clear
-% % close all
+clearvars -except LFP_trials
+close all
 
 
 %% For loop
@@ -12,12 +12,12 @@ dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_
 % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
 % % tic %takes just over 2 min
-load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
+% load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
 % % toc
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
-averageCSDMatrix_diopDichop = nan(15,15,2,size(officLamAssign,1));
-averageCSDMatrix_BRFS = nan(15,15,2,size(officLamAssign,1));
+averageCSDMatrix_diopDichop = nan(1201,15,2,size(officLamAssign,1));
+averageCSDMatrix_BRFS = nan(1201,15,2,size(officLamAssign,1));
 
 
 for penetration = 1:size(LFP_trials,2)
@@ -35,7 +35,6 @@ for penetration = 1:size(LFP_trials,2)
     v1Btm = granBtm + 5;
     v1Ch = v1Top:v1Btm;
     % limit ch to cortex only
-    columnNames = {'sg_1','sg_2','sg_3','sg_4','sg_5','g_1','g_2','g_3','g_4','g_5','ig_1','ig_2','ig_3','ig_4','ig_5'};
     if strcmp(string(officLamAssign.ChToUse(penetration)),"1:32")
         if any(v1Ch > 32) || any(v1Ch < 1)
             warning('skipping session without full column for now')
@@ -159,13 +158,6 @@ for penetration = 1:size(LFP_trials,2)
     end
    
 
-    % Create array of preference-based data
-    % concatenate two timecourses into array
-    tm_full = -200:1600; % 1801 total timepoints
-    tm1 = 1:801;
-    tm2 = 1:1001;
-    tm2_concat = 801:1801;
-
     for i = 1:length(v1Ch)
         % % monoc_1 = [5, 11, 13, 19]; % PO RightEye
         % % monoc_2 = [8, 10, 16, 18]; % PO LeftEye
@@ -199,21 +191,23 @@ for penetration = 1:size(LFP_trials,2)
     end
 
     %% CSD matrix across channels
+    chForCSDcalc = v1Ch(1)-1:v1Ch(end)+1;
     % Dioptic vs dichoptic
-
-calculate CSD here!!
-
     count = 0;
     for conditionNumber = [1 3]        
         % Get the number of trials for the chosen condition
         numTrials = size(LFP_trials{1,penetration}{conditionNumber,1},1);
-        tm_dat = 1:1001; % LFP_trials data goes out to 1200ms to include offset
-        tm_sustained = 490:1001; % Time window of data. Last 512ms of trial. 
-        
-      
+        CSDbinocOut = nan(1201,length(v1Ch),numTrials);
+        for trl = 1:numTrials
+            LFPbinocTrl = LFP_trials{1,penetration}{conditionNumber,1}{trl,1}(:,chForCSDcalc); % adding ch above and below for CSD calc (to use as vaknin pad)
+            blLFPbinoc = mean(LFPbinocTrl(100:200,:),1);
+            LFPbinocBlSub = LFPbinocTrl-blLFPbinoc;
+            CSDbinocTrl = calcCSD_classic(LFPbinocBlSub);
+            CSDbinocOut(:,:,trl) = CSDbinocTrl(:,2:16); % limit to origional V1 ch lim
+        end
         % Average across trials and save output
         count = count + 1; % for pref vs null
-        averageCSDMatrix_diopDichop(:,:,count,penetration) = median(CSDMatrix,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
+        averageCSDMatrix_diopDichop(:,:,count,penetration) = mean(CSDbinocOut,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
     end
 
     % BRFS pref vs null
@@ -221,15 +215,17 @@ calculate CSD here!!
     for conditionNumber = [overallPref overallNull]        
         % Get the number of trials for the chosen condition
         numTrials = size(LFP_trials{1,penetration}{conditionNumber,1},1);
-        
-      
-        tm_dat = 1:1001; % LFP_trials data goes out to 1200ms to include offset
-        tm_sustained = 490:1001; % Time window of data. Last 512ms of trial. 
-        
-       
+        CSDflashOut = nan(1201,length(v1Ch),numTrials);
+        for trl = 1:numTrials
+            LFPflashTrl = LFP_trials{1,penetration}{conditionNumber,1}{trl,2}(:,chForCSDcalc);
+            blLFPflash = mean(LFPflashTrl(100:200,:),1);
+            LFPflashBlSub = LFPflashTrl-blLFPflash;
+            CSDflashTrl = calcCSD_classic(LFPflashBlSub);
+            CSDflashOut(:,:,trl) = CSDflashTrl(:,2:16);
+        end
         % Average across trials and save output
         count = count + 1; % for pref vs null
-        averageCSDMatrix_BRFS(:,:,count,penetration) = median(CSDMatrix,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
+        averageCSDMatrix_BRFS(:,:,count,penetration) = mean(CSDflashOut,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
     end
 
 
@@ -240,29 +236,35 @@ end
 % % % save('LFP_trials.mat','LFP_trials','-v7.3')
 
 %% plot dioptic vs dichoptic
-grandAverageCSD_diopDichop = median(averageCSDMatrix_diopDichop,4,"omitmissing"); % average across penetration
+grandAverageCSD_diopDichop = mean(averageCSDMatrix_diopDichop,4,"omitmissing"); % average across penetration
 
-disp('analyzing freq')
-disp(freq(2:27))
 
 
 % Visualize the CSD matrix
 f = figure;
 set(f,"Position",[345.6667 256.3333 1698 981.3333])
 ax(1) = subplot(2,3,1);
-imagesc(grandAverageCSD_diopDichop(:,:,1));
-colormap(ax(1),'jet');
-colorbar;
-xlabel('Channel');
-ylabel('Channel');
+imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(:,:,1)');
+oldcmap = colormap(ax(1),'jet');
+colormap(flipud(oldcmap))
+clim([-3000 3000]);
+xlabel('Time (ms)');
+ylabel('channel');
+cb = colorbar(); 
+ylabel(cb,'(nA/mm)^3','FontSize',12)
+xl = xline(0,'--','Stimulus onset','LineWidth',3);
 title('Dioptic');
 
 ax(2) = subplot(2,3,2);
-imagesc(grandAverageCSD_diopDichop(:,:,2));
-colormap(ax(2),'jet');
-colorbar;
-xlabel('Channel');
-ylabel('Channel');
+imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(:,:,2)');
+oldcmap = colormap(ax(2),'jet');
+colormap(flipud(oldcmap))
+clim([-3000 3000]);
+xlabel('Time (ms)');
+ylabel('channel');
+cb = colorbar(); 
+ylabel(cb,'(nA/mm)^3','FontSize',12)
+xl = xline(0,'--','Stimulus onset','LineWidth',3);
 title('Dichoptic');
 
 % % % Subtraction plot of CSD matrix
@@ -329,19 +331,30 @@ grandAverageCSD_BRFS = median(averageCSDMatrix_BRFS,4,"omitmissing"); % average 
 
 % Visualize the CSD matrix
 ax(4) = subplot(2,3,4);
-imagesc(grandAverageCSD_BRFS(:,:,1));
-colormap(ax(4),'jet');
-colorbar;
-xlabel('Channel');
-ylabel('Channel');
-title('Preferred Stimulus BRFS flash');
+imagesc(-200:1000,1:15,grandAverageCSD_BRFS(:,:,1)');
+oldcmap = colormap(ax(4),'jet');
+colormap(flipud(oldcmap))
+clim([-3000 3000]);
+xlabel('Time (ms)');
+ylabel('channel');
+cb = colorbar(); 
+ylabel(cb,'(nA/mm)^3','FontSize',12)
+xl = xline(0,'--','Stimulus onset','LineWidth',3);
+xl = xline(800,'--','Stimulus offset','LineWidth',3);
+title('Preferred stimulus BRFS flash');
+
 
 ax(5) = subplot(2,3,5);
-imagesc(grandAverageCSD_BRFS(:,:,2));
-colormap(ax(5),'jet');
-colorbar;
-xlabel('Channel');
-ylabel('Channel');
+imagesc(-200:1000,1:15,grandAverageCSD_BRFS(:,:,2)');
+oldcmap = colormap(ax(5),'jet');
+colormap(flipud(oldcmap))
+clim([-3000 3000]);
+xlabel('Time (ms)');
+ylabel('channel');
+cb = colorbar(); 
+ylabel(cb,'(nA/mm)^3','FontSize',12)
+xl = xline(0,'--','Stimulus onset','LineWidth',3);
+xl = xline(800,'--','Stimulus offset','LineWidth',3);
 title('Non-preferred stimulus BRFS flash');
 
 % % % Subtraction plot of CSD matrix
@@ -403,8 +416,8 @@ title('tScoreMap of difference');
 
 sgtitle('CSD Penetration Average')
 cd(plotDir)
-saveName = strcat('CSDPenetrationAvg_prefFromMUA.png');
-saveas(f,saveName) 
+% % saveName = strcat('CSDPenetrationAvg_prefFromMUA.png');
+% % saveas(f,saveName) 
 
 
 %% Statistical test - ANOVA between compartment comparisons
