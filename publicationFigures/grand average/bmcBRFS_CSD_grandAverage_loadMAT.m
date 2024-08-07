@@ -233,9 +233,7 @@ for penetration = 1:size(LFP_trials,2)
 
     disp(strcat('Done with file number: ',string(penetration)))
 end
-% % % %% save LFP_trials output
-% % % cd(dataDir)
-% % % save('LFP_trials.mat','LFP_trials','-v7.3')
+
 
 %% plot dioptic vs dichoptic
 grandAverageCSD_diopDichop = mean(averageCSDMatrix_diopDichop,4,"omitmissing"); % average across penetration
@@ -245,7 +243,7 @@ f = figure;
 set(f,"Position",[345.6667 256.3333 1698 981.3333])
 % Visualize the CSD matrix
 % dioptic
-ax(1) = subplot(2,4,1);
+ax(1) = subplot(2,5,1);
 imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(:,:,1)');
 oldcmap = colormap(ax(1),'jet');
 newcmap = colormap(flipud(oldcmap));
@@ -259,30 +257,26 @@ xl = xline(0,'--','Stimulus onset','LineWidth',3);
 title('Dioptic');
 
 %dichoptic
-ax(2) = subplot(2,4,2);
+ax(2) = subplot(2,5,2);
 imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(:,:,2)');
 colormap(ax(2),newcmap)
 clim([-3000 3000]);
 xlabel('Time (ms)');
-ylabel('Channel');
 cb = colorbar(); 
-ylabel(cb,'(nA/mm)^3','FontSize',12)
 xl = xline(0,'--','Stimulus onset','LineWidth',3);
 title('Dichoptic');
 
 % Visualize the raw diff
 differenceMatrix_diopDichoip = ...
-    grandAverageCSD_diopDichop(:,:,1)'-grandAverageCSD_diopDichop(:,:,2)';
-ax(3) = subplot(2,4,3);
+    abs(grandAverageCSD_diopDichop(:,:,1)')-abs(grandAverageCSD_diopDichop(:,:,2)');
+ax(3) = subplot(2,5,3);
 imagesc(-200:1000,1:15,differenceMatrix_diopDichoip);
 colormap(ax(3),'bone');
 clim([-1500 1500]);
 xlabel('Time (ms)');
-ylabel('Channel');
 cb = colorbar(); 
-ylabel(cb,'(nA/mm)^3','FontSize',12)
 xl = xline(0,'--','Stimulus onset','LineWidth',3);
-title('Difference: dioptic-dichoptic');
+title('|Difference|: |dioptic-dichoptic|');
 
 
 
@@ -296,38 +290,32 @@ for ch = 1:15
     CSDMatrix2 = squeeze(averageCSDMatrix_diopDichop(:,ch,2,usePenetration)); 
     for bin = 1:24
         tm = [1:50]+(50*(bin-1));
-        CSD_binned1(bin,:) = mean(CSDMatrix1(tm,:),1);   % output should be 24xlength(usePenetration)
-        CSD_binned2(bin,:) = mean(CSDMatrix2(tm,:),1);
+        CSD_binned1(bin,:) = abs(mean(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
+        CSD_binned2(bin,:) = abs(mean(CSDMatrix2(tm,:),1));
         [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
-            ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:));
+            ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','left');
         tStat_1(ch,bin) = stats(ch,bin).tstat;
 
     end
 end
-ax(4) = subplot(2,4,4);
+ax(4) = subplot(2,5,4);
 imagesc(tStat_1);
-% % hline(5.5)
-% % hline(10.5)
-% % vline(5.5)
-% % vline(10.5)
-% % colormap(ax(3),'bone');
-% % e = colorbar;
-% % e.Label.String = "tStat";
-% % e.Label.Rotation = 270;
-% % xlabel('Channel');
-% % ylabel('Channel');
-% % title('tScoreMap of difference');
+colormap(ax(4),'bone');
+cb = colorbar(); 
+xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
+xlabel('Index of 50ms bin');
+title('left-tail tScoreMap of |difference|');
 
 % hypothesis test logical
-subplot(2,5,5);
+ax(5) = subplot(2,5,5);
 imagesc(h);
-colormap('bone');
-e = colorbar;
+colormap(ax(5),'bone');
+e = colorbar(); 
 e.Label.String = "h = 1 or 0";
 e.Label.Rotation = 270;
-xlabel('Channel');
-ylabel('Channel');
-title('Dioptic vs Dichoptic Hypothesis test');
+xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
+xlabel('Index of 50ms bin');
+title('|Dichoptic > Dioptic| Hypothesis test');
 
 
 
@@ -336,10 +324,9 @@ title('Dioptic vs Dichoptic Hypothesis test');
 grandAverageCSD_BRFS = median(averageCSDMatrix_BRFS,4,"omitmissing"); % average across penetration
 
 % Visualize the CSD matrix
-ax(4) = subplot(2,3,4);
+ax(6) = subplot(2,5,6);
 imagesc(-200:1000,1:15,grandAverageCSD_BRFS(:,:,1)');
-oldcmap = colormap(ax(4),'jet');
-colormap(flipud(oldcmap))
+colormap(ax(6),newcmap)
 clim([-3000 3000]);
 xlabel('Time (ms)');
 ylabel('channel');
@@ -350,10 +337,9 @@ xl = xline(800,'--','Stimulus offset','LineWidth',3);
 title('Preferred stimulus BRFS flash');
 
 
-ax(5) = subplot(2,3,5);
+ax(7) = subplot(2,5,7);
 imagesc(-200:1000,1:15,grandAverageCSD_BRFS(:,:,2)');
-oldcmap = colormap(ax(5),'jet');
-colormap(flipud(oldcmap))
+colormap(ax(7),newcmap)
 clim([-3000 3000]);
 xlabel('Time (ms)');
 ylabel('channel');
@@ -363,82 +349,63 @@ xl = xline(0,'--','Stimulus onset','LineWidth',3);
 xl = xline(800,'--','Stimulus offset','LineWidth',3);
 title('Non-preferred stimulus BRFS flash');
 
+% Visualize the raw diff
+differenceMatrix_diopDichoip = ...
+    abs(grandAverageCSD_BRFS(:,:,1)')-abs(grandAverageCSD_BRFS(:,:,2)');
+ax(8) = subplot(2,5,8);
+imagesc(-200:1000,1:15,differenceMatrix_diopDichoip);
+colormap(ax(8),'bone');
+clim([-1500 1500]);
+xlabel('Time (ms)');
+cb = colorbar(); 
+xl = xline(0,'--','Stimulus onset','LineWidth',3);
+title('|Difference|: |PS-NS|');
 
-% % % % % Visualize the raw diff
-% % differenceMatrix = [];
-% % imagesc(differenceMatrix(:,:));
-% % colormap('bone');
-% % % clim([.5 .75])
-% % colorbar;
-% % xlabel('Channel');
-% % ylabel('Channel');
-% % title('Diff of Pref vs Null');
 
 
 % Difference plot - with tStat
-CSDMatrix1 = squeeze(averageCSDMatrix_BRFS(:,:,1,:)); 
-CSDMatrix2 = squeeze(averageCSDMatrix_BRFS(:,:,2,:));
-for ch1 = 1:15
-    for ch2 = 1:ch1
-        [h(ch1,ch2),p(ch1,ch2),ci(ch1,ch2,:),stats(ch1,ch2)]...
-            = ttest2(...
-            CSDMatrix1(ch1,ch2,:),...
-            CSDMatrix2(ch1,ch2,:)); % ttest taken across penetrations
-        tStat_2(ch1,ch2) = stats(ch1,ch2).tstat;
+usePenetration = [1:4 6 8:25 27:29 31];
+h = nan(15,24);
+p = nan(15,24);
+ci = nan(15,24,2);
+for ch = 1:15
+    CSDMatrix1 = squeeze(averageCSDMatrix_BRFS(:,ch,1,usePenetration)); 
+    CSDMatrix2 = squeeze(averageCSDMatrix_BRFS(:,ch,2,usePenetration)); 
+    for bin = 1:24
+        tm = [1:50]+(50*(bin-1));
+        CSD_binned1(bin,:) = abs(mean(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
+        CSD_binned2(bin,:) = abs(mean(CSDMatrix2(tm,:),1));
+        [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
+            ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','right');
+        tStat_1(ch,bin) = stats(ch,bin).tstat;
+
     end
 end
-ax(6) = subplot(2,3,6);
-imagesc(tStat_2);
-hline(5.5)
-hline(10.5)
-vline(5.5)
-vline(10.5)
-colormap(ax(6),'bone');
-e = colorbar;
-e.Label.String = "tStat";
-e.Label.Rotation = 270;
-xlabel('Channel');
-ylabel('Channel');
-title('tScoreMap of difference');
+ax(9) = subplot(2,5,9);
+imagesc(tStat_1);
+colormap(ax(9),'bone');
+cb = colorbar(); 
+xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
+xlabel('Index of 50ms bin');
+title('right-tail tScoreMap of |difference|');
 
-% % hypothesis test logical
-% % subplot(1,4,4);
-% % imagesc(h);
-% % colormap('bone');
-% % e = colorbar;
-% % e.Label.String = "h = 1 or 0";
-% % e.Label.Rotation = 270;
-% % xlabel('Channel');
-% % ylabel('Channel');
-% % title('Dioptic vs Dichoptic Hypothesis test');
+% hypothesis test logical
+ax(10) = subplot(2,5,10);
+imagesc(h);
+colormap(ax(10),'bone');
+e = colorbar(); 
+e.Label.String = "h = 1 or 0";
+e.Label.Rotation = 270;
+xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
+xlabel('Index of 50ms bin');
+title('|PS > NS| Hypothesis test');
+
 
 
 sgtitle('CSD Penetration Average')
+
+
+%% Save output
 cd(plotDir)
-% % saveName = strcat('CSDPenetrationAvg_prefFromMUA.png');
-% % saveas(f,saveName) 
-
-
-%% Statistical test - ANOVA between compartment comparisons
-SxS = tStat_2(1:5,1:5); %half block
-GxS = tStat_2(6:10,1:5);
-IxS = tStat_2(11:15,1:5);
-GxG = tStat_2(6:10,6:10); % half block
-IxG = tStat_2(11:15,6:10);
-IxI = tStat_2(11:15,11:15); % half block
-
-% aov = anova(y) performs a one-way ANOVA and returns the anova object...
-% aov for the response data in the matrix y. Each column of y is treated...
-% as a different factor value.
-% construct y for ANOVA
-holder_cross(:,1) = reshape(GxS,[25,1]);
-holder_cross(:,2) = reshape(IxS,[25,1]);
-holder_cross(:,3) = reshape(IxG,[25,1]);
-aov_cross = anova1(holder_cross);
-disp(aov_cross)
-
-holder_same(:,1) = reshape(SxS,[25,1]);
-holder_same(:,2) = reshape(GxG,[25,1]);
-holder_same(:,3) = reshape(IxI,[25,1]);
-aov_same = anova1(holder_same);
-disp(aov_same)
+saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
+saveas(f,saveName) 
