@@ -9,13 +9,13 @@ datetime
 clear
 % Directories
 
-% % % % codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
+codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
 % % % codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
 % % % cd(codeDir)
-% % % % outDir = 'S:\formattedDataOutputs';
+outDir = 'S:\formattedDataOutputs';
 % % % outDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\figures_240404';
 % % % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
-% % % dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
+% % % % dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs';
 % % % cd(dataDir)
 % % % % officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 % % % officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
@@ -32,24 +32,24 @@ clear
 
 %New run - new laminar alignment
 % (here is hoping that the results did not change)
-codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
+% codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
 cd(codeDir)
-outDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig4_MUA';
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
-cd(dataDir)
-officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+% outDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig4_MUA';
+% dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
+% cd(dataDir)
+officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 %% For loop
 % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
-
-cd(dataDir)
+% % dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
+% % 
+% % cd(dataDir)
 
 
 
 %% load DATAOUT
-cd('C:\Users\neuropixel\Box\Manuscripts\Maier')
-load("DATAOUT_trials.mat")
+cd('C:\Users\Brock Carlson\Box\Manuscripts\Maier')
+load("DATAOUT.mat")
 
 %% Laminar align data
 aligned_100_ps = nan(1801,100,size(officLamAssign,1));
@@ -91,50 +91,48 @@ aligned_ns = aligned_100_ns(:,41:55,:);
 
 
 
-%% grand averages oand SEM
-ps_grandAvg = mean(aligned_ps,3,"omitmissing");
-ns_grandAvg = mean(aligned_ns,3,"omitmissing");
+%% grand averages and SEM on laminar compartments
+% Expecting output of 1801x125 (25 penetrations * 5 ch per compartment)
+useIdx = squeeze(~isnan(aligned_ps(1,1,:))); 
+reshape_ps_S = reshape(aligned_ps(:,1:5,useIdx),[1801,125]);
+reshape_ps_G = reshape(aligned_ps(:,6:10,useIdx),[1801,125]);
+reshape_ps_I = reshape(aligned_ps(:,11:15,useIdx),[1801,125]);
+reshape_ns_S = reshape(aligned_ns(:,1:5,useIdx),[1801,125]);
+reshape_ns_G = reshape(aligned_ns(:,6:10,useIdx),[1801,125]);
+reshape_ns_I = reshape(aligned_ns(:,11:15,useIdx),[1801,125]);
+
+grandAvg_ps_S = smoothdata(mean(reshape_ps_S,2,"omitmissing"),1,"gaussian",20);
+grandAvg_ps_G = smoothdata(mean(reshape_ps_G,2,"omitmissing"),1,"gaussian",20);
+grandAvg_ps_I = smoothdata(mean(reshape_ps_I,2,"omitmissing"),1,"gaussian",20);
+grandAvg_ns_S = smoothdata(mean(reshape_ns_S,2,"omitmissing"),1,"gaussian",20);
+grandAvg_ns_G = smoothdata(mean(reshape_ns_G,2,"omitmissing"),1,"gaussian",20);
+grandAvg_ns_I = smoothdata(mean(reshape_ns_I,2,"omitmissing"),1,"gaussian",20);
+
 
 % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
-penetrationNumber = sum(~isnan(aligned_ps(1,1,:)));
-ps_SEM = std(aligned_ps,0,3,"omitmissing")/sqrt(penetrationNumber); 
-ns_SEM = std(aligned_ns,0,3,"omitmissing")/sqrt(penetrationNumber); 
+SEM_ps_S = smoothdata(std(reshape_ps_S,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
+SEM_ps_G = smoothdata(std(reshape_ps_G,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
+SEM_ps_I = smoothdata(std(reshape_ps_I,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
+SEM_ns_S = smoothdata(std(reshape_ns_S,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
+SEM_ns_G = smoothdata(std(reshape_ns_G,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
+SEM_ns_I = smoothdata(std(reshape_ns_I,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
 
-% Smooth Data
-ps_smooth_mean = smoothdata(ps_grandAvg,1,"gaussian",20);
-ns_smooth_mean = smoothdata(ns_grandAvg,1,"gaussian",20);
-ps_smooth_sem = smoothdata(ps_SEM,1,"gaussian",20);
-ns_smooth_sem = smoothdata(ns_SEM,1,"gaussian",20);
 
 % Mean +/- SEM
-ps_mps = ps_smooth_mean + ps_smooth_sem; %pref stim -- mean plus sem 1 
-ps_mms = ps_smooth_mean - ps_smooth_sem; %pref stim -- mean minus sem 1 
-ns_mps = ns_smooth_mean + ns_smooth_sem; %pref stim -- mean plus sem 1 
-ns_mms = ns_smooth_mean - ns_smooth_sem; %pref stim -- mean minus sem 1 
+avgPlusSEM_ps_S = grandAvg_ps_S + SEM_ps_S; %pref stim -- mean plus sem 1 
+avgMinusSEM_ps_S = grandAvg_ps_S - SEM_ps_S; %pref stim -- mean minus sem 1 
+avgPlusSEM_ps_G = grandAvg_ps_G + SEM_ps_G; %pref stim -- mean plus sem 1 
+avgMinusSEM_ps_G = grandAvg_ps_G - SEM_ps_G; %pref stim -- mean minus sem 1 
+avgPlusSEM_ps_I = grandAvg_ps_I + SEM_ps_I; %pref stim -- mean plus sem 1 
+avgMinusSEM_ps_I = grandAvg_ps_I - SEM_ps_I; %pref stim -- mean minus sem 1 
+avgPlusSEM_ns_S = grandAvg_ns_S + SEM_ns_S; %pref stim -- mean plus sem 1 
+avgMinusSEM_ns_S = grandAvg_ns_S - SEM_ns_S; %pref stim -- mean minus sem 1 
+avgPlusSEM_ns_G = grandAvg_ns_G + SEM_ns_G; %pref stim -- mean plus sem 1 
+avgMinusSEM_ns_G = grandAvg_ns_G - SEM_ns_G; %pref stim -- mean minus sem 1 
+avgPlusSEM_ns_I = grandAvg_ns_I + SEM_ns_I; %pref stim -- mean plus sem 1 
+avgMinusSEM_ns_I = grandAvg_ns_I - SEM_ns_I; %pref stim -- mean minus sem 1 
 
-%% Now convert grand average array into laminar compartments
-ps_S_mean = mean(ps_smooth_mean(:,1:5),2); 
-ps_G_mean = mean(ps_smooth_mean(:,6:10),2); 
-ps_I_mean = mean(ps_smooth_mean(:,11:15),2); 
-ns_S_mean = mean(ns_smooth_mean(:,1:5),2); 
-ns_G_mean = mean(ns_smooth_mean(:,6:10),2); 
-ns_I_mean = mean(ns_smooth_mean(:,11:15),2); 
 
-% Mean plus sem
-ps_S_mps = mean(ps_mps(:,1:5),2); 
-ps_G_mps = mean(ps_mps(:,6:10),2); 
-ps_I_mps = mean(ps_mps(:,11:15),2); 
-ns_S_mps = mean(ns_mps(:,1:5),2); 
-ns_G_mps = mean(ns_mps(:,6:10),2); 
-ns_I_mps = mean(ns_mps(:,11:15),2); 
-
-% Mean minus sem
-ps_S_mms = mean(ps_mms(:,1:5),2); 
-ps_G_mms = mean(ps_mms(:,6:10),2); 
-ps_I_mms = mean(ps_mms(:,11:15),2); 
-ns_S_mms = mean(ns_mms(:,1:5),2); 
-ns_G_mms = mean(ns_mms(:,6:10),2); 
-ns_I_mms = mean(ns_mms(:,11:15),2); 
 
 %% statistics
 % Ok, the data is together for plotting, now lets run statistics on
@@ -171,12 +169,12 @@ lamCom = figure;
 set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
 t = tiledlayout(3,1);
 nexttile
-    plot(tm_full,ps_S_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,ps_S_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ps_S_mms,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_S_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,ns_S_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_S_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,grandAvg_ps_S,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+    plot(tm_full,avgPlusSEM_ps_S,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,avgMinusSEM_ps_S,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,grandAvg_ns_S,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+    plot(tm_full,avgPlusSEM_ns_S,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,avgMinusSEM_ns_S,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     ylim([0 40])
     vline(0)
     vline(800)
@@ -186,12 +184,12 @@ nexttile
     title({strcat('Significant transient modulation?_',string(h_S_trans),'_pVal =',string(p_S_trans)),...
        strcat('Significant sustained modulation?_',string(h_S_susta),'_pVal =',string(p_S_susta))},'Interpreter','none')
 nexttile
-    plot(tm_full,ps_G_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,ps_G_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ps_G_mms,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_G_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,ns_G_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_G_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,grandAvg_ps_G,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+    plot(tm_full,avgPlusSEM_ps_G,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,avgMinusSEM_ps_G,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,grandAvg_ns_G,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+    plot(tm_full,avgPlusSEM_ns_G,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,avgMinusSEM_ns_G,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     ylim([0 40])
     vline(0)
     vline(800)
@@ -201,12 +199,12 @@ nexttile
     title({strcat('Significant transient modulation?_',string(h_G_trans),'_pVal =',string(p_G_trans)),...
        strcat('Significant sustained modulation?_',string(h_G_susta),'_pVal =',string(p_G_susta))},'Interpreter','none')
 nexttile
-    plot(tm_full,ps_I_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,ps_I_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ps_I_mms,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_I_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,ns_I_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_I_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':');
+    plot(tm_full,grandAvg_ps_I,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+    plot(tm_full,avgPlusSEM_ps_I,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,avgMinusSEM_ps_I,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,grandAvg_ns_I,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+    plot(tm_full,avgPlusSEM_ns_I,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,avgMinusSEM_ns_I,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     ylim([0 40])
     vline(0)
     vline(800)

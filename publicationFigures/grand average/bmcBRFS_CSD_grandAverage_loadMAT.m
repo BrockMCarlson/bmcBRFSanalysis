@@ -6,8 +6,8 @@ close all
 
 
 %% For loop
-plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\CSDFigs';
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
+plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\CSDFigs';
+dataDir = 'C:\Users\Brock Carlson\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
 % % dataDir = 'D:\sortedData_240229';
 % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
