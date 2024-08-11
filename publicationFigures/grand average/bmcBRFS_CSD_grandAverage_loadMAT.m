@@ -327,7 +327,7 @@ grandAverageCSD_BRFS = median(averageCSDMatrix_BRFS,4,"omitmissing"); % average 
 ax(6) = subplot(2,5,6);
 imagesc(-200:1000,1:15,grandAverageCSD_BRFS(:,:,1)');
 colormap(ax(6),newcmap)
-clim([-3000 3000]);
+clim([-1500 1500]);
 xlabel('Time (ms)');
 ylabel('channel');
 cb = colorbar(); 
@@ -340,7 +340,7 @@ title('Preferred stimulus BRFS flash');
 ax(7) = subplot(2,5,7);
 imagesc(-200:1000,1:15,grandAverageCSD_BRFS(:,:,2)');
 colormap(ax(7),newcmap)
-clim([-3000 3000]);
+clim([-1500 1500]);
 xlabel('Time (ms)');
 ylabel('channel');
 cb = colorbar(); 
@@ -355,7 +355,7 @@ differenceMatrix_diopDichoip = ...
 ax(8) = subplot(2,5,8);
 imagesc(-200:1000,1:15,differenceMatrix_diopDichoip);
 colormap(ax(8),'bone');
-clim([-1500 1500]);
+clim([-1000 1000]);
 xlabel('Time (ms)');
 cb = colorbar(); 
 xl = xline(0,'--','Stimulus onset','LineWidth',3);
@@ -407,5 +407,7 @@ sgtitle('CSD Penetration Average')
 
 %% Save output
 cd(plotDir)
+saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
+saveas(f,saveName) 
 saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
 saveas(f,saveName) 

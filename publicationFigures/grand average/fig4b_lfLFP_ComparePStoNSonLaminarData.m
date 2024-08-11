@@ -11,7 +11,7 @@ clear
 % laminar alignment
 codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
 cd(codeDir)
-outDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig4_MUA';
+outDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\LFPfigs';
 dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
 cd(dataDir)
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
@@ -29,7 +29,7 @@ cd(dataDir)
 load("LFP_trials.mat")
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
-
+%%
 for penetration = 1:size(LFP_trials,2)
     
     probeName = char(officLamAssign.Session_probe_(penetration,1));
@@ -302,8 +302,8 @@ filt_mean_ns = mean(filtered_data_ns,3,"omitmissing");
 
 % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
 penetrationNumber = sum(~isnan(averageLFPMatrix_BRFSps(1,1,:)));
-SEM_ps = std(filtered_data_ps,0,3,"omitmissing")/sqrt(penetrationNumber); 
-SEM_ns = std(filtered_data_ns,0,3,"omitmissing")/sqrt(penetrationNumber); 
+SEM_ps = std(filtered_data_ps,0,3,"omitmissing")/sqrt(125); 
+SEM_ns = std(filtered_data_ns,0,3,"omitmissing")/sqrt(125); 
 
 % Mean +/- SEM
 avgPlusSEM_ps = filt_mean_ps + SEM_ps; %pref stim -- mean plus sem 1 
@@ -341,30 +341,30 @@ ns_I_mms = mean(avgMinusSEM_ns(:,11:15),2);
 % goal here is to run a t-test to see if the average response between
 % 1200 and 1600ms significantly differs between ps and ns
 useIdx = squeeze(~isnan(averageLFPMatrix_BRFSps(1,1,:))); 
-tInput_ps_S_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1050:1200,1:5,useIdx),1)),[],1);
-tInput_ps_G_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1050:1200,6:10,useIdx),1)),[],1);
-tInput_ps_I_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1050:1200,11:15,useIdx),1)),[],1);
-tInput_ns_S_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1050:1200,1:5,useIdx),1)),[],1);
-tInput_ns_G_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1050:1200,6:10,useIdx),1)),[],1);
-tInput_ns_I_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1050:1200,11:15,useIdx),1)),[],1);
-tInput_ps_S_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1400:1801,1:5,useIdx),1)),[],1);
-tInput_ps_G_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1400:1801,6:10,useIdx),1)),[],1);
-tInput_ps_I_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1400:1801,11:15,useIdx),1)),[],1);
-tInput_ns_S_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1400:1801,1:5,useIdx),1)),[],1);
-tInput_ns_G_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1400:1801,6:10,useIdx),1)),[],1);
-tInput_ns_I_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1400:1801,11:15,useIdx),1)),[],1);
-
-[h_S_trans,p_S_trans] = ttest2(tInput_ps_S_trans,tInput_ns_S_trans);
-[h_G_trans,p_G_trans] = ttest2(tInput_ps_G_trans,tInput_ns_G_trans);
-[h_I_trans,p_I_trans] = ttest2(tInput_ps_I_trans,tInput_ns_I_trans);
-[h_S_susta,p_S_susta] = ttest2(tInput_ps_S_susta,tInput_ns_S_susta);
-[h_G_susta,p_G_susta] = ttest2(tInput_ps_G_susta,tInput_ns_G_susta);
-[h_I_susta,p_I_susta] = ttest2(tInput_ps_I_susta,tInput_ns_I_susta);
+% % % % tInput_ps_S_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1050:1200,1:5,useIdx),1)),[],1);
+% % % % tInput_ps_G_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1050:1200,6:10,useIdx),1)),[],1);
+% % % % tInput_ps_I_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1050:1200,11:15,useIdx),1)),[],1);
+% % % % tInput_ns_S_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1050:1200,1:5,useIdx),1)),[],1);
+% % % % tInput_ns_G_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1050:1200,6:10,useIdx),1)),[],1);
+% % % % tInput_ns_I_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1050:1200,11:15,useIdx),1)),[],1);
+% % % % tInput_ps_S_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1400:1801,1:5,useIdx),1)),[],1);
+% % % % tInput_ps_G_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1400:1801,6:10,useIdx),1)),[],1);
+% % % % tInput_ps_I_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1400:1801,11:15,useIdx),1)),[],1);
+% % % % tInput_ns_S_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1400:1801,1:5,useIdx),1)),[],1);
+% % % % tInput_ns_G_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1400:1801,6:10,useIdx),1)),[],1);
+% % % % tInput_ns_I_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1400:1801,11:15,useIdx),1)),[],1);
+% % % % 
+% % % % [h_S_trans,p_S_trans] = ttest2(tInput_ps_S_trans,tInput_ns_S_trans);
+% % % % [h_G_trans,p_G_trans] = ttest2(tInput_ps_G_trans,tInput_ns_G_trans);
+% % % % [h_I_trans,p_I_trans] = ttest2(tInput_ps_I_trans,tInput_ns_I_trans);
+% % % % [h_S_susta,p_S_susta] = ttest2(tInput_ps_S_susta,tInput_ns_S_susta);
+% % % % [h_G_susta,p_G_susta] = ttest2(tInput_ps_G_susta,tInput_ns_G_susta);
+% % % % [h_I_susta,p_I_susta] = ttest2(tInput_ps_I_susta,tInput_ns_I_susta);
 
 
 %% Figure generation! 
 % tiledLayout plot
-close all
+% close all
 tm_full = -200:1000; % 1801 total timepoints
 lamCom = figure;
 set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
@@ -420,9 +420,9 @@ nexttile
 
 %save fig
 cd(outDir)
-figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.png');
+figName_lamCom = strcat('LFP_laminarCompartment_','_grandAvg_','.png');
 saveas(lamCom,figName_lamCom)
-figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.svg');
+figName_lamCom = strcat('LFP_laminarCompartment_','_grandAvg_','.svg');
 saveas(lamCom,figName_lamCom)
 
 
