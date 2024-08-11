@@ -6,6 +6,8 @@
 
 
 %% For loop
+codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis';
+cd(codeDir)
 % % dataDir = 'D:\sortedData_240229';
 dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
