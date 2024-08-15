@@ -6,28 +6,21 @@
 datetime
 
 %% Setup
-clear
+clearvars -except LFP_trials
 % Directories
 % laminar alignment
 codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
 cd(codeDir)
 outDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\LFPfigs';
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
-cd(dataDir)
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-
-%% For loop
-% % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
 
 cd(dataDir)
+if ~exist('LFP_trials','var')
+    load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
+end
 
 
-
-%% load DATAOUT
-% % cd('C:\Users\neuropixel\Box\Manuscripts\Maier')
-load("LFP_trials.mat")
-officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 %%
 for penetration = 1:size(LFP_trials,2)

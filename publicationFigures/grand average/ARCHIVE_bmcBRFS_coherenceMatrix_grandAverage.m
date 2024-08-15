@@ -5,49 +5,43 @@ clear
 close all
 codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average');
 cd(codeDir)
-
-%% For loop
 dataDir = 'D:\sortedData_240229';
 % dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
 % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
+if ~exist('LFP_trials','var')
+    load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
+end
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 averageCoherenceMatrix = nan(15,15,2,size(officLamAssign,1));
 
-
-for file = 1:size(officLamAssign,1)
-    % load data
-    cd(dataDir)
-    probeName = char(officLamAssign.Session_probe_(file,1));
-    fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
-    load(fileToLoad)
-    LFP_trials{file} = {IDX.LFP_bb}.';
-    MUA_trials{file} = {IDX.MUAe}.';
-
-    if isnan(officLamAssign.stFold4c(file))
-        warning(strcat('no sink found on _',fileToLoad))
+%% For loop
+for penetration = 1:size(LFP_trials,2)
+    
+    probeName = char(officLamAssign.Session_probe_(penetration,1));
+    fileName = strcat('sortedData_',probeName(1:19));
+    granBtm = officLamAssign.stFold4c(penetration); % channel corresponding to the bottom of layer 4c
+    if isnan(granBtm)
+        warning(strcat('no sink found on _',fileName))
         continue
     end
-
-    granBtm = officLamAssign.stFold4c(file); % channel corresponding to the bottom of layer 4c
-    
     % Calculate V1 ch boundaries
     v1Top = granBtm - 9;
     v1Btm = granBtm + 5;
     v1Ch = v1Top:v1Btm;
     % limit ch to cortex only
     columnNames = {'sg_1','sg_2','sg_3','sg_4','sg_5','g_1','g_2','g_3','g_4','g_5','ig_1','ig_2','ig_3','ig_4','ig_5'};
-    if strcmp(string(officLamAssign.ChToUse(file)),"1:32")
+    if strcmp(string(officLamAssign.ChToUse(penetration)),"1:32")
         if any(v1Ch > 32) || any(v1Ch < 1)
             warning('skipping session without full column for now')
-            disp(fileToLoad)
+            disp(fileName)
             continue
         end
-    elseif strcmp(string(officLamAssign.ChToUse(file)),"33:64")
+    elseif strcmp(string(officLamAssign.ChToUse(penetration)),"33:64")
         if any(v1Ch > 64) || any(v1Ch < 33)
             warning('skipping session without full column for now')
-            disp(fileToLoad)
+            disp(fileName)
             continue
         end
     end
@@ -61,22 +55,22 @@ for file = 1:size(officLamAssign,1)
     monoc_2 = [8, 10, 16, 18]; % PO LeftEye
     monoc_3 = [7, 9, 15, 17];  % NPO RightEye
     monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
-    
+
     % convert from cell to double and combine monocular conditions
     count = 0;
     for cond = monoc_1
-        for trl = 1:length(IDX(cond).correctTrialIndex)
+        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
             count = count + 1;
-            array_ofMonoc1(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); % 1000 x 32
+            array_ofMonoc1(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); % 1000 x 32
         end
     end
     clear cond count trl 
     
     count = 0;
     for cond = monoc_2
-        for trl = 1:length(IDX(cond).correctTrialIndex)
+        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
             count = count + 1;
-            array_ofMonoc2(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); 
+            array_ofMonoc2(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -84,9 +78,9 @@ for file = 1:size(officLamAssign,1)
     
     count = 0;
     for cond = monoc_3
-        for trl = 1:length(IDX(cond).correctTrialIndex)
+        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
             count = count + 1;
-            array_ofMonoc3(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); 
+            array_ofMonoc3(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -94,9 +88,9 @@ for file = 1:size(officLamAssign,1)
     
     count = 0;
     for cond = monoc_4
-        for trl = 1:length(IDX(cond).correctTrialIndex)
+        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
             count = count + 1;
-            array_ofMonoc4(:,:,count) = abs(IDX(cond).LFP_bb{trl,1}(:,v1Ch)); 
+            array_ofMonoc4(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -183,8 +177,16 @@ for file = 1:size(officLamAssign,1)
     end
         
     overallPref = mode(prefCondOnFlash);
-    overallNull = mode(nullCondOnFlash);
-    prefOutput{file} = [overallPref overallNull];
+    if overallPref == 9
+        overallNull = 10;
+    elseif overallPref == 10
+        overallNull = 9;
+    elseif overallPref == 11
+        overallNull = 12;
+    elseif overallPref == 12
+        overallNull = 11;
+    end
+
     %% Coherence matrix across channels
     % Choose the condition
     close all
@@ -193,7 +195,8 @@ for file = 1:size(officLamAssign,1)
     for conditionNumber = [1 3] % Dioptic vs dichoptic
         
         % Get the number of trials for the chosen condition
-        numTrials = size(IDX(conditionNumber).LFP_bb, 1);
+        %LFP_trials{1 x 31penetrations}{20conditions x 1}{trialNum x 2}{1201tm x 32Ch};
+        numTrials = size(LFP_trials{1,penetration}{conditionNumber,1}, 1);
         
         % Parameters for mscohere
         fs = 1000;  % Sampling frequency in Hz
@@ -209,8 +212,8 @@ for file = 1:size(officLamAssign,1)
             for channel1 = v1Ch
                 for channel2 = v1Ch(1):channel1
                     % Extract the LFP_bb data for the chosen channels and trial
-                    lfpGammaData1 = IDX(conditionNumber).LFP_bb{trialNumber, 2}(tm, channel1);
-                    lfpGammaData2 = IDX(conditionNumber).LFP_bb{trialNumber, 2}(tm, channel2);
+                    lfpGammaData1 = LFP_trials{1,penetration}{conditionNumber,1}{trialNumber,2}(tm,channel1);
+                    lfpGammaData2 = LFP_trials{1,penetration}{conditionNumber,1}{trialNumber,2}(tm,channel2);
                     %baseline subtract
                     bl1 = median(lfpGammaData1(1:200));
                     lfp_blsub_1 = lfpGammaData1 - bl1;
@@ -228,16 +231,13 @@ for file = 1:size(officLamAssign,1)
         
         % Average across trials and save output
         count = count + 1; % for pref vs null
-        averageCoherenceMatrix(:,:,count,file) = median(coherenceMatrix,3);
+        averageCoherenceMatrix(:,:,count,penetration) = median(coherenceMatrix,3);
         
     end
-    disp(strcat('Done with file number: ',string(file)))
+    disp(strcat('Done with file number: ',string(penetration)))
 end
 %% save LFP_trials output
-cd(dataDir)
-save('LFP_trials.mat','LFP_trials','-v7.3')
-save('MUA_trials.mat','MUA_trials','-v7.3')
-save('prefOutput.mat','prefOutput','-v7.3')
+
 
 %% plot
 grandAverageCoherence = median(averageCoherenceMatrix,4,"omitmissing");

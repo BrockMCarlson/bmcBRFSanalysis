@@ -10,9 +10,9 @@ plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\coherenceFigs';
 dataDir = 'D:\sortedData_240229';
 % % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
 cd(dataDir)
-% % tic
-load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
-% % toc
+if ~exist('LFP_trials','var')
+    load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
+end
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 averageCoherenceMatrix_diopDichop = nan(15,15,2,size(officLamAssign,1));
@@ -295,9 +295,7 @@ for penetration = 1:size(LFP_trials,2)
     end
     disp(strcat('Done with file number: ',string(penetration)))
 end
-% % % %% save LFP_trials output
-% % % cd(dataDir)
-% % % save('LFP_trials.mat','LFP_trials','-v7.3')
+
 
 %% plot dioptic vs dichoptic
 grandAverageCoherence_diopDichop = median(averageCoherenceMatrix_diopDichop,4,"omitmissing"); % average across penetration
