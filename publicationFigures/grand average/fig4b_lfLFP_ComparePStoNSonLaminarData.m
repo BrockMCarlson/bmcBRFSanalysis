@@ -2,11 +2,30 @@
 % The goal of this script is to average together data from each laminar
 % compartment to see if differential perceptual modulations occur
 
-
-datetime
-
 %% Setup
-clearvars -except LFP_trials
+disp('start time')
+datetime
+clear
+
+clearvars -except LFP_trialstic
+workingPC = 'home'; % options: 'home', 'office'
+if strcmp(workingPC,'home')
+    codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\preProcessEphysData';
+    dataDir = 'D:\bmcBRFS datasets (1TB)';
+    outputDir = 'S:\TrialTriggeredLFPandMUA';
+    officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+elseif strcmp(workingPC,'office')
+    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
+    dataDir    = 'D:\TrialTriggeredLFPandMUA';
+    plotDir     = '';
+    officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+end
+cd(codeDir)
+cd(dataDir)
+
+
+
+
 % Directories
 % laminar alignment
 codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');

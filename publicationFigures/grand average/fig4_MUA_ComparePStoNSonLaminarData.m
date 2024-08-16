@@ -7,6 +7,28 @@ datetime
 
 %% Setup
 clear
+
+%% Setup
+disp('start time')
+datetime
+clear
+
+clear
+workingPC = 'home'; % options: 'home', 'office'
+if strcmp(workingPC,'home')
+    codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\preProcessEphysData';
+    dataDir = 'D:\bmcBRFS datasets (1TB)';
+    outputDir = 'S:\TrialTriggeredLFPandMUA';
+    officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+elseif strcmp(workingPC,'office')
+    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
+    dataDir    = 'D:\TrialTriggeredLFPandMUA';
+    plotDir     = '';
+    officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+end
+cd(codeDir)
+cd(dataDir)
+
 % Directories
 
 codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
