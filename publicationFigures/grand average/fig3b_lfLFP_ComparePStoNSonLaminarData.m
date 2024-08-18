@@ -7,34 +7,22 @@ disp('start time')
 datetime
 clear
 
-clearvars -except LFP_trialstic
+clearvars -except LFP_trials
 workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
-    codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\preProcessEphysData';
-    dataDir = 'D:\bmcBRFS datasets (1TB)';
-    outputDir = 'S:\TrialTriggeredLFPandMUA';
+    codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
+    dataDir = 'S:\TrialTriggeredLFPandMUA';
+    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig3_LFP';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
-    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
+    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir    = 'D:\TrialTriggeredLFPandMUA';
-    plotDir     = '';
+    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig3_LFP';
     officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 end
 cd(codeDir)
 cd(dataDir)
 
-
-
-
-% Directories
-% laminar alignment
-codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
-cd(codeDir)
-outDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\LFPfigs';
-officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
-
-cd(dataDir)
 if ~exist('LFP_trials','var')
     load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
 end
@@ -216,9 +204,9 @@ for penetration = 1:size(LFP_trials,2)
     % BRFS pref vs null
     % Get the number of trials for the chosen condition
     numTrials = size(LFP_trials{1,penetration}{overallPref,1},1);
-    LFPflashOut_ps = nan(1201,length(v1Ch),numTrials);
+    LFPflashOut_ps = nan(2001,length(v1Ch),numTrials);
     for trl = 1:numTrials
-        LFPflashTrl = LFP_trials{1,penetration}{overallPref,1}{trl,2}(:,v1Ch);
+        LFPflashTrl = LFP_trials{1,penetration}{overallPref,1}{trl,1}(:,v1Ch);
         blLFPflash = mean(LFPflashTrl(100:200,:),1);
         LFPflashBlSub = LFPflashTrl-blLFPflash;
         LFPflashOut_ps(:,:,trl) = LFPflashBlSub;
@@ -228,9 +216,9 @@ for penetration = 1:size(LFP_trials,2)
 
     % Get the number of trials for the chosen condition
     numTrials = size(LFP_trials{1,penetration}{overallNull,1},1);
-    LFPflashOut_ns = nan(1201,length(v1Ch),numTrials);
+    LFPflashOut_ns = nan(2001,length(v1Ch),numTrials);
     for trl = 1:numTrials
-        LFPflashTrl = LFP_trials{1,penetration}{overallNull,1}{trl,2}(:,v1Ch);
+        LFPflashTrl = LFP_trials{1,penetration}{overallNull,1}{trl,1}(:,v1Ch);
         blLFPflash = mean(LFPflashTrl(100:200,:),1);
         LFPflashBlSub = LFPflashTrl-blLFPflash;
         LFPflashOut_ns(:,:,trl) = LFPflashBlSub;
@@ -314,8 +302,8 @@ filt_mean_ns = mean(filtered_data_ns,3,"omitmissing");
 
 % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
 penetrationNumber = sum(~isnan(averageLFPMatrix_BRFSps(1,1,:)));
-SEM_ps = std(filtered_data_ps,0,3,"omitmissing")/sqrt(125); 
-SEM_ns = std(filtered_data_ns,0,3,"omitmissing")/sqrt(125); 
+SEM_ps = std(LFPflashOut_ps,0,3,"omitmissing")/sqrt(125); 
+SEM_ns = std(LFPflashOut_ns,0,3,"omitmissing")/sqrt(125); 
 
 % Mean +/- SEM
 avgPlusSEM_ps = filt_mean_ps + SEM_ps; %pref stim -- mean plus sem 1 
@@ -377,7 +365,7 @@ useIdx = squeeze(~isnan(averageLFPMatrix_BRFSps(1,1,:)));
 %% Figure generation! 
 % tiledLayout plot
 % close all
-tm_full = -200:1000; % 1801 total timepoints
+tm_full = -200:1800; % 1801 total timepoints
 lamCom = figure;
 set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
 t = tiledlayout(3,1);
@@ -391,9 +379,10 @@ nexttile
     % ylim([0 40])
     vline(0)
     vline(800)
+    vline(1600)
     % xregion(850,1000)
     % xregion(1200,1600)
-    ylabel({'Supragranular','% Change'})
+    ylabel({'Supragranular','uV'})
     % % title({strcat('Significant transient modulation?_',string(h_S_trans),'_pVal =',string(p_S_trans)),...
        % % strcat('Significant sustained modulation?_',string(h_S_susta),'_pVal =',string(p_S_susta))},'Interpreter','none')
 nexttile
@@ -406,6 +395,7 @@ nexttile
     % ylim([0 40])
     vline(0)
     vline(800)
+    vline(1600)
     % xregion(850,1000)
     % xregion(1200,1600)
     ylabel({'Granular','% Change'})
@@ -421,6 +411,7 @@ nexttile
     % ylim([0 40])
     vline(0)
     vline(800)
+    vline(1600)
     % xregion(850,1000)
     % xregion(1200,1600)
     ylabel({'Infragranular','% Change'})
@@ -431,7 +422,7 @@ nexttile
 % % title(t,titleText,'Interpreter','none')
 
 %save fig
-cd(outDir)
+cd(plotDir)
 figName_lamCom = strcat('LFP_laminarCompartment_','_grandAvg_','.png');
 saveas(lamCom,figName_lamCom)
 figName_lamCom = strcat('LFP_laminarCompartment_','_grandAvg_','.svg');
