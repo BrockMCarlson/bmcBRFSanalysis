@@ -6,7 +6,7 @@
 disp('start time')
 datetime
 clearvars -except MUA_trials
-workingPC = 'home'; % options: 'home', 'office'
+workingPC = 'office'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -190,38 +190,50 @@ for penetration = 1:size(MUA_trials,1)
     end
    
 
-    %% low frequency MUA
+    %% MUA in percent change
     % BRFS pref vs null
     % Get the number of trials for the chosen condition
     for i = 1:length(v1Ch)
-        numTrials = size(MUA_trials{penetration,1}{prefCondOnFlash(i,1),1},1);
-        MUAflashOut_ps = nan(2001,numTrials);
-        for trl = 1:numTrials
-            MUAflashTrl = MUA_trials{penetration,1}{prefCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
-            blMUAflash = mean(MUAflashTrl(100:200,:),1);
-            MUAflashBlSub = MUAflashTrl-blMUAflash;
-            MUAflashOut_ps(:,trl) = MUAflashBlSub;
+        numTrials_ps = size(MUA_trials{penetration,1}{prefCondOnFlash(i,1),1},1);
+        MUAflashOut_ps = nan(2001,numTrials_ps);
+        for trl = 1:numTrials_ps
+            MUAflashOut_ps(:,trl) = MUA_trials{penetration,1}{prefCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
         end
-        % Average across trials and save output
-        averageMUAMatrix_BRFSps(:,i,penetration) = mean(MUAflashOut_ps,2); % Average across trl. averageMUAMatrix is (tm x ch x x penetration)
+        
+        % median across trials
+        ps_avg = median(MUAflashOut_ps,2,"omitmissing"); % input is (tm,trl)    
+        % Calculate as Percent Change
+        %              X(t) - avgBl
+        % %Ch = 100 * -------------
+        %                 avgBl
+        psBl = median(ps_avg(1:200,:));
+        if psBl == 0
+            psBl = .1;
+        end
+        ps_PercentC = 100*((ps_avg-psBl)./psBl);
+        averageMUAMatrix_BRFSps(:,i,penetration) = ps_PercentC;
+
     
         % Get the number of trials for the chosen condition
-        numTrials = size(MUA_trials{penetration,1}{nullCondOnFlash(i,1) ,1},1);
-        MUAflashOut_ns = nan(2001,numTrials);
-        for trl = 1:numTrials
-            MUAflashTrl = MUA_trials{penetration,1}{nullCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
-            blMUAflash = mean(MUAflashTrl(100:200,:),1);
-            MUAflashBlSub = MUAflashTrl-blMUAflash;
-            MUAflashOut_ns(:,trl) = MUAflashBlSub;
+        numTrials_ns = size(MUA_trials{penetration,1}{nullCondOnFlash(i,1) ,1},1);
+        MUAflashOut_ns = nan(2001,numTrials_ns);
+        for trl = 1:numTrials_ns
+            MUAflashOut_ns(:,trl) = MUA_trials{penetration,1}{nullCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
         end
         % Average across trials and save output
-        averageMUAMatrix_BRFSns(:,i,penetration) = mean(MUAflashOut_ns,2); % Average across trl. averageMUAMatrix is (tm x ch x x penetration)
+        ns_avg = median(MUAflashOut_ns,2,"omitmissing"); % input is (tm,trl)    
+        nsBl = median(ns_avg(1:200,:));
+        if nsBl == 0
+            nsBl = .1;
+        end
+        ns_PercentC = 100*((ns_avg-nsBl)./nsBl);  
+        averageMUAMatrix_BRFSns(:,i,penetration) = ns_PercentC; % Average across trl. averageMUAMatrix is (tm x ch x x penetration)
     end
     disp(strcat('Done with file number: ',string(penetration)))
 end
 
 
-%% Average
+%% Average over sessions
 mean_ps = smoothdata(mean(averageMUAMatrix_BRFSps,3,"omitmissing"),1,"gaussian",20);
 mean_ns = smoothdata(mean(averageMUAMatrix_BRFSns,3,"omitmissing"),1,"gaussian",20);
 

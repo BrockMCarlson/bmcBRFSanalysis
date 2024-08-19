@@ -5,10 +5,8 @@
 %% Setup
 disp('start time')
 datetime
-clear
-
 clearvars -except LFP_trials
-workingPC = 'home'; % options: 'home', 'office'
+workingPC = 'office'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -24,12 +22,16 @@ cd(codeDir)
 cd(dataDir)
 
 if ~exist('LFP_trials','var')
+    tic
     load('LFP_trials.mat') % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
+    toc
 end
 
 
 
 %%
+averageLFPMatrix_BRFSps = nan(2001,15,31);
+averageLFPMatrix_BRFSns = nan(2001,15,31);
 for penetration = 1:size(LFP_trials,1)
     
     probeName = char(officLamAssign.Session_probe_(penetration,1));
@@ -189,46 +191,90 @@ for penetration = 1:size(LFP_trials,1)
 
     end
         
-    overallPref = mode(prefCondOnFlash);
-    if overallPref == 9
-        overallNull = 10;
-    elseif overallPref == 10
-        overallNull = 9;
-    elseif overallPref == 11
-        overallNull = 12;
-    elseif overallPref == 12
-        overallNull = 11;
-    end
 
-    %% low frequency LFP
+    %% LFP in percent change
     % BRFS pref vs null
     % Get the number of trials for the chosen condition
-    numTrials = size(LFP_trials{penetration,1}{overallPref,1},1);
-    LFPflashOut_ps = nan(2001,length(v1Ch),numTrials);
-    for trl = 1:numTrials
-        LFPflashTrl = LFP_trials{penetration,1}{overallPref,1}{trl,1}(:,v1Ch);
-        blLFPflash = mean(LFPflashTrl(100:200,:),1);
-        LFPflashBlSub = LFPflashTrl-blLFPflash;
-        LFPflashOut_ps(:,:,trl) = LFPflashBlSub;
-    end
-    % Average across trials and save output
-    averageLFPMatrix_BRFSps(:,:,penetration) = mean(LFPflashOut_ps,3); % Average across trl. averageLFPMatrix is (tm x ch x x penetration)
+    for i = 1:length(v1Ch)
+        numTrials_ps = size(LFP_trials{penetration,1}{prefCondOnFlash(i,1),1},1);
+        LFPflashOut_ps = nan(2001,numTrials_ps);
+        for trl = 1:numTrials_ps
+            LFPflashOut_ps(:,trl) = LFP_trials{penetration,1}{prefCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
+        end
+        
+        % median across trials
+        ps_avg = median(LFPflashOut_ps,2,"omitmissing"); % input is (tm,trl)    
+        % Calculate as Percent Change
+        %              X(t) - avgBl
+        % %Ch = 100 * -------------
+        %                 avgBl
+        psBl = median(ps_avg(1:200,:));
+        if psBl == 0
+            psBl = 1;
+        end
+        ps_PercentC = 100*((ps_avg-psBl)./psBl);
+        averageLFPMatrix_BRFSps(:,i,penetration) = ps_PercentC;
 
-    % Get the number of trials for the chosen condition
-    numTrials = size(LFP_trials{penetration,1}{overallNull,1},1);
-    LFPflashOut_ns = nan(2001,length(v1Ch),numTrials);
-    for trl = 1:numTrials
-        LFPflashTrl = LFP_trials{penetration,1}{overallNull,1}{trl,1}(:,v1Ch);
-        blLFPflash = mean(LFPflashTrl(100:200,:),1);
-        LFPflashBlSub = LFPflashTrl-blLFPflash;
-        LFPflashOut_ns(:,:,trl) = LFPflashBlSub;
+    
+        % Get the number of trials for the chosen condition
+        numTrials_ns = size(LFP_trials{penetration,1}{nullCondOnFlash(i,1) ,1},1);
+        LFPflashOut_ns = nan(2001,numTrials_ns);
+        for trl = 1:numTrials_ns
+            LFPflashOut_ns(:,trl) = LFP_trials{penetration,1}{nullCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
+        end
+        % Average across trials and save output
+        ns_avg = median(LFPflashOut_ns,2,"omitmissing"); % input is (tm,trl)    
+        nsBl = median(ns_avg(1:200,:));
+        if nsBl == 0
+            nsBl = 1;
+        end
+        ns_PercentC = 100*((ns_avg-nsBl)./nsBl);
+        averageLFPMatrix_BRFSns(:,i,penetration) = ns_PercentC; % Average across trl. averageLFPMatrix is (tm x ch x x penetration)
     end
-    % Average across trials and save output
-    averageLFPMatrix_BRFSns(:,:,penetration) = mean(LFPflashOut_ns,3); % Average across trl. averageLFPMatrix is (tm x ch x x penetration)
-
     disp(strcat('Done with file number: ',string(penetration)))
 end
 
+%% Organize into compartments, median and std across contacts+penetration
+% reshape
+useIdx = squeeze(~isnan(averageLFPMatrix_BRFSps(1,1,:))); 
+ps_S = reshape(averageLFPMatrix_BRFSps(:,1:5,useIdx),[2001,135]);
+ps_G = reshape(averageLFPMatrix_BRFSps(:,6:10,useIdx),[2001,135]);
+ps_I = reshape(averageLFPMatrix_BRFSps(:,11:15,useIdx),[2001,135]);
+ns_S = reshape(averageLFPMatrix_BRFSns(:,1:5,useIdx),[2001,135]);
+ns_G = reshape(averageLFPMatrix_BRFSns(:,6:10,useIdx),[2001,135]);
+ns_I = reshape(averageLFPMatrix_BRFSns(:,11:15,useIdx),[2001,135]);
+
+% Average across penetrations
+ps_S_avg = smoothdata(median(ps_S,2,"omitmissing"),"gaussian",50);
+ps_G_avg = smoothdata(median(ps_G,2,"omitmissing"),"gaussian",50);
+ps_I_avg = smoothdata(median(ps_I,2,"omitmissing"),"gaussian",50);
+ns_S_avg = smoothdata(median(ns_S,2,"omitmissing"),"gaussian",50);
+ns_G_avg = smoothdata(median(ns_G,2,"omitmissing"),"gaussian",50);
+ns_I_avg = smoothdata(median(ns_I,2,"omitmissing"),"gaussian",50);
+
+% Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
+contactNum = size(ps_S,2);
+ps_S_sem = std(ps_S,0,2,"omitmissing")./sqrt(contactNum); 
+ps_G_sem = std(ps_G,0,2,"omitmissing")./sqrt(contactNum); 
+ps_I_sem = std(ps_I,0,2,"omitmissing")./sqrt(contactNum); 
+ns_S_sem = std(ns_S,0,2,"omitmissing")./sqrt(contactNum); 
+ns_G_sem = std(ns_G,0,2,"omitmissing")./sqrt(contactNum); 
+ns_I_sem = std(ns_I,0,2,"omitmissing")./sqrt(contactNum); 
+
+% Mean +/- SEM
+ps_S_avgPlusSEM = ps_S_avg + ps_S_sem; %pref stim -- median plus sem 1 
+ps_S_avgMinusSEM = ps_S_avg - ps_S_sem; %pref stim -- median minus sem 1 
+ps_G_avgPlusSEM = ps_G_avg + ps_G_sem; %pref stim -- median plus sem 1 
+ps_G_avgMinusSEM = ps_G_avg - ps_G_sem; %pref stim -- median minus sem 1 
+ps_I_avgPlusSEM = ps_I_avg + ps_I_sem; %pref stim -- median plus sem 1 
+ps_I_avgMinusSEM = ps_I_avg - ps_I_sem; %pref stim -- median minus sem 1 
+
+ns_S_avgPlusSEM = ns_S_avg + ns_S_sem; 
+ns_S_avgMinusSEM = ns_S_avg - ns_S_sem;  
+ns_G_avgPlusSEM = ns_G_avg + ns_G_sem; 
+ns_G_avgMinusSEM = ns_G_avg - ns_G_sem; 
+ns_I_avgPlusSEM = ns_I_avg + ns_I_sem; 
+ns_I_avgMinusSEM = ns_I_avg - ns_I_sem; 
 
 %% Define filter parameters
 fs = 1000;  % Sampling frequency in Hz (adjust as needed)
@@ -291,49 +337,32 @@ lowpass_cutoff_norm = lowpass_cutoff / nyquist_freq;
 
 
 
+
 %% Filter data, And the nfind average and SEM across penetrations
 % Apply filter using filtfilt to ensure zero-phase distortion
-filtered_data_ps = filtfilt(b, a, averageLFPMatrix_BRFSps);
-filtered_data_ns = filtfilt(b, a, averageLFPMatrix_BRFSns);
+ps_S_filt = filtfilt(b, a, ps_S_avg);
+ps_G_filt = filtfilt(b, a, ps_G_avg);
+ps_I_filt = filtfilt(b, a, ps_I_avg);
+ns_S_filt = filtfilt(b, a, ns_S_avg);
+ns_G_filt = filtfilt(b, a, ns_G_avg);
+ns_I_filt = filtfilt(b, a, ns_I_avg);
 
-% Average
-filt_mean_ps = mean(filtered_data_ps,3,"omitmissing");
-filt_mean_ns = mean(filtered_data_ns,3,"omitmissing");
+ps_S_avgPlusSEM_filt = filtfilt(b, a, ps_S_avgPlusSEM); 
+ps_S_avgMinusSEM_filt = filtfilt(b, a, ps_S_avgMinusSEM);
+ps_G_avgPlusSEM_filt = filtfilt(b, a, ps_G_avgPlusSEM);
+ps_G_avgMinusSEM_filt = filtfilt(b, a, ps_G_avgMinusSEM);
+ps_I_avgPlusSEM_filt = filtfilt(b, a, ps_I_avgPlusSEM);
+ps_I_avgMinusSEM_filt = filtfilt(b, a, ps_I_avgMinusSEM);
 
-% Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
-penetrationNumber = sum(~isnan(averageLFPMatrix_BRFSps(1,1,:)));
-SEM_ps = std(LFPflashOut_ps,0,3,"omitmissing")/sqrt(125); 
-SEM_ns = std(LFPflashOut_ns,0,3,"omitmissing")/sqrt(125); 
+ns_S_avgPlusSEM_filt = filtfilt(b, a, ns_S_avgPlusSEM);
+ns_S_avgMinusSEM_filt = filtfilt(b, a, ns_S_avgMinusSEM);
+ns_G_avgPlusSEM_filt = filtfilt(b, a, ns_G_avgPlusSEM);
+ns_G_avgMinusSEM_filt = filtfilt(b, a, ns_G_avgMinusSEM);
+ns_I_avgPlusSEM_filt = filtfilt(b, a, ns_I_avgPlusSEM);
+ns_I_avgMinusSEM_filt = filtfilt(b, a, ns_I_avgMinusSEM);
 
-% Mean +/- SEM
-avgPlusSEM_ps = filt_mean_ps + SEM_ps; %pref stim -- mean plus sem 1 
-avgMinusSEM_ps = filt_mean_ps - SEM_ps; %pref stim -- mean minus sem 1 
-avgPlusSEM_ns = filt_mean_ns + SEM_ns; %pref stim -- mean plus sem 1 
-avgMinusSEM_ns = filt_mean_ns - SEM_ns; %pref stim -- mean minus sem 1 
 
-%% Now convert grand average array into laminar compartments
-ps_S_mean = mean(filt_mean_ps(:,1:5),2); 
-ps_G_mean = mean(filt_mean_ps(:,6:10),2); 
-ps_I_mean = mean(filt_mean_ps(:,11:15),2); 
-ns_S_mean = mean(filt_mean_ns(:,1:5),2); 
-ns_G_mean = mean(filt_mean_ns(:,6:10),2); 
-ns_I_mean = mean(filt_mean_ns(:,11:15),2); 
 
-% Mean plus sem
-ps_S_mps = mean(avgPlusSEM_ps(:,1:5),2); 
-ps_G_mps = mean(avgPlusSEM_ps(:,6:10),2); 
-ps_I_mps = mean(avgPlusSEM_ps(:,11:15),2); 
-ns_S_mps = mean(avgPlusSEM_ns(:,1:5),2); 
-ns_G_mps = mean(avgPlusSEM_ns(:,6:10),2); 
-ns_I_mps = mean(avgPlusSEM_ns(:,11:15),2); 
-
-% Mean minus sem
-ps_S_mms = mean(avgMinusSEM_ps(:,1:5),2); 
-ps_G_mms = mean(avgMinusSEM_ps(:,6:10),2); 
-ps_I_mms = mean(avgMinusSEM_ps(:,11:15),2); 
-ns_S_mms = mean(avgMinusSEM_ns(:,1:5),2); 
-ns_G_mms = mean(avgMinusSEM_ns(:,6:10),2); 
-ns_I_mms = mean(avgMinusSEM_ns(:,11:15),2); 
 
 %% statistics
 % Ok, the data is together for plotting, now lets run statistics on
@@ -341,18 +370,18 @@ ns_I_mms = mean(avgMinusSEM_ns(:,11:15),2);
 % goal here is to run a t-test to see if the average response between
 % 1200 and 1600ms significantly differs between ps and ns
 useIdx = squeeze(~isnan(averageLFPMatrix_BRFSps(1,1,:))); 
-% % % % tInput_ps_S_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1050:1200,1:5,useIdx),1)),[],1);
-% % % % tInput_ps_G_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1050:1200,6:10,useIdx),1)),[],1);
-% % % % tInput_ps_I_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1050:1200,11:15,useIdx),1)),[],1);
-% % % % tInput_ns_S_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1050:1200,1:5,useIdx),1)),[],1);
-% % % % tInput_ns_G_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1050:1200,6:10,useIdx),1)),[],1);
-% % % % tInput_ns_I_trans = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1050:1200,11:15,useIdx),1)),[],1);
-% % % % tInput_ps_S_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1400:1801,1:5,useIdx),1)),[],1);
-% % % % tInput_ps_G_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1400:1801,6:10,useIdx),1)),[],1);
-% % % % tInput_ps_I_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSps(1400:1801,11:15,useIdx),1)),[],1);
-% % % % tInput_ns_S_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1400:1801,1:5,useIdx),1)),[],1);
-% % % % tInput_ns_G_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1400:1801,6:10,useIdx),1)),[],1);
-% % % % tInput_ns_I_susta = reshape(squeeze(mean(averageLFPMatrix_BRFSns(1400:1801,11:15,useIdx),1)),[],1);
+% % % % tInput_ps_S_trans = reshape(squeeze(median(averageLFPMatrix_BRFSps(1050:1200,1:5,useIdx),1)),[],1);
+% % % % tInput_ps_G_trans = reshape(squeeze(median(averageLFPMatrix_BRFSps(1050:1200,6:10,useIdx),1)),[],1);
+% % % % tInput_ps_I_trans = reshape(squeeze(median(averageLFPMatrix_BRFSps(1050:1200,11:15,useIdx),1)),[],1);
+% % % % tInput_ns_S_trans = reshape(squeeze(median(averageLFPMatrix_BRFSns(1050:1200,1:5,useIdx),1)),[],1);
+% % % % tInput_ns_G_trans = reshape(squeeze(median(averageLFPMatrix_BRFSns(1050:1200,6:10,useIdx),1)),[],1);
+% % % % tInput_ns_I_trans = reshape(squeeze(median(averageLFPMatrix_BRFSns(1050:1200,11:15,useIdx),1)),[],1);
+% % % % tInput_ps_S_susta = reshape(squeeze(median(averageLFPMatrix_BRFSps(1400:1801,1:5,useIdx),1)),[],1);
+% % % % tInput_ps_G_susta = reshape(squeeze(median(averageLFPMatrix_BRFSps(1400:1801,6:10,useIdx),1)),[],1);
+% % % % tInput_ps_I_susta = reshape(squeeze(median(averageLFPMatrix_BRFSps(1400:1801,11:15,useIdx),1)),[],1);
+% % % % tInput_ns_S_susta = reshape(squeeze(median(averageLFPMatrix_BRFSns(1400:1801,1:5,useIdx),1)),[],1);
+% % % % tInput_ns_G_susta = reshape(squeeze(median(averageLFPMatrix_BRFSns(1400:1801,6:10,useIdx),1)),[],1);
+% % % % tInput_ns_I_susta = reshape(squeeze(median(averageLFPMatrix_BRFSns(1400:1801,11:15,useIdx),1)),[],1);
 % % % % 
 % % % % [h_S_trans,p_S_trans] = ttest2(tInput_ps_S_trans,tInput_ns_S_trans);
 % % % % [h_G_trans,p_G_trans] = ttest2(tInput_ps_G_trans,tInput_ns_G_trans);
@@ -365,61 +394,66 @@ useIdx = squeeze(~isnan(averageLFPMatrix_BRFSps(1,1,:)));
 %% Figure generation! 
 % tiledLayout plot
 % close all
-tm_full = -200:1800; % 1801 total timepoints
+tm_full = -100:1800; % 1801 total timepoints
 lamCom = figure;
 set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
 t = tiledlayout(3,1);
 nexttile
-    plot(tm_full,ps_S_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,ps_S_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ps_S_mms,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_S_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,ns_S_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_S_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ps_S_filt(101:2001,1),'color',[230/255 97/255 1/255],'LineWidth',2); hold on
+    % plot(tm_full,ps_S_avgPlusSEM_filt,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    % plot(tm_full,ps_S_avgMinusSEM_filt,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ns_S_filt(101:2001,1),'color',[94/255 60/255 153/255],'LineWidth',2);
+    % plot(tm_full,ns_S_avgPlusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    % plot(tm_full,ns_S_avgMinusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     % ylim([0 40])
     vline(0)
     vline(800)
     vline(1600)
+    xlim([-100 1800])
     % xregion(850,1000)
     % xregion(1200,1600)
-    ylabel({'Supragranular','uV'})
-    % % title({strcat('Significant transient modulation?_',string(h_S_trans),'_pVal =',string(p_S_trans)),...
-       % % strcat('Significant sustained modulation?_',string(h_S_susta),'_pVal =',string(p_S_susta))},'Interpreter','none')
+    title('Supragranular')
+    set(gca,'xtick',[])
+    box("off")
 nexttile
-    plot(tm_full,ps_G_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,ps_G_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ps_G_mms,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_G_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,ns_G_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_G_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ps_G_filt(101:2001,1),'color',[230/255 97/255 1/255],'LineWidth',2); hold on
+    % plot(tm_full,ps_G_avgPlusSEM_filt,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    % plot(tm_full,ps_G_avgMinusSEM_filt,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ns_G_filt(101:2001,1),'color',[94/255 60/255 153/255],'LineWidth',2); 
+    % plot(tm_full,ns_G_avgPlusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    % plot(tm_full,ns_G_avgMinusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     % ylim([0 40])
     vline(0)
     vline(800)
     vline(1600)
+    xlim([-100 1800])
     % xregion(850,1000)
     % xregion(1200,1600)
-    ylabel({'Granular','% Change'})
-    % % title({strcat('Significant transient modulation?_',string(h_G_trans),'_pVal =',string(p_G_trans)),...
-    % %    strcat('Significant sustained modulation?_',string(h_G_susta),'_pVal =',string(p_G_susta))},'Interpreter','none')
+    title('Granular')
+    set(gca,'xtick',[])
+    box("off")
 nexttile
-    plot(tm_full,ps_I_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,ps_I_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ps_I_mms,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_I_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,ns_I_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_I_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':');
+    plot(tm_full,ps_I_filt(101:2001,1),'color',[230/255 97/255 1/255],'LineWidth',2); hold on
+    % plot(tm_full,ps_I_avgPlusSEM_filt,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    % plot(tm_full,ps_I_avgMinusSEM_filt,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ns_I_filt(101:2001,1),'color',[94/255 60/255 153/255],'LineWidth',2); 
+    % plot(tm_full,ns_I_avgPlusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    % plot(tm_full,ns_I_avgMinusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':');
     % ylim([0 40])
     vline(0)
     vline(800)
     vline(1600)
+    xlim([-100 1800])
     % xregion(850,1000)
     % xregion(1200,1600)
-    ylabel({'Infragranular','% Change'})
-    % % title({strcat('Significant transient modulation?_',string(h_I_trans),'_pVal =',string(p_I_trans)),...
-    % %    strcat('Significant sustained modulation?_',string(h_I_susta),'_pVal =',string(p_I_susta))},'Interpreter','none')
+    ylabel({'% Change from baseline'})
+    xlabel('Time (ms)')
+    title('Infragranular')
+    box("off")
 
-% % titleText = {'Grand average of 150 multi-units (29 penetrations) per laminar compartment'};
-% % title(t,titleText,'Interpreter','none')
+
+titleText = {'Median LFP of 125 electrodes (27 penetrations) per laminar compartment'};
+title(t,titleText,'Interpreter','none')
 
 %save fig
 cd(plotDir)
