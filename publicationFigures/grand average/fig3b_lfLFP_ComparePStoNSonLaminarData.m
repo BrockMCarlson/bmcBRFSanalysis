@@ -1,4 +1,4 @@
-%% fig4
+%% fig3
 % The goal of this script is to average together data from each laminar
 % compartment to see if differential perceptual modulations occur
 
@@ -24,13 +24,13 @@ cd(codeDir)
 cd(dataDir)
 
 if ~exist('LFP_trials','var')
-    load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
+    load('LFP_trials.mat') % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
 end
 
 
 
 %%
-for penetration = 1:size(LFP_trials,2)
+for penetration = 1:size(LFP_trials,1)
     
     probeName = char(officLamAssign.Session_probe_(penetration,1));
     fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
@@ -72,18 +72,18 @@ for penetration = 1:size(LFP_trials,2)
     % convert from cell to double and combine monocular conditions
     count = 0;
     for cond = monoc_1
-        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1)
             count = count + 1;
-            array_ofMonoc1(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); % 1000 x 32
+            array_ofMonoc1(:,:,count) = abs(LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); % 1000 x 32
         end
     end
     clear cond count trl 
     
     count = 0;
     for cond = monoc_2
-        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1)
             count = count + 1;
-            array_ofMonoc2(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
+            array_ofMonoc2(:,:,count) = abs(LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -91,9 +91,9 @@ for penetration = 1:size(LFP_trials,2)
     
     count = 0;
     for cond = monoc_3
-        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1)
             count = count + 1;
-            array_ofMonoc3(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
+            array_ofMonoc3(:,:,count) = abs(LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -101,9 +101,9 @@ for penetration = 1:size(LFP_trials,2)
     
     count = 0;
     for cond = monoc_4
-        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1)
             count = count + 1;
-            array_ofMonoc4(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
+            array_ofMonoc4(:,:,count) = abs(LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -203,10 +203,10 @@ for penetration = 1:size(LFP_trials,2)
     %% low frequency LFP
     % BRFS pref vs null
     % Get the number of trials for the chosen condition
-    numTrials = size(LFP_trials{1,penetration}{overallPref,1},1);
+    numTrials = size(LFP_trials{penetration,1}{overallPref,1},1);
     LFPflashOut_ps = nan(2001,length(v1Ch),numTrials);
     for trl = 1:numTrials
-        LFPflashTrl = LFP_trials{1,penetration}{overallPref,1}{trl,1}(:,v1Ch);
+        LFPflashTrl = LFP_trials{penetration,1}{overallPref,1}{trl,1}(:,v1Ch);
         blLFPflash = mean(LFPflashTrl(100:200,:),1);
         LFPflashBlSub = LFPflashTrl-blLFPflash;
         LFPflashOut_ps(:,:,trl) = LFPflashBlSub;
@@ -215,10 +215,10 @@ for penetration = 1:size(LFP_trials,2)
     averageLFPMatrix_BRFSps(:,:,penetration) = mean(LFPflashOut_ps,3); % Average across trl. averageLFPMatrix is (tm x ch x x penetration)
 
     % Get the number of trials for the chosen condition
-    numTrials = size(LFP_trials{1,penetration}{overallNull,1},1);
+    numTrials = size(LFP_trials{penetration,1}{overallNull,1},1);
     LFPflashOut_ns = nan(2001,length(v1Ch),numTrials);
     for trl = 1:numTrials
-        LFPflashTrl = LFP_trials{1,penetration}{overallNull,1}{trl,1}(:,v1Ch);
+        LFPflashTrl = LFP_trials{penetration,1}{overallNull,1}{trl,1}(:,v1Ch);
         blLFPflash = mean(LFPflashTrl(100:200,:),1);
         LFPflashBlSub = LFPflashTrl-blLFPflash;
         LFPflashOut_ns(:,:,trl) = LFPflashBlSub;
