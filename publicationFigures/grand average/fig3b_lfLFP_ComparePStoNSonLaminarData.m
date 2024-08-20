@@ -5,8 +5,9 @@
 %% Setup
 disp('start time')
 datetime
+close
 clearvars -except LFP_trials
-workingPC = 'office'; % options: 'home', 'office'
+workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -194,42 +195,29 @@ for penetration = 1:size(LFP_trials,1)
 
     %% LFP in percent change
     % BRFS pref vs null
-    % Get the number of trials for the chosen condition
     for i = 1:length(v1Ch)
+        % PS
         numTrials_ps = size(LFP_trials{penetration,1}{prefCondOnFlash(i,1),1},1);
         LFPflashOut_ps = nan(2001,numTrials_ps);
         for trl = 1:numTrials_ps
             LFPflashOut_ps(:,trl) = LFP_trials{penetration,1}{prefCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
         end
-        
-        % median across trials
+        % PS -- average across individual trials
         ps_avg = median(LFPflashOut_ps,2,"omitmissing"); % input is (tm,trl)    
-        % Calculate as Percent Change
-        %              X(t) - avgBl
-        % %Ch = 100 * -------------
-        %                 avgBl
         psBl = median(ps_avg(1:200,:));
-        if psBl == 0
-            psBl = 1;
-        end
-        ps_PercentC = 100*((ps_avg-psBl)./psBl);
-        averageLFPMatrix_BRFSps(:,i,penetration) = ps_PercentC;
+        averageLFPMatrix_BRFSps(:,i,penetration) = ps_avg-psBl;
 
     
-        % Get the number of trials for the chosen condition
+        % NS
         numTrials_ns = size(LFP_trials{penetration,1}{nullCondOnFlash(i,1) ,1},1);
         LFPflashOut_ns = nan(2001,numTrials_ns);
         for trl = 1:numTrials_ns
             LFPflashOut_ns(:,trl) = LFP_trials{penetration,1}{nullCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
         end
-        % Average across trials and save output
+        % NS -- average across individual trials\
         ns_avg = median(LFPflashOut_ns,2,"omitmissing"); % input is (tm,trl)    
         nsBl = median(ns_avg(1:200,:));
-        if nsBl == 0
-            nsBl = 1;
-        end
-        ns_PercentC = 100*((ns_avg-nsBl)./nsBl);
-        averageLFPMatrix_BRFSns(:,i,penetration) = ns_PercentC; % Average across trl. averageLFPMatrix is (tm x ch x x penetration)
+        averageLFPMatrix_BRFSns(:,i,penetration) = ns_avg-nsBl; % Average across trl. averageLFPMatrix is (tm x ch x x penetration)
     end
     disp(strcat('Done with file number: ',string(penetration)))
 end
@@ -245,12 +233,18 @@ ns_G = reshape(averageLFPMatrix_BRFSns(:,6:10,useIdx),[2001,135]);
 ns_I = reshape(averageLFPMatrix_BRFSns(:,11:15,useIdx),[2001,135]);
 
 % Average across penetrations
-ps_S_avg = smoothdata(median(ps_S,2,"omitmissing"),"gaussian",50);
-ps_G_avg = smoothdata(median(ps_G,2,"omitmissing"),"gaussian",50);
-ps_I_avg = smoothdata(median(ps_I,2,"omitmissing"),"gaussian",50);
-ns_S_avg = smoothdata(median(ns_S,2,"omitmissing"),"gaussian",50);
-ns_G_avg = smoothdata(median(ns_G,2,"omitmissing"),"gaussian",50);
-ns_I_avg = smoothdata(median(ns_I,2,"omitmissing"),"gaussian",50);
+% % ps_S_avg = smoothdata(median(ps_S,2,"omitmissing"),"gaussian",50);
+% % ps_G_avg = smoothdata(median(ps_G,2,"omitmissing"),"gaussian",50);
+% % ps_I_avg = smoothdata(median(ps_I,2,"omitmissing"),"gaussian",50);
+% % ns_S_avg = smoothdata(median(ns_S,2,"omitmissing"),"gaussian",50);
+% % ns_G_avg = smoothdata(median(ns_G,2,"omitmissing"),"gaussian",50);
+% % ns_I_avg = smoothdata(median(ns_I,2,"omitmissing"),"gaussian",50);
+ps_S_avg = median(ps_S,2,"omitmissing");
+ps_G_avg = median(ps_G,2,"omitmissing");
+ps_I_avg = median(ps_I,2,"omitmissing");
+ns_S_avg = median(ns_S,2,"omitmissing");
+ns_G_avg = median(ns_G,2,"omitmissing");
+ns_I_avg = median(ns_I,2,"omitmissing");
 
 % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
 contactNum = size(ps_S,2);
@@ -374,7 +368,7 @@ useIdx = squeeze(~isnan(averageLFPMatrix_BRFSps(1,1,:)));
 % % % % tInput_ps_G_trans = reshape(squeeze(median(averageLFPMatrix_BRFSps(1050:1200,6:10,useIdx),1)),[],1);
 % % % % tInput_ps_I_trans = reshape(squeeze(median(averageLFPMatrix_BRFSps(1050:1200,11:15,useIdx),1)),[],1);
 % % % % tInput_ns_S_trans = reshape(squeeze(median(averageLFPMatrix_BRFSns(1050:1200,1:5,useIdx),1)),[],1);
-% % % % tInput_ns_G_trans = reshape(squeeze(median(averageLFPMatrix_BRFSns(1050:1200,6:10,useIdx),1)),[],1);
+% % % % tInput_ns_G_trans = reshape(squeeze(media    vline(833)n(averageLFPMatrix_BRFSns(1050:1200,6:10,useIdx),1)),[],1);
 % % % % tInput_ns_I_trans = reshape(squeeze(median(averageLFPMatrix_BRFSns(1050:1200,11:15,useIdx),1)),[],1);
 % % % % tInput_ps_S_susta = reshape(squeeze(median(averageLFPMatrix_BRFSps(1400:1801,1:5,useIdx),1)),[],1);
 % % % % tInput_ps_G_susta = reshape(squeeze(median(averageLFPMatrix_BRFSps(1400:1801,6:10,useIdx),1)),[],1);
@@ -406,15 +400,18 @@ nexttile
     % plot(tm_full,ns_S_avgPlusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     % plot(tm_full,ns_S_avgMinusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     % ylim([0 40])
+    hAx=gca;
+    hAx.YDir='reverse';
     vline(0)
-    vline(800)
-    vline(1600)
+    vline(833)
+    vline(1633)
     xlim([-100 1800])
     % xregion(850,1000)
     % xregion(1200,1600)
     title('Supragranular')
     set(gca,'xtick',[])
     box("off")
+    legend('Preferred stimulus','Null stimulus')
 nexttile
     plot(tm_full,ps_G_filt(101:2001,1),'color',[230/255 97/255 1/255],'LineWidth',2); hold on
     % plot(tm_full,ps_G_avgPlusSEM_filt,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
@@ -423,9 +420,11 @@ nexttile
     % plot(tm_full,ns_G_avgPlusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     % plot(tm_full,ns_G_avgMinusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     % ylim([0 40])
+    hAx=gca;
+    hAx.YDir='reverse';
     vline(0)
-    vline(800)
-    vline(1600)
+    vline(833)
+    vline(1633)
     xlim([-100 1800])
     % xregion(850,1000)
     % xregion(1200,1600)
@@ -440,27 +439,41 @@ nexttile
     % plot(tm_full,ns_I_avgPlusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
     % plot(tm_full,ns_I_avgMinusSEM_filt,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':');
     % ylim([0 40])
+    hAx=gca;
+    hAx.YDir='reverse';
     vline(0)
-    vline(800)
-    vline(1600)
+    vline(833)
+    vline(1633)
     xlim([-100 1800])
     % xregion(850,1000)
     % xregion(1200,1600)
-    ylabel({'% Change from baseline'})
+    ylabel({'Voltage (uV)'})
     xlabel('Time (ms)')
     title('Infragranular')
     box("off")
 
 
-titleText = {'Median LFP of 125 electrodes (27 penetrations) per laminar compartment'};
+titleText = {'Median LFP of 135 electrodes (27 penetrations) per laminar compartment'};
 title(t,titleText,'Interpreter','none')
 
 %save fig
-cd(plotDir)
-figName_lamCom = strcat('LFP_laminarCompartment_','_grandAvg_','.png');
-saveas(lamCom,figName_lamCom)
-figName_lamCom = strcat('LFP_laminarCompartment_','_grandAvg_','.svg');
-saveas(lamCom,figName_lamCom)
+answer = questdlg('Would you like to save this figure?', ...
+	'Y', ...
+	'N');
+% Handle response
+switch answer
+    case 'Yes'
+       disp('alright, saving figure to plotdir')
+        cd(plotDir)
+        figName_lamCom = strcat('LFP_laminarCompartment_','_grandAvg_','.png');
+        saveas(lamCom,figName_lamCom)
+        figName_lamCom = strcat('LFP_laminarCompartment_','_grandAvg_','.svg');
+        saveas(lamCom,figName_lamCom)
+    case 'No'
+        cd(plotDir)
+        disp('please see plotdir for last save')
+end
+
 
 
 

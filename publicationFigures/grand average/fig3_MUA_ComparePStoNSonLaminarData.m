@@ -5,8 +5,9 @@
 %% Setup
 disp('start time')
 datetime
+close
 clearvars -except MUA_trials
-workingPC = 'office'; % options: 'home', 'office'
+workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -30,6 +31,8 @@ end
 
 
 %%
+averageMUAMatrix_BRFSps = nan(2001,15,31);
+averageLFPMatrix_BRFSns = nan(2001,15,31);
 for penetration = 1:size(MUA_trials,1)
     
     probeName = char(officLamAssign.Session_probe_(penetration,1));
@@ -233,44 +236,53 @@ for penetration = 1:size(MUA_trials,1)
 end
 
 
-%% Average over sessions
-mean_ps = smoothdata(mean(averageMUAMatrix_BRFSps,3,"omitmissing"),1,"gaussian",20);
-mean_ns = smoothdata(mean(averageMUAMatrix_BRFSns,3,"omitmissing"),1,"gaussian",20);
+%% Organize into compartments, median and std across contacts+penetration
+% reshape
+useIdx = squeeze(~isnan(averageMUAMatrix_BRFSps(1,1,:))); 
+ps_S = reshape(averageMUAMatrix_BRFSps(:,1:5,useIdx),[2001,135]);
+ps_G = reshape(averageMUAMatrix_BRFSps(:,6:10,useIdx),[2001,135]);
+ps_I = reshape(averageMUAMatrix_BRFSps(:,11:15,useIdx),[2001,135]);
+ns_S = reshape(averageMUAMatrix_BRFSns(:,1:5,useIdx),[2001,135]);
+ns_G = reshape(averageMUAMatrix_BRFSns(:,6:10,useIdx),[2001,135]);
+ns_I = reshape(averageMUAMatrix_BRFSns(:,11:15,useIdx),[2001,135]);
+
+% Average across penetrations
+ps_S_avg = smoothdata(mean(ps_S,2,"omitmissing"),"gaussian",50);
+ps_G_avg = smoothdata(mean(ps_G,2,"omitmissing"),"gaussian",50);
+ps_I_avg = smoothdata(mean(ps_I,2,"omitmissing"),"gaussian",50);
+ns_S_avg = smoothdata(mean(ns_S,2,"omitmissing"),"gaussian",50);
+ns_G_avg = smoothdata(mean(ns_G,2,"omitmissing"),"gaussian",50);
+ns_I_avg = smoothdata(mean(ns_I,2,"omitmissing"),"gaussian",50);
+% % ps_S_avg = median(ps_S,2,"omitmissing");
+% % ps_G_avg = median(ps_G,2,"omitmissing");
+% % ps_I_avg = median(ps_I,2,"omitmissing");
+% % ns_S_avg = median(ns_S,2,"omitmissing");
+% % ns_G_avg = median(ns_G,2,"omitmissing");
+% % ns_I_avg = median(ns_I,2,"omitmissing");
 
 % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
-penetrationNumber = sum(~isnan(averageMUAMatrix_BRFSps(1,1,:)));
-SEM_ps = std(averageMUAMatrix_BRFSps,0,3,"omitmissing")/sqrt(penetrationNumber); 
-SEM_ns = std(averageMUAMatrix_BRFSns,0,3,"omitmissing")/sqrt(penetrationNumber); 
+contactNum = size(ps_S,2);
+ps_S_sem = std(ps_S,0,2,"omitmissing")./sqrt(contactNum); 
+ps_G_sem = std(ps_G,0,2,"omitmissing")./sqrt(contactNum); 
+ps_I_sem = std(ps_I,0,2,"omitmissing")./sqrt(contactNum); 
+ns_S_sem = std(ns_S,0,2,"omitmissing")./sqrt(contactNum); 
+ns_G_sem = std(ns_G,0,2,"omitmissing")./sqrt(contactNum); 
+ns_I_sem = std(ns_I,0,2,"omitmissing")./sqrt(contactNum); 
 
 % Mean +/- SEM
-avgPlusSEM_ps = mean_ps + SEM_ps; %pref stim -- mean plus sem 1 
-avgMinusSEM_ps = mean_ps - SEM_ps; %pref stim -- mean minus sem 1 
-avgPlusSEM_ns = mean_ns + SEM_ns; %pref stim -- mean plus sem 1 
-avgMinusSEM_ns = mean_ns - SEM_ns; %pref stim -- mean minus sem 1 
+ps_S_avgPlusSEM = ps_S_avg + ps_S_sem; %pref stim -- median plus sem 1 
+ps_S_avgMinusSEM = ps_S_avg - ps_S_sem; %pref stim -- median minus sem 1 
+ps_G_avgPlusSEM = ps_G_avg + ps_G_sem; %pref stim -- median plus sem 1 
+ps_G_avgMinusSEM = ps_G_avg - ps_G_sem; %pref stim -- median minus sem 1 
+ps_I_avgPlusSEM = ps_I_avg + ps_I_sem; %pref stim -- median plus sem 1 
+ps_I_avgMinusSEM = ps_I_avg - ps_I_sem; %pref stim -- median minus sem 1 
 
-%% Now convert grand average array into laminar compartments
-ps_S_mean = mean(mean_ps(:,1:5),2); 
-ps_G_mean = mean(mean_ps(:,6:10),2); 
-ps_I_mean = mean(mean_ps(:,11:15),2); 
-ns_S_mean = mean(mean_ns(:,1:5),2); 
-ns_G_mean = mean(mean_ns(:,6:10),2); 
-ns_I_mean = mean(mean_ns(:,11:15),2); 
-
-% Mean plus sem
-ps_S_mps = mean(avgPlusSEM_ps(:,1:5),2); 
-ps_G_mps = mean(avgPlusSEM_ps(:,6:10),2); 
-ps_I_mps = mean(avgPlusSEM_ps(:,11:15),2); 
-ns_S_mps = mean(avgPlusSEM_ns(:,1:5),2); 
-ns_G_mps = mean(avgPlusSEM_ns(:,6:10),2); 
-ns_I_mps = mean(avgPlusSEM_ns(:,11:15),2); 
-
-% Mean minus sem
-ps_S_mms = mean(avgMinusSEM_ps(:,1:5),2); 
-ps_G_mms = mean(avgMinusSEM_ps(:,6:10),2); 
-ps_I_mms = mean(avgMinusSEM_ps(:,11:15),2); 
-ns_S_mms = mean(avgMinusSEM_ns(:,1:5),2); 
-ns_G_mms = mean(avgMinusSEM_ns(:,6:10),2); 
-ns_I_mms = mean(avgMinusSEM_ns(:,11:15),2); 
+ns_S_avgPlusSEM = ns_S_avg + ns_S_sem; 
+ns_S_avgMinusSEM = ns_S_avg - ns_S_sem;  
+ns_G_avgPlusSEM = ns_G_avg + ns_G_sem; 
+ns_G_avgMinusSEM = ns_G_avg - ns_G_sem; 
+ns_I_avgPlusSEM = ns_I_avg + ns_I_sem; 
+ns_I_avgMinusSEM = ns_I_avg - ns_I_sem; 
 
 %% statistics
 % Ok, the data is together for plotting, now lets run statistics on
@@ -307,64 +319,76 @@ lamCom = figure;
 set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
 t = tiledlayout(3,1);
 nexttile
-    plot(tm_full,ps_S_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,ps_S_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ps_S_mms,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_S_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,ns_S_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_S_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    % ylim([0 40])
+    plot(tm_full,ps_S_avg,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+    plot(tm_full,ps_S_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ps_S_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ns_S_avg,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+    plot(tm_full,ns_S_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ns_S_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    ylim([0 40])
     vline(0)
-    vline(800)
-    vline(1600)
+    vline(833)
+    vline(1633)
     % xregion(850,1000)
     % xregion(1200,1600)
-    ylabel({'Supragranular','uV'})
-    % % title({strcat('Significant transient modulation?_',string(h_S_trans),'_pVal =',string(p_S_trans)),...
-       % % strcat('Significant sustained modulation?_',string(h_S_susta),'_pVal =',string(p_S_susta))},'Interpreter','none')
+    title('Supragranular')
+    set(gca,'xtick',[])
+    box("off")
+    legend('Preferred stimulus','Null stimulus')
 nexttile
-    plot(tm_full,ps_G_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,ps_G_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ps_G_mms,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_G_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,ns_G_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_G_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    % ylim([0 40])
+    plot(tm_full,ps_G_avg,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+    plot(tm_full,ps_G_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ps_G_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ns_G_avg,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+    plot(tm_full,ns_G_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ns_G_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    ylim([0 40])
     vline(0)
-    vline(800)
-    vline(1600)
+    vline(833)
+    vline(1633)
     % xregion(850,1000)
     % xregion(1200,1600)
-    ylabel({'Granular','% Change'})
-    % % title({strcat('Significant transient modulation?_',string(h_G_trans),'_pVal =',string(p_G_trans)),...
-    % %    strcat('Significant sustained modulation?_',string(h_G_susta),'_pVal =',string(p_G_susta))},'Interpreter','none')
+    title('Granular')
+    set(gca,'xtick',[])
+    box("off")
 nexttile
-    plot(tm_full,ps_I_mean,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,ps_I_mps,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ps_I_mms,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_I_mean,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,ns_I_mps,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,ns_I_mms,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':');
-    % ylim([0 40])
+    plot(tm_full,ps_I_avg,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+    plot(tm_full,ps_I_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ps_I_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ns_I_avg,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+    plot(tm_full,ns_I_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,ns_I_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':');
+    ylim([0 40])
     vline(0)
-    vline(800)
-    vline(1600)
+    vline(833)
+    vline(1633)
     % xregion(850,1000)
     % xregion(1200,1600)
-    ylabel({'Infragranular','% Change'})
-    % % title({strcat('Significant transient modulation?_',string(h_I_trans),'_pVal =',string(p_I_trans)),...
-    % %    strcat('Significant sustained modulation?_',string(h_I_susta),'_pVal =',string(p_I_susta))},'Interpreter','none')
+    ylabel({'% change from baseline'})
+    xlabel('Time (ms)')
+    title('Infragranular')
+    box("off")
 
-% % titleText = {'Grand average of 150 multi-units (29 penetrations) per laminar compartment'};
-% % title(t,titleText,'Interpreter','none')
+titleText = {'MEAN MUA of 135 electrodes (27 penetrations) per laminar compartment'};
+title(t,titleText,'Interpreter','none')
+
 
 %save fig
-cd(plotDir)
-figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.png');
-saveas(lamCom,figName_lamCom)
-figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.svg');
-saveas(lamCom,figName_lamCom)
-
-
+answer = questdlg('Would you like to save this figure?', ...
+	'Y', ...
+	'N');
+% Handle response
+switch answer
+    case 'Yes'
+       disp('alright, saving figure to plotdir')
+        cd(plotDir)
+        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.png');
+        saveas(lamCom,figName_lamCom)
+        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.svg');
+        saveas(lamCom,figName_lamCom)
+    case 'No'
+        cd(plotDir)
+        disp('please see plotdir for last save')
+end
 
 
