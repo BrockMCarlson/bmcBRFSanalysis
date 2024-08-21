@@ -202,14 +202,14 @@ for penetration = 1:size(LFP_trials,2)
         CSDbinocOut = nan(1201,length(v1Ch),numTrials);
         for trl = 1:numTrials
             LFPbinocTrl = LFP_trials{1,penetration}{conditionNumber,1}{trl,1}(:,chForCSDcalc); % adding ch above and below for CSD calc (to use as vaknin pad)
-            blLFPbinoc = mean(LFPbinocTrl(100:200,:),1);
+            blLFPbinoc = median(LFPbinocTrl(100:200,:),1);
             LFPbinocBlSub = LFPbinocTrl-blLFPbinoc;
             CSDbinocTrl = calcCSD_classic(LFPbinocBlSub);
             CSDbinocOut(:,:,trl) = CSDbinocTrl(:,2:16); % limit to origional V1 ch lim
         end
         % Average across trials and save output
         count = count + 1; % for pref vs null
-        averageCSDMatrix_diopDichop(:,:,count,penetration) = mean(CSDbinocOut,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
+        averageCSDMatrix_diopDichop(:,:,count,penetration) = median(CSDbinocOut,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
     end
 
     % BRFS pref vs null
@@ -220,14 +220,14 @@ for penetration = 1:size(LFP_trials,2)
         CSDflashOut = nan(1201,length(v1Ch),numTrials);
         for trl = 1:numTrials
             LFPflashTrl = LFP_trials{1,penetration}{conditionNumber,1}{trl,2}(:,chForCSDcalc);
-            blLFPflash = mean(LFPflashTrl(100:200,:),1);
+            blLFPflash = median(LFPflashTrl(100:200,:),1);
             LFPflashBlSub = LFPflashTrl-blLFPflash;
             CSDflashTrl = calcCSD_classic(LFPflashBlSub);
             CSDflashOut(:,:,trl) = CSDflashTrl(:,2:16);
         end
         % Average across trials and save output
         count = count + 1; % for pref vs null
-        averageCSDMatrix_BRFS(:,:,count,penetration) = mean(CSDflashOut,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
+        averageCSDMatrix_BRFS(:,:,count,penetration) = median(CSDflashOut,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
     end
 
 
@@ -236,7 +236,7 @@ end
 
 
 %% plot dioptic vs dichoptic
-grandAverageCSD_diopDichop = mean(averageCSDMatrix_diopDichop,4,"omitmissing"); % average across penetration
+grandAverageCSD_diopDichop = median(averageCSDMatrix_diopDichop,4,"omitmissing"); % average across penetration
 
 
 f = figure;
@@ -290,8 +290,8 @@ for ch = 1:15
     CSDMatrix2 = squeeze(averageCSDMatrix_diopDichop(:,ch,2,usePenetration)); 
     for bin = 1:24
         tm = [1:50]+(50*(bin-1));
-        CSD_binned1(bin,:) = abs(mean(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
-        CSD_binned2(bin,:) = abs(mean(CSDMatrix2(tm,:),1));
+        CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
+        CSD_binned2(bin,:) = abs(median(CSDMatrix2(tm,:),1));
         [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
             ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','left');
         tStat_1(ch,bin) = stats(ch,bin).tstat;
@@ -373,8 +373,8 @@ for ch = 1:15
     CSDMatrix2 = squeeze(averageCSDMatrix_BRFS(:,ch,2,usePenetration)); 
     for bin = 1:24
         tm = [1:50]+(50*(bin-1));
-        CSD_binned1(bin,:) = abs(mean(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
-        CSD_binned2(bin,:) = abs(mean(CSDMatrix2(tm,:),1));
+        CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
+        CSD_binned2(bin,:) = abs(median(CSDMatrix2(tm,:),1));
         [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
             ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','right');
         tStat_1(ch,bin) = stats(ch,bin).tstat;
@@ -406,8 +406,23 @@ sgtitle('CSD Penetration Average')
 
 
 %% Save output
-cd(plotDir)
-saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
-saveas(f,saveName) 
-saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
-saveas(f,saveName) 
+%save fig
+answer = questdlg('Would you like to save this figure?', ...
+	'Y', ...
+	'N');
+% Handle response
+switch answer
+    case 'Yes'
+       disp('alright, saving figure to plotdir')
+        cd(plotDir)
+        saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
+        saveas(f,saveName) 
+        saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
+        saveas(f,saveName) 
+    case 'No'
+        cd(plotDir)
+        disp('please see plotdir for last save')
+end
+
+
+
