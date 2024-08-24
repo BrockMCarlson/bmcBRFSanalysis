@@ -1,28 +1,38 @@
 %% bmcBRFS_CSD_grandAverage_loadMAT
 % Are there observable differences between trial-types with LFP CSD?
 % initialize variables
+
+%% Setup
+disp('start time')
+datetime
 clearvars -except LFP_trials
-close all
+workingPC = 'office'; % options: 'home', 'office'
+if strcmp(workingPC,'home')
+    codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
+    dataDir = 'S:\TrialTriggeredLFPandMUA';
+    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig3_LFP';
+    officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+elseif strcmp(workingPC,'office')
+    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
+    dataDir    = 'D:\TrialTriggeredLFPandMUA';
+    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig3_LFP';
+    officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+end
+cd(codeDir)
+cd(dataDir)
+
+if ~exist('LFP_trials','var')
+    tic
+    load('LFP_trials.mat') % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
+    toc
+end
+
 
 
 %% For loop
-plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\CSDFigs';
-dataDir = 'S:\TrialTriggeredLFPandMUA';
-% % dataDir = 'D:\sortedData_240229';
-% % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
-cd(dataDir)
-% % tic %takes just over 2 min
-if ~exist('LFP_trials','var')
-    load('LFP_trials.mat') % format is LFP_trials{1,penetration}{cond,1}{trial,flash}
-end
-% % toc
-officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-
-averageCSDMatrix_diopDichop = nan(1201,15,2,size(officLamAssign,1));
-averageCSDMatrix_BRFS = nan(1201,15,2,size(officLamAssign,1));
-
-
-for penetration = 1:size(LFP_trials,2)
+averageCSDMatrix_diopDichop = nan(2001,15,2,31);
+averageCSDMatrix_BRFS       = nan(2001,15,2,31);
+for penetration = 1:size(LFP_trials,1)
     
     probeName = char(officLamAssign.Session_probe_(penetration,1));
     fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
@@ -64,18 +74,18 @@ for penetration = 1:size(LFP_trials,2)
     % convert from cell to double and combine monocular conditions
     count = 0;
     for cond = monoc_1
-        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1)
             count = count + 1;
-            array_ofMonoc1(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); % 1000 x 32
+            array_ofMonoc1(:,:,count) = abs(LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); % 1000 x 32
         end
     end
     clear cond count trl 
     
     count = 0;
     for cond = monoc_2
-        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1)
             count = count + 1;
-            array_ofMonoc2(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
+            array_ofMonoc2(:,:,count) = abs(LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -83,9 +93,9 @@ for penetration = 1:size(LFP_trials,2)
     
     count = 0;
     for cond = monoc_3
-        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1)
             count = count + 1;
-            array_ofMonoc3(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
+            array_ofMonoc3(:,:,count) = abs(LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -93,9 +103,9 @@ for penetration = 1:size(LFP_trials,2)
     
     count = 0;
     for cond = monoc_4
-        for trl = 1:size(LFP_trials{1,penetration}{cond,1},1)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1)
             count = count + 1;
-            array_ofMonoc4(:,:,count) = abs(LFP_trials{1,penetration}{cond,1}{trl,1}(:,v1Ch)); 
+            array_ofMonoc4(:,:,count) = abs(LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); 
         end
     end
     clear cond count trl 
@@ -198,11 +208,11 @@ for penetration = 1:size(LFP_trials,2)
     count = 0;
     for conditionNumber = [1 3]        
         % Get the number of trials for the chosen condition
-        numTrials = size(LFP_trials{1,penetration}{conditionNumber,1},1);
-        CSDbinocOut = nan(1201,length(v1Ch),numTrials);
+        numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
+        CSDbinocOut = nan(2001,length(v1Ch),numTrials);
         for trl = 1:numTrials
-            LFPbinocTrl = LFP_trials{1,penetration}{conditionNumber,1}{trl,1}(:,chForCSDcalc); % adding ch above and below for CSD calc (to use as vaknin pad)
-            blLFPbinoc = median(LFPbinocTrl(100:200,:),1);
+            LFPbinocTrl = LFP_trials{penetration,1}{conditionNumber,1}{trl,1}(:,chForCSDcalc); % adding ch above and below for CSD calc (to use as vaknin pad)
+            blLFPbinoc = mean(LFPbinocTrl(100:200,:),1);
             LFPbinocBlSub = LFPbinocTrl-blLFPbinoc;
             CSDbinocTrl = calcCSD_classic(LFPbinocBlSub);
             CSDbinocOut(:,:,trl) = CSDbinocTrl(:,2:16); % limit to origional V1 ch lim
@@ -216,11 +226,11 @@ for penetration = 1:size(LFP_trials,2)
     count = 0;
     for conditionNumber = [overallPref overallNull]        
         % Get the number of trials for the chosen condition
-        numTrials = size(LFP_trials{1,penetration}{conditionNumber,1},1);
-        CSDflashOut = nan(1201,length(v1Ch),numTrials);
+        numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
+        CSDflashOut = nan(2001,length(v1Ch),numTrials);
         for trl = 1:numTrials
-            LFPflashTrl = LFP_trials{1,penetration}{conditionNumber,1}{trl,2}(:,chForCSDcalc);
-            blLFPflash = median(LFPflashTrl(100:200,:),1);
+            LFPflashTrl = LFP_trials{penetration,1}{conditionNumber,1}{trl,1}(:,chForCSDcalc);
+            blLFPflash = mean(LFPflashTrl(100:200,:),1);
             LFPflashBlSub = LFPflashTrl-blLFPflash;
             CSDflashTrl = calcCSD_classic(LFPflashBlSub);
             CSDflashOut(:,:,trl) = CSDflashTrl(:,2:16);
@@ -229,6 +239,47 @@ for penetration = 1:size(LFP_trials,2)
         count = count + 1; % for pref vs null
         averageCSDMatrix_BRFS(:,:,count,penetration) = median(CSDflashOut,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
     end
+
+    % % % % chForCSDcalc = v1Ch(1)-1:v1Ch(end)+1;
+    % % % % % Dioptic vs dichoptic
+    % % % % count = 0;
+    % % % % for conditionNumber = [1 3]        
+    % % % %     % Get the number of trials for the chosen condition
+    % % % %     numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
+    % % % %     CSDbinocOut = nan(2001,length(v1Ch),numTrials);
+    % % % %     for trl = 1:numTrials
+    % % % %         LFPbinocTrl = LFP_trials{penetration,1}{conditionNumber,1}{trl,1}(:,chForCSDcalc); % adding ch above and below for CSD calc (to use as vaknin pad)
+    % % % %         CSDbinocTrl = calcCSD_classic(LFPbinocTrl);
+    % % % %         CSDbinocOut(:,:,trl) = CSDbinocTrl(:,2:16); % limit to origional V1 ch lim
+    % % % %     end
+    % % % %     %convert to % change
+    % % % %     trlAvgBinoc = median(CSDbinocOut,3); 
+    % % % %     blCSDbinoc = mean(trlAvgBinoc(100:200,:),1);
+    % % % %     CSD_percentChange = 100*((trlAvgBinoc-blCSDbinoc)./blCSDbinoc);
+    % % % %     % Average across trials and save output
+    % % % %     count = count + 1; % for pref vs null
+    % % % %     averageCSDMatrix_diopDichop(:,:,count,penetration) = median(CSD_percentChange,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
+    % % % % end
+    % % % % 
+    % % % % % BRFS pref vs null
+    % % % % count = 0;
+    % % % % for conditionNumber = [overallPref overallNull]        
+    % % % %     % Get the number of trials for the chosen condition
+    % % % %     numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
+    % % % %     CSDflashOut = nan(2001,length(v1Ch),numTrials);
+    % % % %     for trl = 1:numTrials
+    % % % %         LFPflashTrl = LFP_trials{penetration,1}{conditionNumber,1}{trl,1}(:,chForCSDcalc);
+    % % % %         CSDflashTrl = calcCSD_classic(LFPflashTrl);
+    % % % %         CSDflashOut(:,:,trl) = CSDflashTrl(:,2:16);
+    % % % %     end
+    % % % %     %convert to % change
+    % % % %     trlAvgFlash = median(CSDflashOut,3); 
+    % % % %     blCSDbinoc = mean(trlAvgFlash(100:200,:),1);
+    % % % %     CSD_percentChange = 100*((trlAvgFlash-blCSDbinoc)./blCSDbinoc);
+    % % % %     % Average across trials and save output
+    % % % %     count = count + 1; % for pref vs null
+    % % % %     averageCSDMatrix_BRFS(:,:,count,penetration) = median(CSD_percentChange,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
+    % % % % end
 
 
     disp(strcat('Done with file number: ',string(penetration)))
@@ -244,7 +295,7 @@ set(f,"Position",[345.6667 256.3333 1698 981.3333])
 % Visualize the CSD matrix
 % dioptic
 ax(1) = subplot(2,5,1);
-imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(:,:,1)');
+imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(1:1201,:,1)');
 oldcmap = colormap(ax(1),'jet');
 newcmap = colormap(flipud(oldcmap));
 colormap(ax(1),newcmap)
@@ -258,7 +309,7 @@ title('Dioptic');
 
 %dichoptic
 ax(2) = subplot(2,5,2);
-imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(:,:,2)');
+imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(1:1201,:,2)');
 colormap(ax(2),newcmap)
 clim([-3000 3000]);
 xlabel('Time (ms)');
@@ -268,7 +319,7 @@ title('Dichoptic');
 
 % Visualize the raw diff
 differenceMatrix_diopDichoip = ...
-    abs(grandAverageCSD_diopDichop(:,:,1)')-abs(grandAverageCSD_diopDichop(:,:,2)');
+    abs(grandAverageCSD_diopDichop(1:1201,:,1)')-abs(grandAverageCSD_diopDichop(1:1201,:,2)');
 ax(3) = subplot(2,5,3);
 imagesc(-200:1000,1:15,differenceMatrix_diopDichoip);
 colormap(ax(3),'bone');
@@ -286,8 +337,8 @@ h = nan(15,24);
 p = nan(15,24);
 ci = nan(15,24,2);
 for ch = 1:15
-    CSDMatrix1 = squeeze(averageCSDMatrix_diopDichop(:,ch,1,usePenetration)); 
-    CSDMatrix2 = squeeze(averageCSDMatrix_diopDichop(:,ch,2,usePenetration)); 
+    CSDMatrix1 = squeeze(averageCSDMatrix_diopDichop(1:1201,ch,1,usePenetration)); 
+    CSDMatrix2 = squeeze(averageCSDMatrix_diopDichop(1:1201,ch,2,usePenetration)); 
     for bin = 1:24
         tm = [1:50]+(50*(bin-1));
         CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
@@ -325,7 +376,7 @@ grandAverageCSD_BRFS = median(averageCSDMatrix_BRFS,4,"omitmissing"); % average 
 
 % Visualize the CSD matrix
 ax(6) = subplot(2,5,6);
-imagesc(-200:1000,1:15,grandAverageCSD_BRFS(:,:,1)');
+imagesc(-200:1000,1:15,grandAverageCSD_BRFS(801:2001,:,1)');
 colormap(ax(6),newcmap)
 clim([-1500 1500]);
 xlabel('Time (ms)');
@@ -338,7 +389,7 @@ title('Preferred stimulus BRFS flash');
 
 
 ax(7) = subplot(2,5,7);
-imagesc(-200:1000,1:15,grandAverageCSD_BRFS(:,:,2)');
+imagesc(-200:1000,1:15,grandAverageCSD_BRFS(801:2001,:,2)');
 colormap(ax(7),newcmap)
 clim([-1500 1500]);
 xlabel('Time (ms)');
@@ -351,7 +402,7 @@ title('Non-preferred stimulus BRFS flash');
 
 % Visualize the raw diff
 differenceMatrix_diopDichoip = ...
-    abs(grandAverageCSD_BRFS(:,:,1)')-abs(grandAverageCSD_BRFS(:,:,2)');
+    abs(grandAverageCSD_BRFS(801:2001,:,1)')-abs(grandAverageCSD_BRFS(801:2001,:,2)');
 ax(8) = subplot(2,5,8);
 imagesc(-200:1000,1:15,differenceMatrix_diopDichoip);
 colormap(ax(8),'bone');
@@ -369,8 +420,8 @@ h = nan(15,24);
 p = nan(15,24);
 ci = nan(15,24,2);
 for ch = 1:15
-    CSDMatrix1 = squeeze(averageCSDMatrix_BRFS(:,ch,1,usePenetration)); 
-    CSDMatrix2 = squeeze(averageCSDMatrix_BRFS(:,ch,2,usePenetration)); 
+    CSDMatrix1 = squeeze(averageCSDMatrix_BRFS(801:2001,ch,1,usePenetration)); 
+    CSDMatrix2 = squeeze(averageCSDMatrix_BRFS(801:2001,ch,2,usePenetration)); 
     for bin = 1:24
         tm = [1:50]+(50*(bin-1));
         CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
@@ -413,16 +464,13 @@ answer = questdlg('Would you like to save this figure?', ...
 % Handle response
 switch answer
     case 'Yes'
-       disp('alright, saving figure to plotdir')
+        disp('alright, saving figure to plotdir')
         cd(plotDir)
         saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
         saveas(f,saveName) 
-        saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
-        saveas(f,saveName) 
+        saveName = strcat('CSDPenetrationAvg_prefFromLFP.svg');
+        saveas(f,saveName)
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')
 end
-
-
-

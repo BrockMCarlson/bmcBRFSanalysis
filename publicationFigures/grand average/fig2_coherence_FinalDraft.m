@@ -3,7 +3,7 @@
 % initialize variables
 clearvars -except LFP_trials
 tic
-workingPC = 'home'; % options: 'home', 'office'
+workingPC = 'office'; % options: 'home', 'office'
 
 %% Setup
 disp('start time')
@@ -205,22 +205,23 @@ for penetration = 1:size(LFP_trials,1)
     end
 
     %% Coherence matrix across channels
+    % Parameters for mscohere
+    fs = 1000;  % Sampling frequency in Hz
+    windowSize = 256;  % Window size for computing the coherence
+    overlap = windowSize/2;  % Overlap between windows
+    tm_full = 1:2001;
+    tm_bl = 1:200;
+    tm_1stOnset = 201:1000; %800ms adapter
+    tm_2ndOnset = 1001:1800;
+    tm_offset = 1801:2001;
+    tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
     % Dioptic vs dichoptic
     count = 0;
     for conditionNumber = [1 3]        
         % Get the number of trials for the chosen condition
         numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
         
-        % Parameters for mscohere
-        fs = 1000;  % Sampling frequency in Hz
-        windowSize = 256;  % Window size for computing the coherence
-        overlap = windowSize/2;  % Overlap between windows
-        tm_full = 1:2001;
-        tm_bl = 1:200;
-        tm_1stOnset = 201:1000; %800ms adapter
-        tm_2ndOnset = 1001:1800;
-        tm_offset = 1801:2001;
-        tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
+
         
         % Initialize coherence matrix
         coherenceMatrix = nan(15,15, numTrials);
@@ -256,13 +257,7 @@ for penetration = 1:size(LFP_trials,1)
     for conditionNumber = [overallPref overallNull]        
         % Get the number of trials for the chosen condition
         numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
-        
-        % Parameters for mscohere
-        fs = 1000;  % Sampling frequency in Hz
-        windowSize = 256;  % Window size for computing the coherence
-        overlap = windowSize/2;  % Overlap between windows
-
-        
+       
         % Initialize coherence matrix
         coherenceMatrix = nan(15,15, numTrials);
         % Loop through all trials and compute coherence for each channel pair
@@ -304,7 +299,7 @@ disp(freq(2:9))
 
 % Visualize the coherence matrix
 f = figure;
-set(f,"Position",[-1238 -55 1126 641])
+% set(f,"Position",[-1238 -55 1126 641])
 ax(1) = subplot(2,3,1);
 imagesc(grandAverageCoherence_diopDichop(:,:,1));
 colormap(ax(1),'jet');

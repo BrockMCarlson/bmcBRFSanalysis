@@ -193,7 +193,7 @@ for penetration = 1:size(LFP_trials,1)
     end
         
 
-    %% LFP in percent change
+    %% LFP raw
     % BRFS pref vs null
     for i = 1:length(v1Ch)
         % PS
