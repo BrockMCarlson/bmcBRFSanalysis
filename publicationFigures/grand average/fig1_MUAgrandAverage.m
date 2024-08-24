@@ -1,239 +1,292 @@
-%% fig4
-% The goal of this script is to average together data from each laminar
-% compartment to see if differential perceptual modulations occur
-
-
-datetime
-
-%% Setup
-clear
+%% fig1
+% MUA grand average
 
 %% Setup
 disp('start time')
 datetime
-clear
-
-clear
-workingPC = 'home'; % options: 'home', 'office'
+close
+clearvars -except MUA_trials
+workingPC = 'office'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
+    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig3_MUA';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
-    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
+    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir    = 'D:\TrialTriggeredLFPandMUA';
-    plotDir     = '';
+    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig3_MUA';
     officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 end
 cd(codeDir)
 cd(dataDir)
 
-% Directories
-
-
-% Directories
-%Old run - on previous laminar alignment
-% % codeDir = strcat('C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis');
-% % cd(codeDir)
-% % outDir = 'S:\formattedDataOutputs';
-% % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
-% % cd(dataDir)
-% % officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-
-%New run - new laminar alignment
-% (here is hoping that the results did not change)
-% codeDir = strcat('C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures');
-cd(codeDir)
-% outDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig4_MUA';
-% dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
-% cd(dataDir)
-officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
-
-%% For loop
-% % dataDir = 'S:\bmcBRFS_sortedData_Nov23';
-% % dataDir = 'C:\Users\neuropixel\Documents\MATLAB\formattedDataOutputs\sortedData_240229';
-% % 
-% % cd(dataDir)
-
-
-
-%% load DATAOUT
-cd('C:\Users\Brock Carlson\Box\Manuscripts\Maier')
-load("DATAOUT.mat")
-
-%% Laminar align data
-aligned_100_ps = nan(1801,100,size(officLamAssign,1));
-aligned_100_ns = nan(1801,100,size(officLamAssign,1));
-for i = 1:size(officLamAssign,1)
-    if i==5 || i==7
-        continue
-    end
-    
-
-    % Calculate V1 ch boundaries
-    granBtm = officLamAssign.stFold4c(i); % channel corresponding to the bottom of layer 4c
-
-    % Calculate V1 ch boundaries
-    v1Top = granBtm - 9;
-    v1Btm = granBtm + 5;
-    v1Ch = v1Top:v1Btm;
-    % limit ch to cortex only
-    columnNames = {'sg_1','sg_2','sg_3','sg_4','sg_5','g_1','g_2','g_3','g_4','g_5','ig_1','ig_2','ig_3','ig_4','ig_5'};
-    if strcmp(string(officLamAssign.ChToUse(i)),"1:32")
-        probeTop = 1;
-        probeBtm = 32;
-    elseif strcmp(string(officLamAssign.ChToUse(i)),"33:64")
-        probeTop = 33;
-        probeBtm = 64;
-    end
-    sinkToTopOfProbe = granBtm-probeTop+1;
-    sinkToBtmOfProbe = probeBtm-granBtm;
-    v1Top_new = 50-sinkToTopOfProbe+1;
-    v1Btm_new = 50+sinkToBtmOfProbe;
-    v1Ch_new = v1Top_new:v1Btm_new;
-    
-    aligned_100_ps(:,v1Ch_new,i) = DATAOUT_ps(:,:,i);
-    aligned_100_ns(:,v1Ch_new,i) = DATAOUT_ns(:,:,i);
+if ~exist('MUA_trials','var')
+    tic
+    load('MUA_trials.mat') % format is MUA_trials{penetration,1}{cond,1}{trial,flash}
+    toc
 end
-% Now we cut down to just 15 channels
-aligned_ps = aligned_100_ps(:,41:55,:);
-aligned_ns = aligned_100_ns(:,41:55,:);
 
 
 
-%% grand averages and SEM on laminar compartments
-% Expecting output of 1801x125 (25 penetrations * 5 ch per compartment)
-useIdx = squeeze(~isnan(aligned_ps(1,1,:))); 
-reshape_ps_S = reshape(aligned_ps(:,1:5,useIdx),[1801,125]);
-reshape_ps_G = reshape(aligned_ps(:,6:10,useIdx),[1801,125]);
-reshape_ps_I = reshape(aligned_ps(:,11:15,useIdx),[1801,125]);
-reshape_ns_S = reshape(aligned_ns(:,1:5,useIdx),[1801,125]);
-reshape_ns_G = reshape(aligned_ns(:,6:10,useIdx),[1801,125]);
-reshape_ns_I = reshape(aligned_ns(:,11:15,useIdx),[1801,125]);
+%%
+averageMUAMatrix_BRFSps = nan(2001,15,31);
+averageLFPMatrix_BRFSns = nan(2001,15,31);
+for penetration = 1:size(MUA_trials,1)
+    
+    probeName = char(officLamAssign.Session_probe_(penetration,1));
+    fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
+    % limit ch to cortex only
+    if strcmp(string(officLamAssign.ChToUse(penetration)),"1:32")
+        v1Ch = 1:32;
+    elseif strcmp(string(officLamAssign.ChToUse(penetration)),"33:64")
+        v1Ch = 33:64;
+    end
+    
+    %% Obtain Monocular preference
+    % bl Sub at average level (better for plotting)
+    clear array_ofMonoc1 array_ofMonoc2 array_ofMonoc3 array_ofMonoc4
+    
+    % Monocular
+    monoc_1 = [5, 11, 13, 19]; % PO RightEye
+    monoc_2 = [8, 10, 16, 18]; % PO LeftEye
+    monoc_3 = [7, 9, 15, 17];  % NPO RightEye
+    monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
+    
+    % convert from cell to double and combine monocular conditions
+    count = 0;
+    for cond = monoc_1
+        for trl = 1:size(MUA_trials{penetration,1}{cond,1},1)
+            count = count + 1;
+            array_ofMonoc1(:,:,count) = abs(MUA_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); % 1000 x 32
+        end
+    end
+    clear cond count trl 
+    
+    count = 0;
+    for cond = monoc_2
+        for trl = 1:size(MUA_trials{penetration,1}{cond,1},1)
+            count = count + 1;
+            array_ofMonoc2(:,:,count) = abs(MUA_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); 
+        end
+    end
+    clear cond count trl 
+    
+    
+    count = 0;
+    for cond = monoc_3
+        for trl = 1:size(MUA_trials{penetration,1}{cond,1},1)
+            count = count + 1;
+            array_ofMonoc3(:,:,count) = abs(MUA_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); 
+        end
+    end
+    clear cond count trl 
+    
+    
+    count = 0;
+    for cond = monoc_4
+        for trl = 1:size(MUA_trials{penetration,1}{cond,1},1)
+            count = count + 1;
+            array_ofMonoc4(:,:,count) = abs(MUA_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch)); 
+        end
+    end
+    clear cond count trl 
+    
+    
+    % Test for monocular preference with anova
+    % The anova function ignores NaN values, <undefined> values, empty 
+    % characters, and empty strings in y. If factors or tbl contains NaN or 
+    % <undefined> values, or empty characters or strings, the function ignores 
+    % the corresponding observations in y. The ANOVA is balanced if each factor 
+    % value has the same number of observations after the function disregards 
+    % empty or NaN values. Otherwise, the function performs an unbalanced 
+    % ANOVA. (We will be doing an unbalanced ANOVA).
+    
+    % preallocate array with nan - running an unbalanced ANOVA)
+    A = [size(array_ofMonoc1,3),...
+        size(array_ofMonoc2,3),...
+        size(array_ofMonoc3,3),...
+        size(array_ofMonoc4,3)];
+    maxTrls = max(A);
+    minTrls = min(A);
+    tuned = nan(length(v1Ch),1);
+    prefMonoc = nan(length(v1Ch),1);
+    
+    % FOR each individual unit 
+    for i = 1:length(v1Ch)
+        % preallocate y based on trial count
+        y = nan(maxTrls,4);
+        % create an array of each trial's median response for each monoc 
+        % condition (trl x 4 monoc)
+        y(1:size(array_ofMonoc1,3),1) = median(squeeze(array_ofMonoc1(200:450,i,:)),1)'; % median of each trial after stim onset
+        y(1:size(array_ofMonoc2,3),2) = median(squeeze(array_ofMonoc2(200:450,i,:)),1)'; % median of each trial after stim onset
+        y(1:size(array_ofMonoc3,3),3) = median(squeeze(array_ofMonoc3(200:450,i,:)),1)'; % median of each trial after stim onset
+        y(1:size(array_ofMonoc4,3),4) = median(squeeze(array_ofMonoc4(200:450,i,:)),1)'; % median of each trial after stim onset
+        % Now we perform baseline subtraction
+        % First we get the blAvg for this contact across all trials
+        y_bl(1,1) = median(median(squeeze(array_ofMonoc1(100:200,i,:)),1)');
+        y_bl(1,2) = median(median(squeeze(array_ofMonoc2(100:200,i,:)),1)');
+        y_bl(1,3) = median(median(squeeze(array_ofMonoc3(100:200,i,:)),1)');
+        y_bl(1,4) = median(median(squeeze(array_ofMonoc4(100:200,i,:)),1)');
+        y_blSub = y - median(y_bl);
+        p = anova1(y_blSub,[],'off');
+        if p < .05
+            tuned(i,1) = true;
+            % Now we find the maximum response
+            [M,maxRespIdx] = max(median(y_blSub,1,"omitmissing"));
+            prefMonoc(i,1) = maxRespIdx;
+            % And assign the null condition
+            if maxRespIdx == 1
+                nullRespIdx = 4;
+            elseif maxRespIdx == 2
+                nullRespIdx = 3;
+            elseif maxRespIdx == 3
+                nullRespIdx = 2;
+            elseif maxRespIdx == 4
+                nullRespIdx = 1;
+            end
+            nullMonoc(i,1) = nullRespIdx;
+            % % monoc_1 = [5, 11, 13, 19]; % PO RightEye
+            % % monoc_2 = [8, 10, 16, 18]; % PO LeftEye
+            % % monoc_3 = [7, 9, 15, 17];  % NPO RightEye
+            % % monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
+            if prefMonoc(i,1) == 1
+                prefCondOnFlash(i,1) = 12;
+                nullCondOnFlash(i,1) = 11;
+            elseif prefMonoc(i,1) == 2
+                prefCondOnFlash(i,1) = 9;
+                nullCondOnFlash(i,1) = 10;
+            elseif prefMonoc(i,1) == 3
+                prefCondOnFlash(i,1) = 10;
+                nullCondOnFlash(i,1) = 9;
+            elseif prefMonoc(i,1) == 4
+                prefCondOnFlash(i,1) = 11;
+                nullCondOnFlash(i,1) = 12;
+            end
+        else
+            tuned(i,1) = false;
+            prefMonoc(i,1) = NaN;
+            nullMonoc(i,1) = NaN;
+            prefCondOnFlash(i,1) = NaN;
+            nullCondOnFlash(i,1) = NaN;
+        end
 
-grandAvg_ps_S = smoothdata(mean(reshape_ps_S,2,"omitmissing"),1,"gaussian",20);
-grandAvg_ps_G = smoothdata(mean(reshape_ps_G,2,"omitmissing"),1,"gaussian",20);
-grandAvg_ps_I = smoothdata(mean(reshape_ps_I,2,"omitmissing"),1,"gaussian",20);
-grandAvg_ns_S = smoothdata(mean(reshape_ns_S,2,"omitmissing"),1,"gaussian",20);
-grandAvg_ns_G = smoothdata(mean(reshape_ns_G,2,"omitmissing"),1,"gaussian",20);
-grandAvg_ns_I = smoothdata(mean(reshape_ns_I,2,"omitmissing"),1,"gaussian",20);
+    end
+   
+
+   
+
+    %% MUA in percent change
+    % BRFS pref vs null
+    % Get the number of trials for the chosen condition
+    for i = 1:length(v1Ch)
+        if ~tuned(i,1)
+            continue
+        end
+        numTrials_ps = size(MUA_trials{penetration,1}{prefCondOnFlash(i,1),1},1);
+        MUAflashOut_ps = nan(2001,numTrials_ps);
+        for trl = 1:numTrials_ps
+            MUAflashOut_ps(:,trl) = MUA_trials{penetration,1}{prefCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
+        end
+        
+        % median across trials
+        ps_avg = median(MUAflashOut_ps,2,"omitmissing"); % input is (tm,trl)    
+        % Calculate as Percent Change
+        %              X(t) - avgBl
+        % %Ch = 100 * -------------
+        %                 avgBl
+        psBl = median(ps_avg(1:200,:));
+        if psBl == 0
+            psBl = .1;
+        end
+        ps_PercentC = 100*((ps_avg-psBl)./psBl);
+        averageMUAMatrix_BRFSps(:,i,penetration) = ps_PercentC;
+
+    
+        % Get the number of trials for the chosen condition
+        numTrials_ns = size(MUA_trials{penetration,1}{nullCondOnFlash(i,1) ,1},1);
+        MUAflashOut_ns = nan(2001,numTrials_ns);
+        for trl = 1:numTrials_ns
+            MUAflashOut_ns(:,trl) = MUA_trials{penetration,1}{nullCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
+        end
+        % Average across trials and save output
+        ns_avg = median(MUAflashOut_ns,2,"omitmissing"); % input is (tm,trl)    
+        nsBl = median(ns_avg(1:200,:));
+        if nsBl == 0
+            nsBl = .1;
+        end
+        ns_PercentC = 100*((ns_avg-nsBl)./nsBl);  
+        averageMUAMatrix_BRFSns(:,i,penetration) = ns_PercentC; % Average across trl. averageMUAMatrix is (tm x ch x x penetration)
+    end
+    disp(strcat('Done with file number: ',string(penetration)))
+end
+
+
+%% Organize into compartments, median and std across contacts+penetration
+% reshape
+useIdx = squeeze(~isnan(averageMUAMatrix_BRFSps(1,1,:))); 
+
+% Average across penetrations
+psAvg = smoothdata(mean(mean(averageMUAMatrix_BRFSps,3,"omitmissing"),2),"gaussian",50);
+nsAvg = smoothdata(mean(mean(averageMUAMatrix_BRFSns,3,"omitmissing"),2),"gaussian",50);
+
 
 
 % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
-SEM_ps_S = smoothdata(std(reshape_ps_S,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
-SEM_ps_G = smoothdata(std(reshape_ps_G,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
-SEM_ps_I = smoothdata(std(reshape_ps_I,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
-SEM_ns_S = smoothdata(std(reshape_ns_S,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
-SEM_ns_G = smoothdata(std(reshape_ns_G,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
-SEM_ns_I = smoothdata(std(reshape_ns_I,0,2,"omitmissing")/sqrt(125),1,"gaussian",20);
-
+contactNum = size(psAvg,2);
+psSEM = std(averageMUAMatrix_BRFSps,0,3,"omitmissing")./sqrt(contactNum); 
+nsSEM = std(averageMUAMatrix_BRFSps,0,3,"omitmissing")./sqrt(contactNum); 
 
 % Mean +/- SEM
-avgPlusSEM_ps_S = grandAvg_ps_S + SEM_ps_S; %pref stim -- mean plus sem 1 
-avgMinusSEM_ps_S = grandAvg_ps_S - SEM_ps_S; %pref stim -- mean minus sem 1 
-avgPlusSEM_ps_G = grandAvg_ps_G + SEM_ps_G; %pref stim -- mean plus sem 1 
-avgMinusSEM_ps_G = grandAvg_ps_G - SEM_ps_G; %pref stim -- mean minus sem 1 
-avgPlusSEM_ps_I = grandAvg_ps_I + SEM_ps_I; %pref stim -- mean plus sem 1 
-avgMinusSEM_ps_I = grandAvg_ps_I - SEM_ps_I; %pref stim -- mean minus sem 1 
-avgPlusSEM_ns_S = grandAvg_ns_S + SEM_ns_S; %pref stim -- mean plus sem 1 
-avgMinusSEM_ns_S = grandAvg_ns_S - SEM_ns_S; %pref stim -- mean minus sem 1 
-avgPlusSEM_ns_G = grandAvg_ns_G + SEM_ns_G; %pref stim -- mean plus sem 1 
-avgMinusSEM_ns_G = grandAvg_ns_G - SEM_ns_G; %pref stim -- mean minus sem 1 
-avgPlusSEM_ns_I = grandAvg_ns_I + SEM_ns_I; %pref stim -- mean plus sem 1 
-avgMinusSEM_ns_I = grandAvg_ns_I - SEM_ns_I; %pref stim -- mean minus sem 1 
+ps_S_avgPlusSEM = psAvg + psSEM; %pref stim -- median plus sem 1 
+ps_S_avgMinusSEM = psAvg - psSEM; %pref stim -- median minus sem 1 
 
 
+ns_S_avgPlusSEM = nsAvg + nsSEM; 
+ns_S_avgMinusSEM = nsAvg - nsSEM;  
 
-%% statistics
-% Ok, the data is together for plotting, now lets run statistics on
-% each laminar compartment to see if perceptual modulation occurs. The
-% goal here is to run a t-test to see if the average response between
-% 1200 and 1600ms significantly differs between ps and ns
-useIdx = squeeze(~isnan(aligned_ps(1,1,:))); 
-tInput_ps_S_trans = reshape(squeeze(mean(aligned_ps(1050:1200,1:5,useIdx),1)),[],1);
-tInput_ps_G_trans = reshape(squeeze(mean(aligned_ps(1050:1200,6:10,useIdx),1)),[],1);
-tInput_ps_I_trans = reshape(squeeze(mean(aligned_ps(1050:1200,11:15,useIdx),1)),[],1);
-tInput_ns_S_trans = reshape(squeeze(mean(aligned_ns(1050:1200,1:5,useIdx),1)),[],1);
-tInput_ns_G_trans = reshape(squeeze(mean(aligned_ns(1050:1200,6:10,useIdx),1)),[],1);
-tInput_ns_I_trans = reshape(squeeze(mean(aligned_ns(1050:1200,11:15,useIdx),1)),[],1);
-tInput_ps_S_susta = reshape(squeeze(mean(aligned_ps(1400:1801,1:5,useIdx),1)),[],1);
-tInput_ps_G_susta = reshape(squeeze(mean(aligned_ps(1400:1801,6:10,useIdx),1)),[],1);
-tInput_ps_I_susta = reshape(squeeze(mean(aligned_ps(1400:1801,11:15,useIdx),1)),[],1);
-tInput_ns_S_susta = reshape(squeeze(mean(aligned_ns(1400:1801,1:5,useIdx),1)),[],1);
-tInput_ns_G_susta = reshape(squeeze(mean(aligned_ns(1400:1801,6:10,useIdx),1)),[],1);
-tInput_ns_I_susta = reshape(squeeze(mean(aligned_ns(1400:1801,11:15,useIdx),1)),[],1);
-
-[h_S_trans,p_S_trans] = ttest2(tInput_ps_S_trans,tInput_ns_S_trans);
-[h_G_trans,p_G_trans] = ttest2(tInput_ps_G_trans,tInput_ns_G_trans);
-[h_I_trans,p_I_trans] = ttest2(tInput_ps_I_trans,tInput_ns_I_trans);
-[h_S_susta,p_S_susta] = ttest2(tInput_ps_S_susta,tInput_ns_S_susta);
-[h_G_susta,p_G_susta] = ttest2(tInput_ps_G_susta,tInput_ns_G_susta);
-[h_I_susta,p_I_susta] = ttest2(tInput_ps_I_susta,tInput_ns_I_susta);
 
 
 %% Figure generation! 
 % tiledLayout plot
 close all
-tm_full = -200:1600; % 1801 total timepoints
+tm_full = -200:1800; % 1801 total timepoints
 lamCom = figure;
 set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
-t = tiledlayout(3,1);
-nexttile
-    plot(tm_full,grandAvg_ps_S,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,avgPlusSEM_ps_S,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,avgMinusSEM_ps_S,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,grandAvg_ns_S,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,avgPlusSEM_ns_S,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,avgMinusSEM_ns_S,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    ylim([0 40])
-    vline(0)
-    vline(800)
-    xregion(850,1000)
-    xregion(1200,1600)
-    ylabel({'Supragranular','% Change'})
-    title({strcat('Significant transient modulation?_',string(h_S_trans),'_pVal =',string(p_S_trans)),...
-       strcat('Significant sustained modulation?_',string(h_S_susta),'_pVal =',string(p_S_susta))},'Interpreter','none')
-nexttile
-    plot(tm_full,grandAvg_ps_G,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,avgPlusSEM_ps_G,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,avgMinusSEM_ps_G,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,grandAvg_ns_G,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,avgPlusSEM_ns_G,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,avgMinusSEM_ns_G,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    ylim([0 40])
-    vline(0)
-    vline(800)
-    xregion(850,1000)
-    xregion(1200,1600)
-    ylabel({'Granular','% Change'})
-    title({strcat('Significant transient modulation?_',string(h_G_trans),'_pVal =',string(p_G_trans)),...
-       strcat('Significant sustained modulation?_',string(h_G_susta),'_pVal =',string(p_G_susta))},'Interpreter','none')
-nexttile
-    plot(tm_full,grandAvg_ps_I,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-    plot(tm_full,avgPlusSEM_ps_I,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,avgMinusSEM_ps_I,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,grandAvg_ns_I,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-    plot(tm_full,avgPlusSEM_ns_I,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    plot(tm_full,avgMinusSEM_ns_I,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-    ylim([0 40])
-    vline(0)
-    vline(800)
-    xregion(850,1000)
-    xregion(1200,1600)
-    ylabel({'Infragranular','% Change'})
-    title({strcat('Significant transient modulation?_',string(h_I_trans),'_pVal =',string(p_I_trans)),...
-       strcat('Significant sustained modulation?_',string(h_I_susta),'_pVal =',string(p_I_susta))},'Interpreter','none')
+plot(tm_full,psAvg,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+% plot(tm_full,ps_S_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+% plot(tm_full,ps_S_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+plot(tm_full,nsAvg,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+% plot(tm_full,ns_S_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+% plot(tm_full,ns_S_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+ylim([0 40])
+vline(0)
+vline(833)
+vline(1633)
+% xregion(850,1000)
+% xregion(1200,1600)
+title('Supragranular')
+set(gca,'xtick',[])
+box("off")
+legend('Preferred stimulus','Null stimulus')
 
-titleText = {'Grand average of 150 multi-units (29 penetrations) per laminar compartment'};
-title(t,titleText,'Interpreter','none')
 
 %save fig
-cd(outDir)
-figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.png');
-saveas(lamCom,figName_lamCom)
-figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.svg');
-saveas(lamCom,figName_lamCom)
-
-
+answer = questdlg('Would you like to save this figure?', ...
+	'Y', ...
+	'N');
+% Handle response
+switch answer
+    case 'Yes'
+       disp('alright, saving figure to plotdir')
+        cd(plotDir)
+        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.png');
+        saveas(lamCom,figName_lamCom)
+        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.svg');
+        saveas(lamCom,figName_lamCom)
+    case 'No'
+        cd(plotDir)
+        disp('please see plotdir for last save')
+end
 
 
