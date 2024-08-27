@@ -6,7 +6,7 @@
 disp('start time')
 datetime
 clearvars -except LFP_trials
-workingPC = 'office'; % options: 'home', 'office'
+workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -288,168 +288,198 @@ end
 
 %% plot dioptic vs dichoptic
 grandAverageCSD_diopDichop = median(averageCSDMatrix_diopDichop,4,"omitmissing"); % average across penetration
+filterCSD_dioptic = filterCSD(grandAverageCSD_diopDichop(1:1201,:,1)',.01);
+filterCSD_dichoptic = filterCSD(grandAverageCSD_diopDichop(1:1201,:,2)',.01);
 
-
-f = figure;
-set(f,"Position",[345.6667 256.3333 1698 981.3333])
+f = figure; 
+set(f,"Position",[-1828 -37 1584 856])
 % Visualize the CSD matrix
 % dioptic
-ax(1) = subplot(2,5,1);
-imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(1:1201,:,1)');
+ax(1) = subplot(2,3,1);
+imagesc(-200:1000,1:15,filterCSD_dioptic);
 oldcmap = colormap(ax(1),'jet');
 newcmap = colormap(flipud(oldcmap));
 colormap(ax(1),newcmap)
-clim([-3000 3000]);
-xlabel('Time (ms)');
+clim([-2000 2000]);
+% xlabel('Time (ms)');
 ylabel('Channel');
 cb = colorbar(); 
-ylabel(cb,'(nA/mm)^3','FontSize',12)
+% ylabel(cb,'(nA/mm)^3','FontSize',12)
 xl = xline(0,'--','Stimulus onset','LineWidth',3);
 title('Dioptic');
+box('off')
+set(gca,'XTick',[])
+
+
 
 %dichoptic
-ax(2) = subplot(2,5,2);
-imagesc(-200:1000,1:15,grandAverageCSD_diopDichop(1:1201,:,2)');
+ax(2) = subplot(2,3,2);
+imagesc(-200:1000,1:15,filterCSD_dichoptic);
 colormap(ax(2),newcmap)
-clim([-3000 3000]);
+clim([-2000 2000]);
 xlabel('Time (ms)');
 cb = colorbar(); 
 xl = xline(0,'--','Stimulus onset','LineWidth',3);
 title('Dichoptic');
+box('off')
+
 
 % Visualize the raw diff
 differenceMatrix_diopDichoip = ...
     abs(grandAverageCSD_diopDichop(1:1201,:,1)')-abs(grandAverageCSD_diopDichop(1:1201,:,2)');
-ax(3) = subplot(2,5,3);
-imagesc(-200:1000,1:15,differenceMatrix_diopDichoip);
+filterCSD_binocDiff =  filterCSD(differenceMatrix_diopDichoip,.01);
+
+ax(3) = subplot(2,3,3);
+imagesc(-200:1000,1:15,filterCSD_binocDiff);
 colormap(ax(3),'bone');
-clim([-1500 1500]);
-xlabel('Time (ms)');
+clim([-500 500]);
+% xlabel('Time (ms)');
 cb = colorbar(); 
+ylabel(cb,'(nA/mm)^3','FontSize',12)
 xl = xline(0,'--','Stimulus onset','LineWidth',3);
 title('|Difference|: |dioptic-dichoptic|');
+box('off')
+set(gca,'XTick',[])
 
 
 
-% Difference plot - with tStat
-usePenetration = [1:4 6 8:25 27:29 31];
-h = nan(15,24);
-p = nan(15,24);
-ci = nan(15,24,2);
-for ch = 1:15
-    CSDMatrix1 = squeeze(averageCSDMatrix_diopDichop(1:1201,ch,1,usePenetration)); 
-    CSDMatrix2 = squeeze(averageCSDMatrix_diopDichop(1:1201,ch,2,usePenetration)); 
-    for bin = 1:24
-        tm = [1:50]+(50*(bin-1));
-        CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
-        CSD_binned2(bin,:) = abs(median(CSDMatrix2(tm,:),1));
-        [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
-            ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','left');
-        tStat_1(ch,bin) = stats(ch,bin).tstat;
 
-    end
-end
-ax(4) = subplot(2,5,4);
-imagesc(tStat_1);
-colormap(ax(4),'bone');
-cb = colorbar(); 
-xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
-xlabel('Index of 50ms bin');
-title('left-tail tScoreMap of |difference|');
-
-% hypothesis test logical
-ax(5) = subplot(2,5,5);
-imagesc(h);
-colormap(ax(5),'bone');
-e = colorbar(); 
-e.Label.String = "h = 1 or 0";
-e.Label.Rotation = 270;
-xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
-xlabel('Index of 50ms bin');
-title('|Dichoptic > Dioptic| Hypothesis test');
+% % 
+% % % Difference plot - with tStat
+% % usePenetration = [1:4 6 8:25 27:29 31];
+% % h = nan(15,24);
+% % p = nan(15,24);
+% % ci = nan(15,24,2);
+% % for ch = 1:15
+% %     CSDMatrix1 = squeeze(averageCSDMatrix_diopDichop(1:1201,ch,1,usePenetration)); 
+% %     CSDMatrix2 = squeeze(averageCSDMatrix_diopDichop(1:1201,ch,2,usePenetration)); 
+% %     for bin = 1:24
+% %         tm = [1:50]+(50*(bin-1));
+% %         CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
+% %         CSD_binned2(bin,:) = abs(median(CSDMatrix2(tm,:),1));
+% %         [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
+% %             ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','left');
+% %         tStat_1(ch,bin) = stats(ch,bin).tstat;
+% % 
+% %     end
+% % end
+% % ax(4) = subplot(2,3,4);
+% % imagesc(tStat_1);
+% % colormap(ax(4),'bone');
+% % cb = colorbar(); 
+% % clim([-1 1]);
+% % xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
+% % xlabel('Index of 50ms bin');
+% % title('left-tail tScoreMap of |difference|');
+% % 
+% % % hypothesis test logical
+% % ax(5) = subplot(2,3,5);
+% % imagesc(h);
+% % colormap(ax(5),'bone');
+% % e = colorbar(); 
+% % e.Label.String = "h = 1 or 0";
+% % e.Label.Rotation = 270;
+% % xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
+% % xlabel('Index of 50ms bin');
+% % title('|Dichoptic > Dioptic| Hypothesis test');
 
 
 
 
 %% plot BRFS
 grandAverageCSD_BRFS = median(averageCSDMatrix_BRFS,4,"omitmissing"); % average across penetration
+filterCSD_BRFSps = filterCSD(grandAverageCSD_BRFS(801:2001,:,1)',.01);
+filterCSD_BRFSns = filterCSD(grandAverageCSD_BRFS(801:2001,:,2)',.01);
 
 % Visualize the CSD matrix
-ax(6) = subplot(2,5,6);
-imagesc(-200:1000,1:15,grandAverageCSD_BRFS(801:2001,:,1)');
+ax(6) = subplot(2,3,4);
+imagesc(-200:1000,1:15,filterCSD_BRFSps);
 colormap(ax(6),newcmap)
 clim([-1500 1500]);
-xlabel('Time (ms)');
+% xlabel('Time (ms)');
 ylabel('channel');
 cb = colorbar(); 
-ylabel(cb,'(nA/mm)^3','FontSize',12)
+% ylabel(cb,'(nA/mm)^3','FontSize',12)
 xl = xline(0,'--','Stimulus onset','LineWidth',3);
 xl = xline(800,'--','Stimulus offset','LineWidth',3);
 title('Preferred stimulus BRFS flash');
+box('off')
+set(gca,'XTick',[])
 
 
-ax(7) = subplot(2,5,7);
-imagesc(-200:1000,1:15,grandAverageCSD_BRFS(801:2001,:,2)');
+
+
+ax(7) = subplot(2,3,5);
+imagesc(-200:1000,1:15,filterCSD_BRFSns);
 colormap(ax(7),newcmap)
 clim([-1500 1500]);
 xlabel('Time (ms)');
-ylabel('channel');
+% ylabel('channel');
+cb = colorbar(); 
+% ylabel(cb,'(nA/mm)^3','FontSize',12)
+xl = xline(0,'--','Stimulus onset','LineWidth',3);
+xl = xline(800,'--','Stimulus offset','LineWidth',3);
+title('Non-preferred stimulus BRFS flash');
+box('off')
+
+
+% Visualize the raw diff
+differenceMatrix_BRFS = ...
+    abs(grandAverageCSD_BRFS(801:2001,:,1)')-abs(grandAverageCSD_BRFS(801:2001,:,2)');
+filterCSD_BRFSDiff =  filterCSD(differenceMatrix_BRFS,.01);
+
+ax(8) = subplot(2,3,6);
+imagesc(-200:1000,1:15,filterCSD_BRFSDiff);
+colormap(ax(8),'bone');
+clim([-500 500]);
+% xlabel('Time (ms)');
 cb = colorbar(); 
 ylabel(cb,'(nA/mm)^3','FontSize',12)
 xl = xline(0,'--','Stimulus onset','LineWidth',3);
 xl = xline(800,'--','Stimulus offset','LineWidth',3);
-title('Non-preferred stimulus BRFS flash');
-
-% Visualize the raw diff
-differenceMatrix_diopDichoip = ...
-    abs(grandAverageCSD_BRFS(801:2001,:,1)')-abs(grandAverageCSD_BRFS(801:2001,:,2)');
-ax(8) = subplot(2,5,8);
-imagesc(-200:1000,1:15,differenceMatrix_diopDichoip);
-colormap(ax(8),'bone');
-clim([-1000 1000]);
-xlabel('Time (ms)');
-cb = colorbar(); 
-xl = xline(0,'--','Stimulus onset','LineWidth',3);
 title('|Difference|: |PS-NS|');
+box('off')
+set(gca,'XTick',[])
 
 
 
-% Difference plot - with tStat
-usePenetration = [1:4 6 8:25 27:29 31];
-h = nan(15,24);
-p = nan(15,24);
-ci = nan(15,24,2);
-for ch = 1:15
-    CSDMatrix1 = squeeze(averageCSDMatrix_BRFS(801:2001,ch,1,usePenetration)); 
-    CSDMatrix2 = squeeze(averageCSDMatrix_BRFS(801:2001,ch,2,usePenetration)); 
-    for bin = 1:24
-        tm = [1:50]+(50*(bin-1));
-        CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
-        CSD_binned2(bin,:) = abs(median(CSDMatrix2(tm,:),1));
-        [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
-            ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','right');
-        tStat_1(ch,bin) = stats(ch,bin).tstat;
 
-    end
-end
-ax(9) = subplot(2,5,9);
-imagesc(tStat_1);
-colormap(ax(9),'bone');
-cb = colorbar(); 
-xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
-xlabel('Index of 50ms bin');
-title('right-tail tScoreMap of |difference|');
-
-% hypothesis test logical
-ax(10) = subplot(2,5,10);
-imagesc(h);
-colormap(ax(10),'bone');
-e = colorbar(); 
-e.Label.String = "h = 1 or 0";
-e.Label.Rotation = 270;
-xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
-xlabel('Index of 50ms bin');
-title('|PS > NS| Hypothesis test');
+% % % Difference plot - with tStat
+% % usePenetration = [1:4 6 8:25 27:29 31];
+% % h = nan(15,24);
+% % p = nan(15,24);
+% % ci = nan(15,24,2);
+% % for ch = 1:15
+% %     CSDMatrix1 = squeeze(averageCSDMatrix_BRFS(801:2001,ch,1,usePenetration)); 
+% %     CSDMatrix2 = squeeze(averageCSDMatrix_BRFS(801:2001,ch,2,usePenetration)); 
+% %     for bin = 1:24
+% %         tm = [1:50]+(50*(bin-1));
+% %         CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
+% %         CSD_binned2(bin,:) = abs(median(CSDMatrix2(tm,:),1));
+% %         [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
+% %             ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','right');
+% %         tStat_1(ch,bin) = stats(ch,bin).tstat;
+% % 
+% %     end
+% % end
+% % ax(9) = subplot(2,3,9);
+% % imagesc(tStat_1);
+% % colormap(ax(9),'bone');
+% % cb = colorbar(); 
+% % xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
+% % xlabel('Index of 50ms bin');
+% % title('right-tail tScoreMap of |difference|');
+% % 
+% % % hypothesis test logical
+% % ax(10) = subplot(2,3,10);
+% % imagesc(h);
+% % colormap(ax(10),'bone');
+% % e = colorbar(); 
+% % e.Label.String = "h = 1 or 0";
+% % e.Label.Rotation = 270;
+% % xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
+% % xlabel('Index of 50ms bin');
+% % title('|PS > NS| Hypothesis test');
 
 
 

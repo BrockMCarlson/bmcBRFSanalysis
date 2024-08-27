@@ -6,7 +6,7 @@ disp('start time')
 datetime
 close
 clearvars -except MUA_trials
-workingPC = 'office'; % options: 'home', 'office'
+workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -36,13 +36,31 @@ for penetration = 1:size(MUA_trials,1)
     
     probeName = char(officLamAssign.Session_probe_(penetration,1));
     fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
+
+    granBtm = officLamAssign.stFold4c(penetration); % channel corresponding to the bottom of layer 4c
+    if isnan(granBtm)
+        warning(strcat('no sink found on _',fileToLoad))
+        continue
+    end
+    % Calculate V1 ch boundaries
+    v1Top = granBtm - 9;
+    v1Btm = granBtm + 5;
+    v1Ch = v1Top:v1Btm;
     % limit ch to cortex only
     if strcmp(string(officLamAssign.ChToUse(penetration)),"1:32")
-        v1Ch = 1:32;
+        if any(v1Ch > 32) || any(v1Ch < 1)
+            warning('skipping session without full column for now')
+            disp(fileToLoad)
+            continue
+        end
     elseif strcmp(string(officLamAssign.ChToUse(penetration)),"33:64")
-        v1Ch = 33:64;
+        if any(v1Ch > 64) || any(v1Ch < 33)
+            warning('skipping session without full column for now')
+            disp(fileToLoad)
+            continue
+        end
     end
-    
+
     %% Obtain Monocular preference
     % bl Sub at average level (better for plotting)
     clear array_ofMonoc1 array_ofMonoc2 array_ofMonoc3 array_ofMonoc4
@@ -130,7 +148,7 @@ for penetration = 1:size(MUA_trials,1)
         y_bl(1,4) = median(median(squeeze(array_ofMonoc4(100:200,i,:)),1)');
         y_blSub = y - median(y_bl);
         p = anova1(y_blSub,[],'off');
-        if p < .05
+        % % % if p < .05
             tuned(i,1) = true;
             % Now we find the maximum response
             [M,maxRespIdx] = max(median(y_blSub,1,"omitmissing"));
@@ -146,10 +164,10 @@ for penetration = 1:size(MUA_trials,1)
                 nullRespIdx = 1;
             end
             nullMonoc(i,1) = nullRespIdx;
-            % % monoc_1 = [5, 11, 13, 19]; % PO RightEye
-            % % monoc_2 = [8, 10, 16, 18]; % PO LeftEye
-            % % monoc_3 = [7, 9, 15, 17];  % NPO RightEye
-            % % monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
+            % % % monoc_1 = [5, 11, 13, 19]; % PO RightEye
+            % % % % monoc_2 = [8, 10, 16, 18]; % PO LeftEye
+            % % % % monoc_3 = [7, 9, 15, 17];  % NPO RightEye
+            % % % % monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
             if prefMonoc(i,1) == 1
                 prefCondOnFlash(i,1) = 12;
                 nullCondOnFlash(i,1) = 11;
@@ -163,13 +181,13 @@ for penetration = 1:size(MUA_trials,1)
                 prefCondOnFlash(i,1) = 11;
                 nullCondOnFlash(i,1) = 12;
             end
-        else
-            tuned(i,1) = false;
-            prefMonoc(i,1) = NaN;
-            nullMonoc(i,1) = NaN;
-            prefCondOnFlash(i,1) = NaN;
-            nullCondOnFlash(i,1) = NaN;
-        end
+        % % % else
+        % % %     tuned(i,1) = false;
+        % % %     prefMonoc(i,1) = NaN;
+        % % %     nullMonoc(i,1) = NaN;
+        % % %     prefCondOnFlash(i,1) = NaN;
+        % % %     nullCondOnFlash(i,1) = NaN;
+        % % % end
 
     end
    
@@ -225,17 +243,19 @@ end
 %% Organize into compartments, median and std across contacts+penetration
 % reshape
 useIdx = squeeze(~isnan(averageMUAMatrix_BRFSps(1,1,:))); 
+ps_reshaped = reshape(averageMUAMatrix_BRFSps(:,:,useIdx),[2001,405]);
+ns_reshaped = reshape(averageMUAMatrix_BRFSns(:,:,useIdx),[2001,405]);
 
 % Average across penetrations
-psAvg = smoothdata(mean(mean(averageMUAMatrix_BRFSps,3,"omitmissing"),2),"gaussian",50);
-nsAvg = smoothdata(mean(mean(averageMUAMatrix_BRFSns,3,"omitmissing"),2),"gaussian",50);
+psAvg = smoothdata(mean(ps_reshaped,2,"omitmissing"),"gaussian",20);
+nsAvg = smoothdata(mean(ns_reshaped,2,"omitmissing"),"gaussian",20);
 
 
 
 % Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
-contactNum = size(psAvg,2);
-psSEM = std(averageMUAMatrix_BRFSps,0,3,"omitmissing")./sqrt(contactNum); 
-nsSEM = std(averageMUAMatrix_BRFSps,0,3,"omitmissing")./sqrt(contactNum); 
+contactNum = size(ps_reshaped,2);
+psSEM = std(ps_reshaped,0,2,"omitmissing")./sqrt(contactNum); 
+nsSEM = std(ns_reshaped,0,2,"omitmissing")./sqrt(contactNum); 
 
 % Mean +/- SEM
 ps_S_avgPlusSEM = psAvg + psSEM; %pref stim -- median plus sem 1 
@@ -252,21 +272,23 @@ ns_S_avgMinusSEM = nsAvg - nsSEM;
 close all
 tm_full = -200:1800; % 1801 total timepoints
 lamCom = figure;
-set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
+% set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
 plot(tm_full,psAvg,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-% plot(tm_full,ps_S_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-% plot(tm_full,ps_S_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
 plot(tm_full,nsAvg,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-% plot(tm_full,ns_S_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-% plot(tm_full,ns_S_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+plot(tm_full,ps_S_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+plot(tm_full,ps_S_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+plot(tm_full,ns_S_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+plot(tm_full,ns_S_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
 ylim([0 40])
 vline(0)
 vline(833)
 vline(1633)
 % xregion(850,1000)
 % xregion(1200,1600)
-title('Supragranular')
-set(gca,'xtick',[])
+title('Grand Average')
+% % set(gca,'xtick',[])
+xlabel('Time (ms)')
+ylabel('% change from baseline')
 box("off")
 legend('Preferred stimulus','Null stimulus')
 
@@ -280,9 +302,9 @@ switch answer
     case 'Yes'
        disp('alright, saving figure to plotdir')
         cd(plotDir)
-        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.png');
+        figName_lamCom = strcat('MUA_fig1','_grandAvg_','.png');
         saveas(lamCom,figName_lamCom)
-        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.svg');
+        figName_lamCom = strcat('MUA_fig1','_grandAvg_','.svg');
         saveas(lamCom,figName_lamCom)
     case 'No'
         cd(plotDir)

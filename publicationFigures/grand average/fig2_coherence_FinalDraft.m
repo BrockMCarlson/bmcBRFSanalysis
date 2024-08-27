@@ -3,7 +3,7 @@
 % initialize variables
 clearvars -except LFP_trials
 tic
-workingPC = 'office'; % options: 'home', 'office'
+workingPC = 'home'; % options: 'home', 'office'
 
 %% Setup
 disp('start time')
@@ -408,6 +408,8 @@ xlabel('Channel');
 ylabel('Channel');
 title('difference');
 
+sgtitle('Coherence Penetration Average')
+
 % % hypothesis test logical
 % % subplot(1,4,4);
 % % imagesc(h);
@@ -419,11 +421,25 @@ title('difference');
 % % ylabel('Channel');
 % % title('Dioptic vs Dichoptic Hypothesis test');
 
+%% Save output
+%save fig
+answer = questdlg('Would you like to save this figure?', ...
+	'Y', ...
+	'N');
+% Handle response
+switch answer
+    case 'Yes'
+        disp('alright, saving figure to plotdir')
+        sgtitle('Coherence Penetration Average')
+        cd(plotDir)
+        saveName = strcat('coherencePenetrationAvg.png');
+        saveas(f,saveName) 
+    case 'No'
+        cd(plotDir)
+        disp('please see plotdir for last save')
+end
 
-sgtitle('Coherence Penetration Average')
-cd(plotDir)
-saveName = strcat('coherencePenetrationAvg.png');
-saveas(f,saveName) 
+
 
 
 %% Statistical test - ANOVA between compartment comparisons
