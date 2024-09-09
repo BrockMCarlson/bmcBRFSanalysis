@@ -6,7 +6,7 @@
 disp('start time')
 datetime
 clearvars -except LFP_trials
-workingPC = 'home'; % options: 'home', 'office'
+workingPC = 'office'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -288,11 +288,11 @@ end
 
 %% plot dioptic vs dichoptic
 grandAverageCSD_diopDichop = median(averageCSDMatrix_diopDichop,4,"omitmissing"); % average across penetration
-filterCSD_dioptic = filterCSD(grandAverageCSD_diopDichop(1:1201,:,1)',.01);
-filterCSD_dichoptic = filterCSD(grandAverageCSD_diopDichop(1:1201,:,2)',.01);
+filterCSD_dioptic = filterCSD(grandAverageCSD_diopDichop(1:1201,:,1)',.05);
+filterCSD_dichoptic = filterCSD(grandAverageCSD_diopDichop(1:1201,:,2)',.05);
 
 f = figure; 
-set(f,"Position",[-1828 -37 1584 856])
+% set(f,"Position",[-1828 -37 1584 856])
 % Visualize the CSD matrix
 % dioptic
 ax(1) = subplot(2,3,1);
@@ -327,7 +327,7 @@ box('off')
 % Visualize the raw diff
 differenceMatrix_diopDichoip = ...
     abs(grandAverageCSD_diopDichop(1:1201,:,1)')-abs(grandAverageCSD_diopDichop(1:1201,:,2)');
-filterCSD_binocDiff =  filterCSD(differenceMatrix_diopDichoip,.01);
+filterCSD_binocDiff =  filterCSD(differenceMatrix_diopDichoip,.05);
 
 ax(3) = subplot(2,3,3);
 imagesc(-200:1000,1:15,filterCSD_binocDiff);
@@ -388,8 +388,8 @@ set(gca,'XTick',[])
 
 %% plot BRFS
 grandAverageCSD_BRFS = median(averageCSDMatrix_BRFS,4,"omitmissing"); % average across penetration
-filterCSD_BRFSps = filterCSD(grandAverageCSD_BRFS(801:2001,:,1)',.01);
-filterCSD_BRFSns = filterCSD(grandAverageCSD_BRFS(801:2001,:,2)',.01);
+filterCSD_BRFSps = filterCSD(grandAverageCSD_BRFS(801:2001,:,1)',.05);
+filterCSD_BRFSns = filterCSD(grandAverageCSD_BRFS(801:2001,:,2)',.05);
 
 % Visualize the CSD matrix
 ax(6) = subplot(2,3,4);
@@ -426,7 +426,7 @@ box('off')
 % Visualize the raw diff
 differenceMatrix_BRFS = ...
     abs(grandAverageCSD_BRFS(801:2001,:,1)')-abs(grandAverageCSD_BRFS(801:2001,:,2)');
-filterCSD_BRFSDiff =  filterCSD(differenceMatrix_BRFS,.01);
+filterCSD_BRFSDiff =  filterCSD(differenceMatrix_BRFS,.05);
 
 ax(8) = subplot(2,3,6);
 imagesc(-200:1000,1:15,filterCSD_BRFSDiff);
