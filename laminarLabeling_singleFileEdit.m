@@ -144,12 +144,7 @@ for i = 1:length(sortedDataFiles)
             %loop through trials
             for trialNum = 1:size(lfpAllData,3)
                 clear x n Spec
-                lfp_holder        = lfpAllData(:,ch,trialNum);
-            
-                %%%%%%%%%%%%%%%%%
-                % % % % % % % % % %  x =bandStopFiltLFP(lfp_holder); fix bandstop filter
-                %%%%%%%%%%%%%%%%%
-            
+                lfp_holder        = lfpAllData(:,ch,trialNum);           
                 n        = size(lfp_holder,1); % Number of data points
                 % prep for psd 
                     nfft     = 512; 
@@ -159,11 +154,11 @@ for i = 1:length(sortedDataFiles)
                     x(nwind)=0;  
                     n=nwind;
                 end
-                noverlap = 1;
+                noverlap = nwind/2;
                 k        = fix((n-noverlap)/(nwind-noverlap));	% Number of windows
                 index    = 1:nwind;
                 % compute PSD
-                    x        = lfp_holder;   
+                    x        = lfp_holder;   %(tm,1,1)
                     Spec     = zeros(nfft,1); 
                 % loop through windows 
                     for j=1:k
