@@ -3,7 +3,7 @@
 % initialize variables
 clearvars -except LFP_trials
 tic
-workingPC = 'office'; % options: 'home', 'office'
+workingPC = 'home'; % options: 'home', 'office'
 
 %% Setup
 disp('start time')
@@ -231,11 +231,11 @@ for penetration = 1:size(LFP_trials,1)
                 for channel2 = v1Ch(1):channel1
                     % Extract the LFP_bb data for the chosen channels and trial
                     % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
-                    lfpGammaData1 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
+                    dataToUse = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
                     lfpGammaData2 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel2);
                     %baseline subtract
-                    bl1 = median(lfpGammaData1(tm_bl));
-                    lfp_blsub_1 = lfpGammaData1 - bl1;
+                    bl1 = median(dataToUse(tm_bl));
+                    lfp_blsub_1 = dataToUse - bl1;
                     bl2 = median(lfpGammaData2(tm_bl));
                     lfp_blsub_2 = lfpGammaData2 - bl2;
     
@@ -266,11 +266,11 @@ for penetration = 1:size(LFP_trials,1)
                 for channel2 = v1Ch(1):channel1
                     % Extract the LFP_bb data for the chosen channels and trial
                     % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
-                    lfpGammaData1 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
+                    dataToUse = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
                     lfpGammaData2 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel2);
                     %baseline subtract
-                    bl1 = median(lfpGammaData1(tm_bl));
-                    lfp_blsub_1 = lfpGammaData1 - bl1;
+                    bl1 = median(dataToUse(tm_bl));
+                    lfp_blsub_1 = dataToUse - bl1;
                     bl2 = median(lfpGammaData2(tm_bl));
                     lfp_blsub_2 = lfpGammaData2 - bl2;
     
@@ -288,35 +288,21 @@ for penetration = 1:size(LFP_trials,1)
     end
 
     %% PSD
-
-    % Dioptic vs dichoptic
-    conditionNumber = 1;
+    % Compute average PSD for each conditions 
+    for cond = [1 3 overallPref overallNull]
+        % format is LFP_trials{penetration,1}{cond,1}{trial}(tm,ch)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1);
+            DATA_PSDin = LFP_trials{penetration,1}{cond,1}{trl,1};
+            
+            % Compute PSD
+            [PSD, freq] = calcPSD(DATA_PSDin);
     
-    % Expected 
-    numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
-    preAllocatePSD = nan(15,15, numTrials);
-    % Loop through all trials and compute coherence for each channel pair
-    for trialNumber = 1:numTrials
-        for channel1 = v1Ch
-            for channel2 = v1Ch(1):channel1
-                % Extract the LFP_bb data for the chosen channels and trial
-                % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
-                lfpGammaData1 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
-                lfpGammaData2 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel2);
-                %baseline subtract
-                bl1 = median(lfpGammaData1(tm_bl));
-                lfp_blsub_1 = lfpGammaData1 - bl1;
-                bl2 = median(lfpGammaData2(tm_bl));
-                lfp_blsub_2 = lfpGammaData2 - bl2;
+            % Store PSD across penetrations and conditions
+            PSD_out(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:9));  % coherenceMatrix is (ch1 x ch2 x trialNum)
 
-                % Compute coherence
-                [coherence, freq] = mscohere(lfp_blsub_1(tm_coher), lfp_blsub_2(tm_coher), windowSize, overlap, [], fs);
-    
-                % Store coherence in the matrix
-                coherenceMatrix(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:9));  % coherenceMatrix is (ch1 x ch2 x trialNum)
-            end
         end
     end
+    
     % Average across trials and save output
     averagePSD_dioptic(:,:,penetration) = median(coherenceMatrix,3); % Average across trl. averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
 
