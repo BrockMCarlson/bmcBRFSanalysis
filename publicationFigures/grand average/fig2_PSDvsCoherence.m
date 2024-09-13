@@ -289,7 +289,9 @@ for penetration = 1:size(LFP_trials,1)
 
     %% PSD
     % Compute average PSD for each conditions 
+    count = 0;
     for cond = [1 3 overallPref overallNull]
+        count = count + 1; % for condition index
         % format is LFP_trials{penetration,1}{cond,1}{trial}(tm,ch)
         for trl = 1:size(LFP_trials{penetration,1}{cond,1},1);
             DATA_PSDin = LFP_trials{penetration,1}{cond,1}{trl,1};
@@ -298,19 +300,17 @@ for penetration = 1:size(LFP_trials,1)
             [PSD, freq] = calcPSD(DATA_PSDin);
     
             % Store PSD across penetrations and conditions
-            PSD_out(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:9));  % coherenceMatrix is (ch1 x ch2 x trialNum)
+            PSD_out{penetration,count}(:,:,trl) = PSD;  % coherenceMatrix is (ch1 x ch2 x trialNum)
 
         end
     end
     
-    % Average across trials and save output
-    averagePSD_dioptic(:,:,penetration) = median(coherenceMatrix,3); % Average across trl. averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
-
-
     disp(strcat('Done with file number: ',string(penetration)))
 
 end
 
+%% did you make it?
+asdflkj
 
 %% plot dioptic vs dichoptic
 grandAverageCoherence_diopDichop = median(averageCoherenceMatrix_diopDichop,4,"omitmissing"); % average across penetration

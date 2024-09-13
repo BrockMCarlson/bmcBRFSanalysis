@@ -15,7 +15,6 @@ if n < nwind    % zero-pad x if it has length less than the window length
     n=nwind;
 end
 k        = fix((n-noverlap)/(nwind-noverlap))-1;	% Number of windows
-index    = 1:nwind;
 
 % FFT
 % loop through channels 
@@ -24,6 +23,7 @@ for ch = 1:size(DATA,2)
     % compute PSD
     x        = DATA(:,ch);   
     % loop through windows 
+    index    = 1:nwind;
     for j=1:k
         xw    = window.*(x(index));
         index = index + (nwind - noverlap);
@@ -31,14 +31,21 @@ for ch = 1:size(DATA,2)
         Spec    = abs(fft(xw,nfft)).^2; % Spec is power.
     end
     % Select first half
-    if ~any(any(imag(x)~=0))   % check if x is complex 
+    % If the data is real, the PSD will only take the first half of the 
+    % FFT results due to the symmetry of the Fourier transform 
+    % (for real signals).
+    % If the data is complex, the PSD will take the full FFT, and the 
+    % number of rows in PSD will be nfft.
+    if ~any(imag(x)~=0)   % check if x is real 
         if rem(nfft,2)    % nfft odd
             select = (1:(nfft+1)/2)';
         else
             select = (1:nfft/2+1)';
         end
         Spec = Spec(select);
-    else
+    else %if x is complex
+        error(['Expected inputs are raw LFP voltages (which are not complex)' ...
+            'Have you put filtered data into this function?'])
         select = (1:nfft)';
     end
 
