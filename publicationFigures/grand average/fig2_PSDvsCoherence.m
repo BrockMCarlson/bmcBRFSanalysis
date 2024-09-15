@@ -205,87 +205,88 @@ for penetration = 1:size(LFP_trials,1)
     end
 
     %% Coherence matrix across channels
-    % Parameters for mscohere
-    fs = 1000;  % Sampling frequency in Hz
-    windowSize = 256;  % Window size for computing the coherence
-    overlap = windowSize/2;  % Overlap between windows
-    tm_full = 1:2001;
-    tm_bl = 1:200;
-    tm_1stOnset = 201:1000; %800ms adapter
-    tm_2ndOnset = 1001:1800;
-    tm_offset = 1801:2001;
-    tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
-    % Dioptic vs dichoptic
-    count = 0;
-    for conditionNumber = [1 3]        
-        % Get the number of trials for the chosen condition
-        numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
-        
-
-        
-        % Initialize coherence matrix
-        coherenceMatrix = nan(15,15, numTrials);
-        % Loop through all trials and compute coherence for each channel pair
-        for trialNumber = 1:numTrials
-            for channel1 = v1Ch
-                for channel2 = v1Ch(1):channel1
-                    % Extract the LFP_bb data for the chosen channels and trial
-                    % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
-                    dataToUse = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
-                    lfpGammaData2 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel2);
-                    %baseline subtract
-                    bl1 = median(dataToUse(tm_bl));
-                    lfp_blsub_1 = dataToUse - bl1;
-                    bl2 = median(lfpGammaData2(tm_bl));
-                    lfp_blsub_2 = lfpGammaData2 - bl2;
-    
-                    % Compute coherence
-                    [coherence, freq] = mscohere(lfp_blsub_1(tm_coher), lfp_blsub_2(tm_coher), windowSize, overlap, [], fs);
-        
-                    % Store coherence in the matrix
-                    coherenceMatrix(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:9));  % coherenceMatrix is (ch1 x ch2 x trialNum)
-                end
-            end
-        end
-        % Average across trials and save output
-        count = count + 1; % for pref vs null
-        averageCoherenceMatrix_diopDichop(:,:,count,penetration) = median(coherenceMatrix,3); % Average across trl. averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
-    end
-
-    % BRFS pref vs null
-    count = 0;
-    for conditionNumber = [overallPref overallNull]        
-        % Get the number of trials for the chosen condition
-        numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
-       
-        % Initialize coherence matrix
-        coherenceMatrix = nan(15,15, numTrials);
-        % Loop through all trials and compute coherence for each channel pair
-        for trialNumber = 1:numTrials
-            for channel1 = v1Ch
-                for channel2 = v1Ch(1):channel1
-                    % Extract the LFP_bb data for the chosen channels and trial
-                    % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
-                    dataToUse = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
-                    lfpGammaData2 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel2);
-                    %baseline subtract
-                    bl1 = median(dataToUse(tm_bl));
-                    lfp_blsub_1 = dataToUse - bl1;
-                    bl2 = median(lfpGammaData2(tm_bl));
-                    lfp_blsub_2 = lfpGammaData2 - bl2;
-    
-                    % Compute coherence
-                    [coherence, freq] = mscohere(lfp_blsub_1(tm_coher), lfp_blsub_2(tm_coher), windowSize, overlap, [], fs);
-        
-                    % Store coherence in the matrix
-                    coherenceMatrix(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:9));  % coherenceMatrix is (ch1 x ch2 x trialNum)
-                end
-            end
-        end
-        % Average across trials and save output
-        count = count + 1; % for pref vs null
-        averageCoherenceMatrix_BRFS(:,:,count,penetration) = median(coherenceMatrix,3); % Average across trl. averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
-    end
+    % % % % % Parameters for mscohere
+    % % % % fs = 1000;  % Sampling frequency in Hz
+    % % % % windowSize = 256;  % Window size for computing the coherence
+    % % % % overlap = windowSize/2;  % Overlap between windows
+    % % % % tm_full = 1:2001;
+    % % % % tm_bl = 1:200;
+    % % % % tm_1stOnset = 201:1000; %800ms adapter
+    % % % % tm_2ndOnset = 1001:1800;
+    % % % % tm_offset = 1801:2001;
+    % % % % tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
+    % % % % % Dioptic vs dichoptic
+    % % % % count = 0;
+    % % % % for conditionNumber = [1 3]        
+    % % % %     % Get the number of trials for the chosen condition
+    % % % %     numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
+    % % % % 
+    % % % % 
+    % % % % 
+    % % % %     % Initialize coherence matrix
+    % % % %     coherenceMatrix = nan(15,15, numTrials);
+    % % % %     % Loop through all trials and compute coherence for each channel pair
+    % % % %     for trialNumber = 1:numTrials
+    % % % %         for channel1 = v1Ch
+    % % % %             for channel2 = v1Ch(1):channel1
+    % % % %                 % Extract the LFP_bb data for the chosen channels and trial
+    % % % %                 % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
+    % % % %                 dataToUse = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
+    % % % %                 lfpGammaData2 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel2);
+    % % % %                 %baseline subtract
+    % % % %                 bl1 = median(dataToUse(tm_bl));
+    % % % %                 lfp_blsub_1 = dataToUse - bl1;
+    % % % %                 bl2 = median(lfpGammaData2(tm_bl));
+    % % % %                 lfp_blsub_2 = lfpGammaData2 - bl2;
+    % % % % 
+    % % % %                 % Compute coherence
+    % % % %                 [coherence, freq] = mscohere(lfp_blsub_1(tm_coher), lfp_blsub_2(tm_coher), windowSize, overlap, [], fs);
+    % % % % 
+    % % % %                 % Store coherence in the matrix
+    % % % %                 coherenceMatrix(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:9));  % coherenceMatrix is (ch1 x ch2 x trialNum)
+    % % % %             end
+    % % % %         end
+    % % % %     end
+    % % % %     % Average across trials and save output
+    % % % %     count = count + 1; % for pref vs null
+    % % % %     averageCoherenceMatrix_diopDichop(:,:,count,penetration) = median(coherenceMatrix,3); % Average across trl. averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
+    % % % % end
+    % % % % 
+    % % % % % BRFS pref vs null
+    % % % % count = 0;
+    % % % % for conditionNumber = [overallPref overallNull]        
+    % % % %     % Get the number of trials for the chosen condition
+    % % % %     numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
+    % % % % 
+    % % % %     % Initialize coherence matrix
+    % % % %     coherenceMatrix = nan(15,15, numTrials);
+    % % % %     % Loop through all trials and compute coherence for each channel pair
+    % % % %     for trialNumber = 1:numTrials
+    % % % %         for channel1 = v1Ch
+    % % % %             for channel2 = v1Ch(1):channel1
+    % % % %                 % Extract the LFP_bb data for the chosen channels and trial
+    % % % %                 % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
+    % % % %                 dataToUse = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
+    % % % %                 lfpGammaData2 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel2);
+    % % % %                 %baseline subtract
+    % % % %                 bl1 = median(dataToUse(tm_bl));
+    % % % %                 lfp_blsub_1 = dataToUse - bl1;
+    % % % %                 bl2 = median(lfpGammaData2(tm_bl));
+    % % % %                 lfp_blsub_2 = lfpGammaData2 - bl2;
+    % % % % 
+    % % % %                 % Compute coherence
+    % % % %                 [coherence, freq] = mscohere(lfp_blsub_1(tm_coher), lfp_blsub_2(tm_coher), windowSize, overlap, [], fs);
+    % % % % 
+    % % % %                 % Store coherence in the matrix
+    % % % %                 % We are analyzing freq 2:9, 2-30Hz
+    % % % %                 coherenceMatrix(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:9));  % coherenceMatrix is (ch1 x ch2 x trialNum)
+    % % % %             end
+    % % % %         end
+    % % % %     end
+    % % % %     % Average across trials and save output
+    % % % %     count = count + 1; % for pref vs null
+    % % % %     averageCoherenceMatrix_BRFS(:,:,count,penetration) = median(coherenceMatrix,3); % Average across trl. averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
+    % % % % end
 
     %% PSD
     % Compute average PSD for each conditions 
@@ -294,144 +295,162 @@ for penetration = 1:size(LFP_trials,1)
         count = count + 1; % for condition index
         % format is LFP_trials{penetration,1}{cond,1}{trial}(tm,ch)
         for trl = 1:size(LFP_trials{penetration,1}{cond,1},1);
-            DATA_PSDin = LFP_trials{penetration,1}{cond,1}{trl,1};
-            
+            DATA_PSDin = LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch);
             % Compute PSD
-            [PSD, freq] = calcPSD(DATA_PSDin,tm_coher);
-    
-            % Store PSD across penetrations and conditions
-            PSD_out{penetration,count}(:,:,trl) = PSD;  % coherenceMatrix is (ch1 x ch2 x trialNum)
-
+            [PSD, freq] = calcPSD(DATA_PSDin,tm_coher); %input is tm x ch, output is freq x ch 
+            % Store PSD across trials
+            PSD_trls(:,:,trl) = PSD;  %(freq x ch x trl)
         end
+
+        % average power across. trials
+        powerAvg = mean(PSD_trls,3,"omitnan");       
+        
+        % normalize power. At each frequency, we divide the power of each channel
+        % by that of the channel with the highest power.
+        PSD_norm = nan(size(powerAvg)); 
+        for freq = 1:size(powerAvg,1)
+            powerOfAllChAtThisFreq = powerAvg(freq,:);
+            [maxPower,chWithMaxPower] = max(powerOfAllChAtThisFreq);
+            PSD_norm(freq,:) = powerOfAllChAtThisFreq ./ maxPower; 
+            % output of power_norm is (freq,ch)
+        end
+        % Store output for condition and penetration
+        if cond == 1
+            PSD_normCond.dioptic(:,:,penetration) = PSD_norm;
+        elseif cond == 3
+            PSD_normCond.dichoptic(:,:,penetration) = PSD_norm;
+        elseif cond == overallPref
+            PSD_normCond.BRFSps(:,:,penetration) = PSD_norm;
+        elseif cond == overallNull
+            PSD_normCond.BRFSns(:,:,penetration) = PSD_norm;
+        end
+
     end
-    
-    disp(strcat('Done with file number: ',string(penetration)))
+        disp(strcat('Done with file number: ',string(penetration)))
 
-end
-
+end %% END OF penetration = 1:size(LFP_trials,1).
 
 
-%% plot dioptic vs dichoptic
-grandAverageCoherence_diopDichop = median(averageCoherenceMatrix_diopDichop,4,"omitmissing"); % average across penetration
 
-disp('analyzing freq')
-disp(freq(2:9))
-
-
-% Visualize the coherence matrix
-f = figure;
-% set(f,"Position",[-1238 -55 1126 641])
-ax(1) = subplot(2,3,1);
-imagesc(grandAverageCoherence_diopDichop(:,:,1));
-colormap(ax(1),'jet');
-colorbar;
-xlabel('Channel');
-ylabel('Channel');
-title('Dioptic');
-
-ax(2) = subplot(2,3,2);
-imagesc(grandAverageCoherence_diopDichop(:,:,2));
-colormap(ax(2),'jet');
-colorbar;
-xlabel('Channel');
-ylabel('Channel');
-title('Dichoptic');
-
-
-% Difference plot 
-coherenceMatrix1 = squeeze(averageCoherenceMatrix_diopDichop(:,:,1,:)); 
-coherenceMatrix2 = squeeze(averageCoherenceMatrix_diopDichop(:,:,2,:));
-diff_1 = grandAverageCoherence_diopDichop(:,:,1)-grandAverageCoherence_diopDichop(:,:,2);
-% % for ch1 = 1:15
-% %     for ch2 = 1:ch1
-% %         [h(ch1,ch2),p(ch1,ch2),ci(ch1,ch2,:),stats(ch1,ch2)]...
-% %             = ttest2(...
-% %             coherenceMatrix1(ch1,ch2,:),...
-% %             coherenceMatrix2(ch1,ch2,:)); % ttest taken across penetrations
-% %         tStat_1(ch1,ch2) = stats(ch1,ch2).tstat;
-% %     end
-% % end
-ax(3) = subplot(2,3,3);
-imagesc(diff_1);
-hline(5.5)
-hline(10.5)
-vline(5.5)
-vline(10.5)
-colormap(ax(3),'bone');
-clim([-.04 .04])
-e = colorbar;
-e.Label.String = "Coherence Difference";
-e.Label.Rotation = 270;
-xlabel('Channel');
-ylabel('Channel');
-title('difference');
-
-% % hypothesis test logical
-% % subplot(1,4,4);
-% % imagesc(h);
-% % colormap('bone');
-% % e = colorbar;
-% % e.Label.String = "h = 1 or 0";
-% % e.Label.Rotation = 270;
-% % xlabel('Channel');
-% % ylabel('Channel');
-% % title('Dioptic vs Dichoptic Hypothesis test');
+%% plot dioptic vs dichoptic coherence
+% % % % grandAverageCoherence_diopDichop = median(averageCoherenceMatrix_diopDichop,4,"omitmissing"); % average across penetration
+% % % % 
+% % % % 
+% % % % 
+% % % % % Visualize the coherence matrix
+% % % % f = figure;
+% % % % % set(f,"Position",[-1238 -55 1126 641])
+% % % % ax(1) = subplot(2,3,1);
+% % % % imagesc(grandAverageCoherence_diopDichop(:,:,1));
+% % % % colormap(ax(1),'jet');
+% % % % colorbar;
+% % % % xlabel('Channel');
+% % % % ylabel('Channel');
+% % % % title('Dioptic');
+% % % % 
+% % % % ax(2) = subplot(2,3,2);
+% % % % imagesc(grandAverageCoherence_diopDichop(:,:,2));
+% % % % colormap(ax(2),'jet');
+% % % % colorbar;
+% % % % xlabel('Channel');
+% % % % ylabel('Channel');
+% % % % title('Dichoptic');
+% % % % 
+% % % % 
+% % % % % Difference plot 
+% % % % coherenceMatrix1 = squeeze(averageCoherenceMatrix_diopDichop(:,:,1,:)); 
+% % % % coherenceMatrix2 = squeeze(averageCoherenceMatrix_diopDichop(:,:,2,:));
+% % % % diff_1 = grandAverageCoherence_diopDichop(:,:,1)-grandAverageCoherence_diopDichop(:,:,2);
+% % % % % % for ch1 = 1:15
+% % % % % %     for ch2 = 1:ch1
+% % % % % %         [h(ch1,ch2),p(ch1,ch2),ci(ch1,ch2,:),stats(ch1,ch2)]...
+% % % % % %             = ttest2(...
+% % % % % %             coherenceMatrix1(ch1,ch2,:),...
+% % % % % %             coherenceMatrix2(ch1,ch2,:)); % ttest taken across penetrations
+% % % % % %         tStat_1(ch1,ch2) = stats(ch1,ch2).tstat;
+% % % % % %     end
+% % % % % % end
+% % % % ax(3) = subplot(2,3,3);
+% % % % imagesc(diff_1);
+% % % % hline(5.5)
+% % % % hline(10.5)
+% % % % vline(5.5)
+% % % % vline(10.5)
+% % % % colormap(ax(3),'bone');
+% % % % clim([-.04 .04])
+% % % % e = colorbar;
+% % % % e.Label.String = "Coherence Difference";
+% % % % e.Label.Rotation = 270;
+% % % % xlabel('Channel');
+% % % % ylabel('Channel');
+% % % % title('difference');
+% % % % 
+% % % % % % hypothesis test logical
+% % % % % % subplot(1,4,4);
+% % % % % % imagesc(h);
+% % % % % % colormap('bone');
+% % % % % % e = colorbar;
+% % % % % % e.Label.String = "h = 1 or 0";
+% % % % % % e.Label.Rotation = 270;
+% % % % % % xlabel('Channel');
+% % % % % % ylabel('Channel');
+% % % % % % title('Dioptic vs Dichoptic Hypothesis test');
 
 
 
 
-%% plot BRFS
-grandAverageCoherence_BRFS = median(averageCoherenceMatrix_BRFS,4,"omitmissing"); % average across penetration
-
-% Visualize the coherence matrix
-ax(4) = subplot(2,3,4);
-imagesc(grandAverageCoherence_BRFS(:,:,1));
-colormap(ax(4),'jet');
-colorbar;
-xlabel('Channel');
-ylabel('Channel');
-title('Preferred Stimulus BRFS flash');
-
-ax(5) = subplot(2,3,5);
-imagesc(grandAverageCoherence_BRFS(:,:,2));
-colormap(ax(5),'jet');
-colorbar;
-xlabel('Channel');
-ylabel('Channel');
-title('Non-preferred stimulus BRFS flash');
-
-
-% Difference plot - with tStat
-coherenceMatrix1 = squeeze(averageCoherenceMatrix_BRFS(:,:,1,:)); 
-coherenceMatrix2 = squeeze(averageCoherenceMatrix_BRFS(:,:,2,:));
-diff_2 = grandAverageCoherence_BRFS(:,:,1)-grandAverageCoherence_BRFS(:,:,2);
-% % for ch1 = 1:15
-% %     for ch2 = 1:ch1
-% %         [h(ch1,ch2),p(ch1,ch2),ci(ch1,ch2,:),stats(ch1,ch2)]...
-% %             = ttest2(...
-% %             coherenceMatrix1(ch1,ch2,:),...
-% %             coherenceMatrix2(ch1,ch2,:)); % ttest taken across penetrations
-% %         tStat_2(ch1,ch2) = stats(ch1,ch2).tstat;
-% %     end
-% % end
-ax(6) = subplot(2,3,6);
-imagesc(diff_2);
-hline(5.5)
-hline(10.5)
-vline(5.5)
-vline(10.5)
-colormap(ax(6),'bone');
-clim([-.04 .04])
-e = colorbar;
-e.Label.String = "Coherence Difference";
-e.Label.Rotation = 270;
-xlabel('Channel');
-ylabel('Channel');
-title('difference');
-
-sgtitle('Coherence Penetration Average')
-
-% % hypothesis test logical
+%% plot BRFS coherence
+% % % grandAverageCoherence_BRFS = median(averageCoherenceMatrix_BRFS,4,"omitmissing"); % average across penetration
+% % % 
+% % % % Visualize the coherence matrix
+% % % ax(4) = subplot(2,3,4);
+% % % imagesc(grandAverageCoherence_BRFS(:,:,1));
+% % % colormap(ax(4),'jet');
+% % % colorbar;
+% % % xlabel('Channel');
+% % % ylabel('Channel');
+% % % title('Preferred Stimulus BRFS flash');
+% % % 
+% % % ax(5) = subplot(2,3,5);
+% % % imagesc(grandAverageCoherence_BRFS(:,:,2));
+% % % colormap(ax(5),'jet');
+% % % colorbar;
+% % % xlabel('Channel');
+% % % ylabel('Channel');
+% % % title('Non-preferred stimulus BRFS flash');
+% % % 
+% % % 
+% % % % Difference plot - with tStat
+% % % coherenceMatrix1 = squeeze(averageCoherenceMatrix_BRFS(:,:,1,:)); 
+% % % coherenceMatrix2 = squeeze(averageCoherenceMatrix_BRFS(:,:,2,:));
+% % % diff_2 = grandAverageCoherence_BRFS(:,:,1)-grandAverageCoherence_BRFS(:,:,2);
+% % % % % for ch1 = 1:15
+% % % % %     for ch2 = 1:ch1
+% % % % %         [h(ch1,ch2),p(ch1,ch2),ci(ch1,ch2,:),stats(ch1,ch2)]...
+% % % % %             = ttest2(...
+% % % % %             coherenceMatrix1(ch1,ch2,:),...
+% % % % %             coherenceMatrix2(ch1,ch2,:)); % ttest taken across penetrations
+% % % % %         tStat_2(ch1,ch2) = stats(ch1,ch2).tstat;
+% % % % %     end
+% % % % % end
+% % % ax(6) = subplot(2,3,6);
+% % % imagesc(diff_2);
+% % % hline(5.5)
+% % % hline(10.5)
+% % % vline(5.5)
+% % % vline(10.5)
+% % % colormap(ax(6),'bone');
+% % % clim([-.04 .04])
+% % % e = colorbar;
+% % % e.Label.String = "Coherence Difference";
+% % % e.Label.Rotation = 270;
+% % % xlabel('Channel');
+% % % ylabel('Channel');
+% % % title('difference');
+% % % 
+% % % sgtitle('Coherence Penetration Average')
+% % % 
+% % % % % hypothesis test logical
 % % subplot(1,4,4);
 % % imagesc(h);
 % % colormap('bone');
@@ -445,26 +464,26 @@ sgtitle('Coherence Penetration Average')
 %% Save output
 %save fig
 toc
-answer = questdlg('Would you like to save this figure?', ...
-	'Y', ...
-	'N');
-% Handle response
-switch answer
-    case 'Yes'
-        disp('alright, saving figure to plotdir')
-        sgtitle('Coherence Penetration Average')
-        cd(plotDir)
-        saveName = strcat('coherencePenetrationAvg.png');
-        saveas(f,saveName) 
-    case 'No'
-        cd(plotDir)
-        disp('please see plotdir for last save')
-end
+% % % answer = questdlg('Would you like to save this figure?', ...
+% % % 	'Y', ...
+% % % 	'N');
+% % % % Handle response
+% % % switch answer
+% % %     case 'Yes'
+% % %         disp('alright, saving figure to plotdir')
+% % %         sgtitle('Coherence Penetration Average')
+% % %         cd(plotDir)
+% % %         saveName = strcat('coherencePenetrationAvg.png');
+% % %         saveas(f,saveName) 
+% % %     case 'No'
+% % %         cd(plotDir)
+% % %         disp('please see plotdir for last save')
+% % % end
 
 
 
 
-%% Statistical test - ANOVA between compartment comparisons
+%% Statistical test - ANOVA between compartment comparisons coherence
 SxS_1 = diff_1(1:5,1:5); %half block
 GxS_1 = diff_1(6:10,1:5);
 IxS_1 = diff_1(11:15,1:5);
@@ -522,21 +541,24 @@ aov_same_2 = anova1(holder_same_2);
 disp(aov_same_2)
 
 
-%% PSD Plot
+%% PSD 
 %%%%%%%%%%%%%
 %%% POWER %%%
 %%%%%%%%%%%%%
-grandAverageCoherence_diopDichop = median(averageCoherenceMatrix_diopDichop,4,"omitmissing"); % average across penetration
 
-disp('analyzing freq')
-disp(freq(2:9))
+%% Average variables across penetration
+PSD_grandAvg.dioptic = median(PSD_normCond.dioptic,3,"omitmissing"); % average across penetration
+PSD_grandAvg.dichoptic = median(PSD_normCond.dichoptic,3,"omitmissing"); % average across penetration
+PSD_grandAvg.BRFSps = median(PSD_normCond.BRFSps,3,"omitmissing"); % average across penetration
+PSD_grandAvg.BRFSns = median(PSD_normCond.BRFSns,3,"omitmissing"); % average across penetration
 
+%% Plot PSD
 
 % Visualize the coherence matrix
 f = figure;
 % set(f,"Position",[-1238 -55 1126 641])
 ax(1) = subplot(2,3,1);
-imagesc(grandAverageCoherence_diopDichop(:,:,1));
+imagesc(PSD_grandAvg.dioptic'); % expected input is ch x freq
 colormap(ax(1),'jet');
 colorbar;
 xlabel('Channel');
@@ -544,7 +566,7 @@ ylabel('Channel');
 title('Dioptic');
 
 ax(2) = subplot(2,3,2);
-imagesc(grandAverageCoherence_diopDichop(:,:,2));
+imagesc(PSD_grandAvg.dichoptic');
 colormap(ax(2),'jet');
 colorbar;
 xlabel('Channel');
@@ -553,18 +575,7 @@ title('Dichoptic');
 
 
 % Difference plot 
-coherenceMatrix1 = squeeze(averageCoherenceMatrix_diopDichop(:,:,1,:)); 
-coherenceMatrix2 = squeeze(averageCoherenceMatrix_diopDichop(:,:,2,:));
-diff_1 = grandAverageCoherence_diopDichop(:,:,1)-grandAverageCoherence_diopDichop(:,:,2);
-% % for ch1 = 1:15
-% %     for ch2 = 1:ch1
-% %         [h(ch1,ch2),p(ch1,ch2),ci(ch1,ch2,:),stats(ch1,ch2)]...
-% %             = ttest2(...
-% %             coherenceMatrix1(ch1,ch2,:),...
-% %             coherenceMatrix2(ch1,ch2,:)); % ttest taken across penetrations
-% %         tStat_1(ch1,ch2) = stats(ch1,ch2).tstat;
-% %     end
-% % end
+diff_1 = PSD_grandAvg.dioptic-PSD_grandAvg.dichoptic;
 ax(3) = subplot(2,3,3);
 imagesc(diff_1);
 hline(5.5)
@@ -580,16 +591,7 @@ xlabel('Channel');
 ylabel('Channel');
 title('difference');
 
-% % hypothesis test logical
-% % subplot(1,4,4);
-% % imagesc(h);
-% % colormap('bone');
-% % e = colorbar;
-% % e.Label.String = "h = 1 or 0";
-% % e.Label.Rotation = 270;
-% % xlabel('Channel');
-% % ylabel('Channel');
-% % title('Dioptic vs Dichoptic Hypothesis test');
+
 
 
 
@@ -658,22 +660,22 @@ sgtitle('Coherence Penetration Average')
 
 %% Save output
 %save fig
-answer = questdlg('Would you like to save this figure?', ...
-	'Y', ...
-	'N');
-% Handle response
-switch answer
-    case 'Yes'
-        disp('alright, saving figure to plotdir')
-        sgtitle('Coherence Penetration Average')
-        cd(plotDir)
-        saveName = strcat('coherencePenetrationAvg.png');
-        saveas(f,saveName) 
-    case 'No'
-        cd(plotDir)
-        disp('please see plotdir for last save')
-end
-
+% % % answer = questdlg('Would you like to save this figure?', ...
+% % % 	'Y', ...
+% % % 	'N');
+% % % % Handle response
+% % % switch answer
+% % %     case 'Yes'
+% % %         disp('alright, saving figure to plotdir')
+% % %         sgtitle('Coherence Penetration Average')
+% % %         cd(plotDir)
+% % %         saveName = strcat('coherencePenetrationAvg.png');
+% % %         saveas(f,saveName) 
+% % %     case 'No'
+% % %         cd(plotDir)
+% % %         disp('please see plotdir for last save')
+% % % end
+% % % 
 
 
 

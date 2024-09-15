@@ -151,7 +151,7 @@ for file = 20:size(officLamAssign,1)
     for chIDX = 1:32
         ch = yAxisChannels(chIDX);
         %loop through trials
-        for trialNum = 1:size(lfpAllData,3)
+        for trialNum = 1:size(lfpAllData,3) % tm x ch x trial
             clear x n Spec
             lfp_holder  = lfpAllData(:,ch,trialNum);
             n        = size(lfp_holder,1); % Number of data points

@@ -1,4 +1,4 @@
-function [PSD,freq] = calcPSD(DATA,tmOfAnalysis) %input is tm x ch
+function [PSD,freq] = calcPSD(DATA,tmOfAnalysis) %input is tm x ch, output is freq x ch 
 %% Power spectral density
 % Brock Carlson - Maier Lab - 9/10/24
 
@@ -47,5 +47,3 @@ for ch = 1:size(DATA,2)
     PSD(:,ch) = Spec'; 
 
 end
-
-Normalize! You must normalize the output. !~##~!#
