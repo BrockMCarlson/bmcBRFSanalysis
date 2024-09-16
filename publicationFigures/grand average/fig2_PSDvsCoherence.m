@@ -214,7 +214,7 @@ for penetration = 1:size(LFP_trials,1)
     % % % % tm_1stOnset = 201:1000; %800ms adapter
     % % % % tm_2ndOnset = 1001:1800;
     % % % % tm_offset = 1801:2001;
-    % % % % tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
+    tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
     % % % % % Dioptic vs dichoptic
     % % % % count = 0;
     % % % % for conditionNumber = [1 3]        
@@ -484,61 +484,61 @@ toc
 
 
 %% Statistical test - ANOVA between compartment comparisons coherence
-SxS_1 = diff_1(1:5,1:5); %half block
-GxS_1 = diff_1(6:10,1:5);
-IxS_1 = diff_1(11:15,1:5);
-GxG_1 = diff_1(6:10,6:10); % half block
-IxG_1 = diff_1(11:15,6:10);
-IxI_1 = diff_1(11:15,11:15); % half block
-
-% aov = anova(y) performs a one-way ANOVA and returns the anova object...
-% aov for the response data in the matrix y. Each column of y is treated...
-% as a different factor value.
-% construct y for ANOVA
-holder_cross_1(:,1) = reshape(GxS_1,[25,1]);
-holder_cross_1(:,2) = reshape(IxS_1,[25,1]);
-holder_cross_1(:,3) = reshape(IxG_1,[25,1]);
-aov_cross_1 = anova1(holder_cross_1);
-disp(aov_cross_1)
-
-%turn 0 to NaN
-SxS_1(SxS_1 == 0) = NaN;
-GxG_1(GxG_1 == 0) = NaN;
-IxI_1(IxI_1 == 0) = NaN;
-holder_same_1(:,1) = reshape(SxS_1,[25,1]);
-holder_same_1(:,2) = reshape(GxG_1,[25,1]);
-holder_same_1(:,3) = reshape(IxI_1,[25,1]);
-aov_same_1 = anova1(holder_same_1);
-disp(aov_same_1)
-
-
-% BRFS
-SxS_2 = diff_2(1:5,1:5); %half block
-GxS_2 = diff_2(6:10,1:5);
-IxS_2 = diff_2(11:15,1:5);
-GxG_2 = diff_2(6:10,6:10); % half block
-IxG_2 = diff_2(11:15,6:10);
-IxI_2 = diff_2(11:15,11:15); % half block
-
-% aov = anova(y) performs a one-way ANOVA and returns the anova object...
-% aov for the response data in the matrix y. Each column of y is treated...
-% as a different factor value.
-% construct y for ANOVA
-holder_cross_2(:,1) = reshape(GxS_2,[25,1]);
-holder_cross_2(:,2) = reshape(IxS_2,[25,1]);
-holder_cross_2(:,3) = reshape(IxG_2,[25,1]);
-aov_cross_2 = anova1(holder_cross_2);
-disp(aov_cross_2)
-
-%turn 0 to NaN
-SxS_2(SxS_2 == 0) = NaN;
-GxG_2(GxG_2 == 0) = NaN;
-IxI_2(IxI_2 == 0) = NaN;
-holder_same_2(:,1) = reshape(SxS_2,[25,1]);
-holder_same_2(:,2) = reshape(GxG_2,[25,1]);
-holder_same_2(:,3) = reshape(IxI_2,[25,1]);
-aov_same_2 = anova1(holder_same_2);
-disp(aov_same_2)
+% % % SxS_1 = diff_1(1:5,1:5); %half block
+% % % GxS_1 = diff_1(6:10,1:5);
+% % % IxS_1 = diff_1(11:15,1:5);
+% % % GxG_1 = diff_1(6:10,6:10); % half block
+% % % IxG_1 = diff_1(11:15,6:10);
+% % % IxI_1 = diff_1(11:15,11:15); % half block
+% % % 
+% % % % aov = anova(y) performs a one-way ANOVA and returns the anova object...
+% % % % aov for the response data in the matrix y. Each column of y is treated...
+% % % % as a different factor value.
+% % % % construct y for ANOVA
+% % % holder_cross_1(:,1) = reshape(GxS_1,[25,1]);
+% % % holder_cross_1(:,2) = reshape(IxS_1,[25,1]);
+% % % holder_cross_1(:,3) = reshape(IxG_1,[25,1]);
+% % % aov_cross_1 = anova1(holder_cross_1);
+% % % disp(aov_cross_1)
+% % % 
+% % % %turn 0 to NaN
+% % % SxS_1(SxS_1 == 0) = NaN;
+% % % GxG_1(GxG_1 == 0) = NaN;
+% % % IxI_1(IxI_1 == 0) = NaN;
+% % % holder_same_1(:,1) = reshape(SxS_1,[25,1]);
+% % % holder_same_1(:,2) = reshape(GxG_1,[25,1]);
+% % % holder_same_1(:,3) = reshape(IxI_1,[25,1]);
+% % % aov_same_1 = anova1(holder_same_1);
+% % % disp(aov_same_1)
+% % % 
+% % % 
+% % % % BRFS
+% % % SxS_2 = diff_2(1:5,1:5); %half block
+% % % GxS_2 = diff_2(6:10,1:5);
+% % % IxS_2 = diff_2(11:15,1:5);
+% % % GxG_2 = diff_2(6:10,6:10); % half block
+% % % IxG_2 = diff_2(11:15,6:10);
+% % % IxI_2 = diff_2(11:15,11:15); % half block
+% % % 
+% % % % aov = anova(y) performs a one-way ANOVA and returns the anova object...
+% % % % aov for the response data in the matrix y. Each column of y is treated...
+% % % % as a different factor value.
+% % % % construct y for ANOVA
+% % % holder_cross_2(:,1) = reshape(GxS_2,[25,1]);
+% % % holder_cross_2(:,2) = reshape(IxS_2,[25,1]);
+% % % holder_cross_2(:,3) = reshape(IxG_2,[25,1]);
+% % % aov_cross_2 = anova1(holder_cross_2);
+% % % disp(aov_cross_2)
+% % % 
+% % % %turn 0 to NaN
+% % % SxS_2(SxS_2 == 0) = NaN;
+% % % GxG_2(GxG_2 == 0) = NaN;
+% % % IxI_2(IxI_2 == 0) = NaN;
+% % % holder_same_2(:,1) = reshape(SxS_2,[25,1]);
+% % % holder_same_2(:,2) = reshape(GxG_2,[25,1]);
+% % % holder_same_2(:,3) = reshape(IxI_2,[25,1]);
+% % % aov_same_2 = anova1(holder_same_2);
+% % % disp(aov_same_2)
 
 
 %% PSD 
@@ -558,36 +558,34 @@ PSD_grandAvg.BRFSns = median(PSD_normCond.BRFSns,3,"omitmissing"); % average acr
 f = figure;
 % set(f,"Position",[-1238 -55 1126 641])
 ax(1) = subplot(2,3,1);
-imagesc(PSD_grandAvg.dioptic'); % expected input is ch x freq
-colormap(ax(1),'jet');
+imagesc(PSD_grandAvg.dioptic(1:50,:)'); % expected input is ch x freq
+colormap(ax(1),'parula');
 colorbar;
-xlabel('Channel');
+% clim([.75 1])
+xlabel('Frequency');
 ylabel('Channel');
 title('Dioptic');
 
 ax(2) = subplot(2,3,2);
-imagesc(PSD_grandAvg.dichoptic');
-colormap(ax(2),'jet');
+imagesc(PSD_grandAvg.dichoptic(1:50,:)');
+colormap(ax(2),'parula');
 colorbar;
-xlabel('Channel');
+% clim([.75 1])
+xlabel('Frequency');
 ylabel('Channel');
 title('Dichoptic');
 
 
 % Difference plot 
-diff_1 = PSD_grandAvg.dioptic-PSD_grandAvg.dichoptic;
+diff_1 = PSD_grandAvg.dioptic(1:50,:)'-PSD_grandAvg.dichoptic(1:50,:)';
 ax(3) = subplot(2,3,3);
 imagesc(diff_1);
-hline(5.5)
-hline(10.5)
-vline(5.5)
-vline(10.5)
 colormap(ax(3),'bone');
-clim([-.04 .04])
+% clim([0 .5])
 e = colorbar;
-e.Label.String = "Coherence Difference";
+e.Label.String = "PSD Difference";
 e.Label.Rotation = 270;
-xlabel('Channel');
+xlabel('Frequency');
 ylabel('Channel');
 title('difference');
 
