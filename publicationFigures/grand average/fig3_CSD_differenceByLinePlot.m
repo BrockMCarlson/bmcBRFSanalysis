@@ -240,46 +240,6 @@ for penetration = 1:size(LFP_trials,1)
         averageCSDMatrix_BRFS(:,:,count,penetration) = median(CSDflashOut,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
     end
 
-    % % % % chForCSDcalc = v1Ch(1)-1:v1Ch(end)+1;
-    % % % % % Dioptic vs dichoptic
-    % % % % count = 0;
-    % % % % for conditionNumber = [1 3]        
-    % % % %     % Get the number of trials for the chosen condition
-    % % % %     numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
-    % % % %     CSDbinocOut = nan(2001,length(v1Ch),numTrials);
-    % % % %     for trl = 1:numTrials
-    % % % %         LFPbinocTrl = LFP_trials{penetration,1}{conditionNumber,1}{trl,1}(:,chForCSDcalc); % adding ch above and below for CSD calc (to use as vaknin pad)
-    % % % %         CSDbinocTrl = calcCSD_classic(LFPbinocTrl);
-    % % % %         CSDbinocOut(:,:,trl) = CSDbinocTrl(:,2:16); % limit to origional V1 ch lim
-    % % % %     end
-    % % % %     %convert to % change
-    % % % %     trlAvgBinoc = median(CSDbinocOut,3); 
-    % % % %     blCSDbinoc = mean(trlAvgBinoc(100:200,:),1);
-    % % % %     CSD_percentChange = 100*((trlAvgBinoc-blCSDbinoc)./blCSDbinoc);
-    % % % %     % Average across trials and save output
-    % % % %     count = count + 1; % for pref vs null
-    % % % %     averageCSDMatrix_diopDichop(:,:,count,penetration) = median(CSD_percentChange,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
-    % % % % end
-    % % % % 
-    % % % % % BRFS pref vs null
-    % % % % count = 0;
-    % % % % for conditionNumber = [overallPref overallNull]        
-    % % % %     % Get the number of trials for the chosen condition
-    % % % %     numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
-    % % % %     CSDflashOut = nan(2001,length(v1Ch),numTrials);
-    % % % %     for trl = 1:numTrials
-    % % % %         LFPflashTrl = LFP_trials{penetration,1}{conditionNumber,1}{trl,1}(:,chForCSDcalc);
-    % % % %         CSDflashTrl = calcCSD_classic(LFPflashTrl);
-    % % % %         CSDflashOut(:,:,trl) = CSDflashTrl(:,2:16);
-    % % % %     end
-    % % % %     %convert to % change
-    % % % %     trlAvgFlash = median(CSDflashOut,3); 
-    % % % %     blCSDbinoc = mean(trlAvgFlash(100:200,:),1);
-    % % % %     CSD_percentChange = 100*((trlAvgFlash-blCSDbinoc)./blCSDbinoc);
-    % % % %     % Average across trials and save output
-    % % % %     count = count + 1; % for pref vs null
-    % % % %     averageCSDMatrix_BRFS(:,:,count,penetration) = median(CSD_percentChange,3); % Average across trl. averageCSDMatrix is (ch1 x ch2 x cond x penetration)
-    % % % % end
 
 
     disp(strcat('Done with file number: ',string(penetration)))
@@ -287,102 +247,115 @@ end
 
 
 %% plot dioptic vs dichoptic
-grandAverageCSD_diopDichop = median(averageCSDMatrix_diopDichop,4,"omitmissing"); % average across penetration
-filterCSD_dioptic = filterCSD(grandAverageCSD_diopDichop(1:1201,:,1)',.05);
-filterCSD_dichoptic = filterCSD(grandAverageCSD_diopDichop(1:1201,:,2)',.05);
+%% plot dioptic vs dichoptic
+% Set smoothing factor (adjust if needed)
+smoothing_factor = 10;  % You can tweak this value for more/less smoothing
 
-f = figure; 
-% set(f,"Position",[-1828 -37 1584 856])
-% Visualize the CSD matrix
-% dioptic
-ax(1) = subplot(2,3,1);
-imagesc(-200:1000,1:15,filterCSD_dioptic);
-oldcmap = colormap(ax(1),'jet');
-newcmap = colormap(flipud(oldcmap));
-colormap(ax(1),newcmap)
-clim([-2000 2000]);
-% xlabel('Time (ms)');
-ylabel('Channel');
-cb = colorbar(); 
-% ylabel(cb,'(nA/mm)^3','FontSize',12)
-xl = xline(0,'--','Stimulus onset','LineWidth',3);
-title('Dioptic');
-box('off')
-set(gca,'XTick',[])
+% Average over the recording sessions
+grandAverageCSD_diopDichop = median(averageCSDMatrix_diopDichop, 4, "omitmissing"); % Average across sessions
 
+% Extract the data for dioptic and dichoptic conditions
+dioptic_data = grandAverageCSD_diopDichop(:, :, 1);  % Dioptic condition
+dichoptic_data = grandAverageCSD_diopDichop(:, :, 2);  % Dichoptic condition
 
+% Time vector for the last 1000 ms (assuming 1 ms resolution)
+time = -200:1000;  % Align with your earlier time axis
 
-%dichoptic
-ax(2) = subplot(2,3,2);
-imagesc(-200:1000,1:15,filterCSD_dichoptic);
-colormap(ax(2),newcmap)
-clim([-2000 2000]);
+% Smoothing the data before averaging
+dioptic_data_smooth = smoothdata(dioptic_data, 'gaussian', smoothing_factor);
+dichoptic_data_smooth = smoothdata(dichoptic_data, 'gaussian', smoothing_factor);
+
+% Limit time vector to the first 701 ms (0 to 500 ms)
+time_idx_start = 1; % Start index for -200 ms
+time_idx_end = 701; % End index for 500 ms
+
+% Compute averages for each laminar compartment (across channels)
+supragranular_avg_diop = mean(dioptic_data_smooth(time_idx_start:time_idx_end, 1:5), 2);   % Channels 1:5 for dioptic
+supragranular_avg_dicho = mean(dichoptic_data_smooth(time_idx_start:time_idx_end, 1:5), 2);  % Channels 1:5 for dichoptic
+
+granular_avg_diop = mean(dioptic_data_smooth(time_idx_start:time_idx_end, 6:10), 2);  % Channels 6:10 for dioptic
+granular_avg_dicho = mean(dichoptic_data_smooth(time_idx_start:time_idx_end, 6:10), 2);  % Channels 6:10 for dichoptic
+
+infragranular_avg_diop = mean(dioptic_data_smooth(time_idx_start:time_idx_end, 11:15), 2);  % Channels 11:15 for dioptic
+infragranular_avg_dicho = mean(dichoptic_data_smooth(time_idx_start:time_idx_end, 11:15), 2);  % Channels 11:15 for dichoptic
+
+% Difference between conditions (before filtering)
+supragranular_diff = supragranular_avg_diop - supragranular_avg_dicho;
+granular_diff = granular_avg_diop - granular_avg_dicho;
+infragranular_diff = infragranular_avg_diop - infragranular_avg_dicho;
+
+% Define the cutoff frequency and sample rate for the low-pass filter
+fs = 1000; % Assuming 1000 Hz sampling rate
+cutoff_freq = 30; % 20 Hz cutoff frequency
+[b, a] = butter(4, cutoff_freq / (fs / 2), 'low'); % 4th-order Butterworth filter
+
+% Apply low-pass filter to the averaged data
+supragranular_avg_diop_filtered = filtfilt(b, a, supragranular_avg_diop);
+supragranular_avg_dicho_filtered = filtfilt(b, a, supragranular_avg_dicho);
+
+granular_avg_diop_filtered = filtfilt(b, a, granular_avg_diop);
+granular_avg_dicho_filtered = filtfilt(b, a, granular_avg_dicho);
+
+infragranular_avg_diop_filtered = filtfilt(b, a, infragranular_avg_diop);
+infragranular_avg_dicho_filtered = filtfilt(b, a, infragranular_avg_dicho);
+
+% Apply low-pass filter to the difference between conditions
+supragranular_diff_filtered = filtfilt(b, a, supragranular_diff);
+granular_diff_filtered = filtfilt(b, a, granular_diff);
+infragranular_diff_filtered = filtfilt(b, a, infragranular_diff);
+
+% Create a modern muted color palette that is easier to differentiate
+colors = [
+    0.121, 0.466, 0.705; % Blue
+    0.682, 0.780, 0.902; % Light Blue
+    0.890, 0.102, 0.110; % Red
+    0.600, 0.400, 0.000; % Olive Green
+    0.659, 0.661, 0.661; % Gray
+];
+
+% Create figure for line plots
+f = figure;
+
+% First plot: Supragranular
+subplot(3, 2, 1);
+plot(time(time_idx_start:time_idx_end), supragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
+plot(time(time_idx_start:time_idx_end), supragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
-cb = colorbar(); 
-xl = xline(0,'--','Stimulus onset','LineWidth',3);
-title('Dichoptic');
-box('off')
+ylabel('nA/mm^3');
+title('Supragranular');
+legend;
+xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
 
+% Second plot: Granular
+subplot(3, 2, 3);
+plot(time(time_idx_start:time_idx_end), granular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
+plot(time(time_idx_start:time_idx_end), granular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+xlabel('Time (ms)');
+ylabel('nA/mm^3');
+title('Granular');
+legend;
+xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
 
-% Visualize the raw diff
-differenceMatrix_diopDichoip = ...
-    abs(grandAverageCSD_diopDichop(1:1201,:,1)')-abs(grandAverageCSD_diopDichop(1:1201,:,2)');
-filterCSD_binocDiff =  filterCSD(differenceMatrix_diopDichoip,.05);
+% Third plot: Infragranular
+subplot(3, 2, 5);
+plot(time(time_idx_start:time_idx_end), infragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
+plot(time(time_idx_start:time_idx_end), infragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+xlabel('Time (ms)');
+ylabel('nA/mm^3');
+title('Infragranular');
+legend;
+xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
 
-ax(3) = subplot(2,3,3);
-imagesc(-200:1000,1:15,filterCSD_binocDiff);
-colormap(ax(3),'bone');
-clim([-500 500]);
-% xlabel('Time (ms)');
-cb = colorbar(); 
-ylabel(cb,'(nA/mm)^3','FontSize',12)
-xl = xline(0,'--','Stimulus onset','LineWidth',3);
-title('|Difference|: |dioptic-dichoptic|');
-box('off')
-set(gca,'XTick',[])
-
-
-
-
-% % 
-% % % Difference plot - with tStat
-% % usePenetration = [1:4 6 8:25 27:29 31];
-% % h = nan(15,24);
-% % p = nan(15,24);
-% % ci = nan(15,24,2);
-% % for ch = 1:15
-% %     CSDMatrix1 = squeeze(averageCSDMatrix_diopDichop(1:1201,ch,1,usePenetration)); 
-% %     CSDMatrix2 = squeeze(averageCSDMatrix_diopDichop(1:1201,ch,2,usePenetration)); 
-% %     for bin = 1:24
-% %         tm = [1:50]+(50*(bin-1));
-% %         CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
-% %         CSD_binned2(bin,:) = abs(median(CSDMatrix2(tm,:),1));
-% %         [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
-% %             ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','left');
-% %         tStat_1(ch,bin) = stats(ch,bin).tstat;
-% % 
-% %     end
-% % end
-% % ax(4) = subplot(2,3,4);
-% % imagesc(tStat_1);
-% % colormap(ax(4),'bone');
-% % cb = colorbar(); 
-% % clim([-1 1]);
-% % xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
-% % xlabel('Index of 50ms bin');
-% % title('left-tail tScoreMap of |difference|');
-% % 
-% % % hypothesis test logical
-% % ax(5) = subplot(2,3,5);
-% % imagesc(h);
-% % colormap(ax(5),'bone');
-% % e = colorbar(); 
-% % e.Label.String = "h = 1 or 0";
-% % e.Label.Rotation = 270;
-% % xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
-% % xlabel('Index of 50ms bin');
-% % title('|Dichoptic > Dioptic| Hypothesis test');
-
+% Fourth plot: Difference between conditions
+subplot(3, 2, [2 4 6]);
+plot(time(time_idx_start:time_idx_end), supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 1.5, 'DisplayName', 'Supragranular Diff'); hold on;
+plot(time(time_idx_start:time_idx_end), granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 1.5, 'DisplayName', 'Granular Diff');
+plot(time(time_idx_start:time_idx_end), infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 1.5, 'DisplayName', 'Infragranular Diff');
+xlabel('Time (ms)');
+ylabel('Difference (nA/mm^3)');
+title('Difference between Conditions');
+legend;
+xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
 
 
 
@@ -443,43 +416,6 @@ set(gca,'XTick',[])
 
 
 
-
-% % % Difference plot - with tStat
-% % usePenetration = [1:4 6 8:25 27:29 31];
-% % h = nan(15,24);
-% % p = nan(15,24);
-% % ci = nan(15,24,2);
-% % for ch = 1:15
-% %     CSDMatrix1 = squeeze(averageCSDMatrix_BRFS(801:2001,ch,1,usePenetration)); 
-% %     CSDMatrix2 = squeeze(averageCSDMatrix_BRFS(801:2001,ch,2,usePenetration)); 
-% %     for bin = 1:24
-% %         tm = [1:50]+(50*(bin-1));
-% %         CSD_binned1(bin,:) = abs(median(CSDMatrix1(tm,:),1));   % output should be 24xlength(usePenetration)
-% %         CSD_binned2(bin,:) = abs(median(CSDMatrix2(tm,:),1));
-% %         [h(ch,bin),p(ch,bin),ci(ch,bin,:),stats(ch,bin)] =...
-% %             ttest2(CSD_binned1(bin,:),CSD_binned2(bin,:),'Alpha',0.05,'Tail','right');
-% %         tStat_1(ch,bin) = stats(ch,bin).tstat;
-% % 
-% %     end
-% % end
-% % ax(9) = subplot(2,3,9);
-% % imagesc(tStat_1);
-% % colormap(ax(9),'bone');
-% % cb = colorbar(); 
-% % xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
-% % xlabel('Index of 50ms bin');
-% % title('right-tail tScoreMap of |difference|');
-% % 
-% % % hypothesis test logical
-% % ax(10) = subplot(2,3,10);
-% % imagesc(h);
-% % colormap(ax(10),'bone');
-% % e = colorbar(); 
-% % e.Label.String = "h = 1 or 0";
-% % e.Label.Rotation = 270;
-% % xl = xline(3.5,'--','Stimulus onset','LineWidth',3);
-% % xlabel('Index of 50ms bin');
-% % title('|PS > NS| Hypothesis test');
 
 
 
