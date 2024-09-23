@@ -10,12 +10,12 @@ workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig3_LFP';
+    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\CSDFigs';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
     codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir    = 'D:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig3_LFP';
+    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\CSDFigs';
     officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 end
 cd(codeDir)
@@ -249,35 +249,35 @@ end
 %% plot dioptic vs dichoptic
 %% plot dioptic vs dichoptic
 % Set smoothing factor (adjust if needed)
-smoothing_factor = 10;  % You can tweak this value for more/less smoothing
+smoothing_factor = 20;  % You can tweak this value for more/less smoothing
+
+% half-wave rectify the data
+% halfWaveRectify = averageCSDMatrix_BRFS;
+halfWaveRectify = averageCSDMatrix_diopDichop;
+halfWaveRectify(halfWaveRectify > 0) = 0;
+rectifiedCSD = abs(halfWaveRectify);
 
 % Average over the recording sessions
-grandAverageCSD_diopDichop = median(averageCSDMatrix_diopDichop, 4, "omitmissing"); % Average across sessions
+grandAverageCSD = median(rectifiedCSD, 4, "omitmissing"); % Average across sessions
 
 % Extract the data for dioptic and dichoptic conditions
-dioptic_data = grandAverageCSD_diopDichop(:, :, 1);  % Dioptic condition
-dichoptic_data = grandAverageCSD_diopDichop(:, :, 2);  % Dichoptic condition
+dioptic_data = grandAverageCSD(:, :, 1);  % Dioptic condition
+dichoptic_data = grandAverageCSD(:, :, 2);  % Dichoptic condition
 
-% Time vector for the last 1000 ms (assuming 1 ms resolution)
-time = -200:1000;  % Align with your earlier time axis
 
 % Smoothing the data before averaging
 dioptic_data_smooth = smoothdata(dioptic_data, 'gaussian', smoothing_factor);
 dichoptic_data_smooth = smoothdata(dichoptic_data, 'gaussian', smoothing_factor);
 
-% Limit time vector to the first 701 ms (0 to 500 ms)
-time_idx_start = 1; % Start index for -200 ms
-time_idx_end = 701; % End index for 500 ms
-
 % Compute averages for each laminar compartment (across channels)
-supragranular_avg_diop = mean(dioptic_data_smooth(time_idx_start:time_idx_end, 1:5), 2);   % Channels 1:5 for dioptic
-supragranular_avg_dicho = mean(dichoptic_data_smooth(time_idx_start:time_idx_end, 1:5), 2);  % Channels 1:5 for dichoptic
+supragranular_avg_diop = mean(dioptic_data_smooth(:, 1:5), 2);   % Channels 1:5 for dioptic
+supragranular_avg_dicho = mean(dichoptic_data_smooth(:, 1:5), 2);  % Channels 1:5 for dichoptic
 
-granular_avg_diop = mean(dioptic_data_smooth(time_idx_start:time_idx_end, 6:10), 2);  % Channels 6:10 for dioptic
-granular_avg_dicho = mean(dichoptic_data_smooth(time_idx_start:time_idx_end, 6:10), 2);  % Channels 6:10 for dichoptic
+granular_avg_diop = mean(dioptic_data_smooth(:, 6:10), 2);  % Channels 6:10 for dioptic
+granular_avg_dicho = mean(dichoptic_data_smooth(:, 6:10), 2);  % Channels 6:10 for dichoptic
 
-infragranular_avg_diop = mean(dioptic_data_smooth(time_idx_start:time_idx_end, 11:15), 2);  % Channels 11:15 for dioptic
-infragranular_avg_dicho = mean(dichoptic_data_smooth(time_idx_start:time_idx_end, 11:15), 2);  % Channels 11:15 for dichoptic
+infragranular_avg_diop = mean(dioptic_data_smooth(:, 11:15), 2);  % Channels 11:15 for dioptic
+infragranular_avg_dicho = mean(dichoptic_data_smooth(:, 11:15), 2);  % Channels 11:15 for dichoptic
 
 % Difference between conditions (before filtering)
 supragranular_diff = supragranular_avg_diop - supragranular_avg_dicho;
@@ -318,108 +318,114 @@ f = figure;
 
 % First plot: Supragranular
 subplot(3, 2, 1);
-plot(time(time_idx_start:time_idx_end), supragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
-plot(time(time_idx_start:time_idx_end), supragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+plot(:, supragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
+plot(:, supragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
-ylabel('nA/mm^3');
-title('Supragranular');
+ylabel('Supragranular');
 legend;
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+box('off')
 
 % Second plot: Granular
 subplot(3, 2, 3);
-plot(time(time_idx_start:time_idx_end), granular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
-plot(time(time_idx_start:time_idx_end), granular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+plot(:, granular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
+plot(:, granular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
-ylabel('nA/mm^3');
-title('Granular');
+ylabel('Granular');
 legend;
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+box('off')
+
 
 % Third plot: Infragranular
 subplot(3, 2, 5);
-plot(time(time_idx_start:time_idx_end), infragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
-plot(time(time_idx_start:time_idx_end), infragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+plot(:, infragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
+plot(:, infragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
-ylabel('nA/mm^3');
-title('Infragranular');
+ylabel({'Infragranular','nA/mm^3'});
 legend;
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+box('off')
+
 
 % Fourth plot: Difference between conditions
 subplot(3, 2, [2 4 6]);
-plot(time(time_idx_start:time_idx_end), supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 1.5, 'DisplayName', 'Supragranular Diff'); hold on;
-plot(time(time_idx_start:time_idx_end), granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 1.5, 'DisplayName', 'Granular Diff');
-plot(time(time_idx_start:time_idx_end), infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 1.5, 'DisplayName', 'Infragranular Diff');
+plot(:, supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 1.5, 'DisplayName', 'Supragranular Diff'); hold on;
+plot(:, granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 1.5, 'DisplayName', 'Granular Diff');
+plot(:, infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 1.5, 'DisplayName', 'Infragranular Diff');
 xlabel('Time (ms)');
 ylabel('Difference (nA/mm^3)');
 title('Difference between Conditions');
 legend;
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(800, '--', 'Stimulus offset', 'LineWidth', 2);
+hline(0)
+box('off')
+
 
 
 
 %% plot BRFS
-grandAverageCSD_BRFS = median(averageCSDMatrix_BRFS,4,"omitmissing"); % average across penetration
-filterCSD_BRFSps = filterCSD(grandAverageCSD_BRFS(801:2001,:,1)',.05);
-filterCSD_BRFSns = filterCSD(grandAverageCSD_BRFS(801:2001,:,2)',.05);
-
-% Visualize the CSD matrix
-ax(6) = subplot(2,3,4);
-imagesc(-200:1000,1:15,filterCSD_BRFSps);
-colormap(ax(6),newcmap)
-clim([-1500 1500]);
-% xlabel('Time (ms)');
-ylabel('channel');
-cb = colorbar(); 
-% ylabel(cb,'(nA/mm)^3','FontSize',12)
-xl = xline(0,'--','Stimulus onset','LineWidth',3);
-xl = xline(800,'--','Stimulus offset','LineWidth',3);
-title('Preferred stimulus BRFS flash');
-box('off')
-set(gca,'XTick',[])
-
-
-
-
-ax(7) = subplot(2,3,5);
-imagesc(-200:1000,1:15,filterCSD_BRFSns);
-colormap(ax(7),newcmap)
-clim([-1500 1500]);
-xlabel('Time (ms)');
-% ylabel('channel');
-cb = colorbar(); 
-% ylabel(cb,'(nA/mm)^3','FontSize',12)
-xl = xline(0,'--','Stimulus onset','LineWidth',3);
-xl = xline(800,'--','Stimulus offset','LineWidth',3);
-title('Non-preferred stimulus BRFS flash');
-box('off')
-
-
-% Visualize the raw diff
-differenceMatrix_BRFS = ...
-    abs(grandAverageCSD_BRFS(801:2001,:,1)')-abs(grandAverageCSD_BRFS(801:2001,:,2)');
-filterCSD_BRFSDiff =  filterCSD(differenceMatrix_BRFS,.05);
-
-ax(8) = subplot(2,3,6);
-imagesc(-200:1000,1:15,filterCSD_BRFSDiff);
-colormap(ax(8),'bone');
-clim([-500 500]);
-% xlabel('Time (ms)');
-cb = colorbar(); 
-ylabel(cb,'(nA/mm)^3','FontSize',12)
-xl = xline(0,'--','Stimulus onset','LineWidth',3);
-xl = xline(800,'--','Stimulus offset','LineWidth',3);
-title('|Difference|: |PS-NS|');
-box('off')
-set(gca,'XTick',[])
-
-
-
-
-
-
-sgtitle('CSD Penetration Average')
+% % % grandAverageCSD_BRFS = median(averageCSDMatrix_BRFS,4,"omitmissing"); % average across penetration
+% % % filterCSD_BRFSps = filterCSD(grandAverageCSD_BRFS(801:2001,:,1)',.05);
+% % % filterCSD_BRFSns = filterCSD(grandAverageCSD_BRFS(801:2001,:,2)',.05);
+% % % 
+% % % % Visualize the CSD matrix
+% % % ax(6) = subplot(2,3,4);
+% % % imagesc(-200:1000,1:15,filterCSD_BRFSps);
+% % % colormap(ax(6),newcmap)
+% % % clim([-1500 1500]);
+% % % % xlabel('Time (ms)');
+% % % ylabel('channel');
+% % % cb = colorbar(); 
+% % % % ylabel(cb,'(nA/mm)^3','FontSize',12)
+% % % xl = xline(0,'--','Stimulus onset','LineWidth',3);
+% % % xl = xline(800,'--','Stimulus offset','LineWidth',3);
+% % % title('Preferred stimulus BRFS flash');
+% % % box('off')
+% % % set(gca,'XTick',[])
+% % % 
+% % % 
+% % % 
+% % % 
+% % % ax(7) = subplot(2,3,5);
+% % % imagesc(-200:1000,1:15,filterCSD_BRFSns);
+% % % colormap(ax(7),newcmap)
+% % % clim([-1500 1500]);
+% % % xlabel('Time (ms)');
+% % % % ylabel('channel');
+% % % cb = colorbar(); 
+% % % % ylabel(cb,'(nA/mm)^3','FontSize',12)
+% % % xl = xline(0,'--','Stimulus onset','LineWidth',3);
+% % % xl = xline(800,'--','Stimulus offset','LineWidth',3);
+% % % title('Non-preferred stimulus BRFS flash');
+% % % box('off')
+% % % 
+% % % 
+% % % % Visualize the raw diff
+% % % differenceMatrix_BRFS = ...
+% % %     abs(grandAverageCSD_BRFS(801:2001,:,1)')-abs(grandAverageCSD_BRFS(801:2001,:,2)');
+% % % filterCSD_BRFSDiff =  filterCSD(differenceMatrix_BRFS,.05);
+% % % 
+% % % ax(8) = subplot(2,3,6);
+% % % imagesc(-200:1000,1:15,filterCSD_BRFSDiff);
+% % % colormap(ax(8),'bone');
+% % % clim([-500 500]);
+% % % % xlabel('Time (ms)');
+% % % cb = colorbar(); 
+% % % ylabel(cb,'(nA/mm)^3','FontSize',12)
+% % % xl = xline(0,'--','Stimulus onset','LineWidth',3);
+% % % xl = xline(800,'--','Stimulus offset','LineWidth',3);
+% % % title('|Difference|: |PS-NS|');
+% % % box('off')
+% % % set(gca,'XTick',[])
+% % % 
+% % % 
+% % % 
+% % % 
+% % % 
+% % % 
+% % % sgtitle('CSD Penetration Average')
 
 
 %% Save output
@@ -432,9 +438,9 @@ switch answer
     case 'Yes'
         disp('alright, saving figure to plotdir')
         cd(plotDir)
-        saveName = strcat('CSDPenetrationAvg_prefFromLFP.png');
+        saveName = strcat('CSDlinePlot.png');
         saveas(f,saveName) 
-        saveName = strcat('CSDPenetrationAvg_prefFromLFP.svg');
+        saveName = strcat('CSDlinePlot.svg');
         saveas(f,saveName)
     case 'No'
         cd(plotDir)

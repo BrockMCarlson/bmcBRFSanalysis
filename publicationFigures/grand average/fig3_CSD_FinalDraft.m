@@ -10,12 +10,12 @@ workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig3_LFP';
+    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\CSDFigs';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
     codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir    = 'D:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig3_LFP';
+    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\CSDFigs';
     officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 end
 cd(codeDir)
