@@ -434,9 +434,9 @@ halfWave_BRFS = grandAverageCSD_BRFS;
 halfWave_BRFS(halfWave_BRFS > 0) = 0;
 hwRectify_BRFS = abs(halfWave_BRFS);
 % Then subtract dichoptic from dioptic
-differenceMatrix_diopDichoip = ...
+differenceMatrix_BRFS = ...
     abs(hwRectify_BRFS(1:1201,:,1)')-abs(hwRectify_BRFS(1:1201,:,2)');
-filterCSD_BRFSDiff =  filterCSD(differenceMatrix_diopDichoip,.05);
+filterCSD_BRFSDiff =  filterCSD(differenceMatrix_BRFS,.05);
 
 ax(8) = subplot(2,3,6);
 imagesc(-200:1000,1:15,filterCSD_BRFSDiff);

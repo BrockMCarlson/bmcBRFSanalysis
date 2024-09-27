@@ -6,7 +6,7 @@
 disp('start time')
 datetime
 clearvars -except LFP_trials
-workingPC = 'home'; % options: 'home', 'office'
+workingPC = 'office'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -315,11 +315,11 @@ colors = [
 
 % Create figure for line plots
 f = figure;
-
+tm = -200:1800;
 % First plot: Supragranular
 subplot(3, 2, 1);
-plot(:, supragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
-plot(:, supragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+plot(tm, supragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
+plot(tm, supragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
 ylabel('Supragranular');
 legend;
@@ -328,8 +328,8 @@ box('off')
 
 % Second plot: Granular
 subplot(3, 2, 3);
-plot(:, granular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
-plot(:, granular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+plot(tm, granular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
+plot(tm, granular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
 ylabel('Granular');
 legend;
@@ -339,8 +339,8 @@ box('off')
 
 % Third plot: Infragranular
 subplot(3, 2, 5);
-plot(:, infragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
-plot(:, infragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+plot(tm, infragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
+plot(tm, infragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
 ylabel({'Infragranular','nA/mm^3'});
 legend;
@@ -350,9 +350,9 @@ box('off')
 
 % Fourth plot: Difference between conditions
 subplot(3, 2, [2 4 6]);
-plot(:, supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 1.5, 'DisplayName', 'Supragranular Diff'); hold on;
-plot(:, granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 1.5, 'DisplayName', 'Granular Diff');
-plot(:, infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 1.5, 'DisplayName', 'Infragranular Diff');
+plot(tm, supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 1.5, 'DisplayName', 'Supragranular Diff'); hold on;
+plot(tm, granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 1.5, 'DisplayName', 'Granular Diff');
+plot(tm, infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 1.5, 'DisplayName', 'Infragranular Diff');
 xlabel('Time (ms)');
 ylabel('Difference (nA/mm^3)');
 title('Difference between Conditions');
