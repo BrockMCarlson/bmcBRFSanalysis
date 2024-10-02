@@ -6,7 +6,7 @@
 disp('start time')
 datetime
 clearvars -except LFP_trials
-workingPC = 'home'; % options: 'home', 'office'
+workingPC = 'office'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -325,8 +325,13 @@ box('off')
 
 
 % Visualize the raw diff
+% First we half-wave rectify
+halfWave_diopDichop = grandAverageCSD_diopDichop;
+halfWave_diopDichop(halfWave_diopDichop > 0) = 0;
+hwRectify_diopDichop = abs(halfWave_diopDichop);
+% Then subtract dichoptic from dioptic
 differenceMatrix_diopDichoip = ...
-    abs(grandAverageCSD_diopDichop(1:1201,:,1)')-abs(grandAverageCSD_diopDichop(1:1201,:,2)');
+    abs(hwRectify_diopDichop(1:1201,:,1)')-abs(hwRectify_diopDichop(1:1201,:,2)');
 filterCSD_binocDiff =  filterCSD(differenceMatrix_diopDichoip,.05);
 
 ax(3) = subplot(2,3,3);
@@ -424,8 +429,13 @@ box('off')
 
 
 % Visualize the raw diff
+% First we half-wave rectify
+halfWave_BRFS = grandAverageCSD_BRFS;
+halfWave_BRFS(halfWave_BRFS > 0) = 0;
+hwRectify_BRFS = abs(halfWave_BRFS);
+% Then subtract dichoptic from dioptic
 differenceMatrix_BRFS = ...
-    abs(grandAverageCSD_BRFS(801:2001,:,1)')-abs(grandAverageCSD_BRFS(801:2001,:,2)');
+    abs(hwRectify_BRFS(1:1201,:,1)')-abs(hwRectify_BRFS(1:1201,:,2)');
 filterCSD_BRFSDiff =  filterCSD(differenceMatrix_BRFS,.05);
 
 ax(8) = subplot(2,3,6);
