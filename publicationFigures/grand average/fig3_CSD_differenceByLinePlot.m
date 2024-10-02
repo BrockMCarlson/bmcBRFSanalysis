@@ -6,7 +6,7 @@
 disp('start time')
 datetime
 clearvars -except LFP_trials
-workingPC = 'office'; % options: 'home', 'office'
+workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -247,7 +247,6 @@ end
 
 
 %% plot dioptic vs dichoptic
-%% plot dioptic vs dichoptic
 % Set smoothing factor (adjust if needed)
 smoothing_factor = 20;  % You can tweak this value for more/less smoothing
 
@@ -363,74 +362,7 @@ hline(0)
 box('off')
 
 
-
-
-%% plot BRFS
-% % % grandAverageCSD_BRFS = median(averageCSDMatrix_BRFS,4,"omitmissing"); % average across penetration
-% % % filterCSD_BRFSps = filterCSD(grandAverageCSD_BRFS(801:2001,:,1)',.05);
-% % % filterCSD_BRFSns = filterCSD(grandAverageCSD_BRFS(801:2001,:,2)',.05);
-% % % 
-% % % % Visualize the CSD matrix
-% % % ax(6) = subplot(2,3,4);
-% % % imagesc(-200:1000,1:15,filterCSD_BRFSps);
-% % % colormap(ax(6),newcmap)
-% % % clim([-1500 1500]);
-% % % % xlabel('Time (ms)');
-% % % ylabel('channel');
-% % % cb = colorbar(); 
-% % % % ylabel(cb,'(nA/mm)^3','FontSize',12)
-% % % xl = xline(0,'--','Stimulus onset','LineWidth',3);
-% % % xl = xline(800,'--','Stimulus offset','LineWidth',3);
-% % % title('Preferred stimulus BRFS flash');
-% % % box('off')
-% % % set(gca,'XTick',[])
-% % % 
-% % % 
-% % % 
-% % % 
-% % % ax(7) = subplot(2,3,5);
-% % % imagesc(-200:1000,1:15,filterCSD_BRFSns);
-% % % colormap(ax(7),newcmap)
-% % % clim([-1500 1500]);
-% % % xlabel('Time (ms)');
-% % % % ylabel('channel');
-% % % cb = colorbar(); 
-% % % % ylabel(cb,'(nA/mm)^3','FontSize',12)
-% % % xl = xline(0,'--','Stimulus onset','LineWidth',3);
-% % % xl = xline(800,'--','Stimulus offset','LineWidth',3);
-% % % title('Non-preferred stimulus BRFS flash');
-% % % box('off')
-% % % 
-% % % 
-% % % % Visualize the raw diff
-% % % differenceMatrix_BRFS = ...
-% % %     abs(grandAverageCSD_BRFS(801:2001,:,1)')-abs(grandAverageCSD_BRFS(801:2001,:,2)');
-% % % filterCSD_BRFSDiff =  filterCSD(differenceMatrix_BRFS,.05);
-% % % 
-% % % ax(8) = subplot(2,3,6);
-% % % imagesc(-200:1000,1:15,filterCSD_BRFSDiff);
-% % % colormap(ax(8),'bone');
-% % % clim([-500 500]);
-% % % % xlabel('Time (ms)');
-% % % cb = colorbar(); 
-% % % ylabel(cb,'(nA/mm)^3','FontSize',12)
-% % % xl = xline(0,'--','Stimulus onset','LineWidth',3);
-% % % xl = xline(800,'--','Stimulus offset','LineWidth',3);
-% % % title('|Difference|: |PS-NS|');
-% % % box('off')
-% % % set(gca,'XTick',[])
-% % % 
-% % % 
-% % % 
-% % % 
-% % % 
-% % % 
-% % % sgtitle('CSD Penetration Average')
-
-
-%% Save output
-%save fig
-answer = questdlg('Would you like to save this figure?', ...
+answer = questdlg('Would you like to save this figure? _diopticDichoptic', ...
 	'Y', ...
 	'N');
 % Handle response
@@ -438,11 +370,152 @@ switch answer
     case 'Yes'
         disp('alright, saving figure to plotdir')
         cd(plotDir)
-        saveName = strcat('CSDlinePlot.png');
+        saveName = strcat('CSDlinePlot_diopticDichoptic.png');
         saveas(f,saveName) 
-        saveName = strcat('CSDlinePlot.svg');
+        saveName = strcat('CSDlinePlot_diopticDichoptic.svg');
         saveas(f,saveName)
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')
 end
+
+
+
+
+%% plot BRFS
+% Set smoothing factor (adjust if needed)
+smoothing_factor = 20;  % You can tweak this value for more/less smoothing
+
+% half-wave rectify the data
+% halfWaveRectify = averageCSDMatrix_BRFS;
+halfWaveRectify = averageCSDMatrix_BRFS;
+halfWaveRectify(halfWaveRectify > 0) = 0;
+rectifiedCSD = abs(halfWaveRectify);
+
+% Average over the recording sessions
+grandAverageCSD = median(rectifiedCSD, 4, "omitmissing"); % Average across sessions
+
+% Extract the data for dioptic and dichoptic conditions
+PS_data = grandAverageCSD(:, :, 1);  % PS condition
+NS_data = grandAverageCSD(:, :, 2);  % NS condition
+
+
+% Smoothing the data before averaging
+PS_data_smooth = smoothdata(PS_data, 'gaussian', smoothing_factor);
+NS_data_smooth = smoothdata(NS_data, 'gaussian', smoothing_factor);
+
+% Compute averages for each laminar compartment (across channels)
+supragranular_avg_PS = mean(PS_data_smooth(:, 1:5), 2);   % Channels 1:5 for PS
+supragranular_avg_NS = mean(NS_data_smooth(:, 1:5), 2);  % Channels 1:5 for NS
+
+granular_avg_PS = mean(PS_data_smooth(:, 6:10), 2);  % Channels 6:10 for PS
+granular_avg_NS = mean(NS_data_smooth(:, 6:10), 2);  % Channels 6:10 for NS
+
+infragranular_avg_PS = mean(PS_data_smooth(:, 11:15), 2);  % Channels 11:15 for PS
+infragranular_avg_NS = mean(NS_data_smooth(:, 11:15), 2);  % Channels 11:15 for NS
+
+% Difference between conditions (before filtering)
+supragranular_diff = supragranular_avg_PS - supragranular_avg_NS;
+granular_diff = granular_avg_PS - granular_avg_NS;
+infragranular_diff = infragranular_avg_PS - infragranular_avg_NS;
+
+% Define the cutoff frequency and sample rate for the low-pass filter
+fs = 1000; % Assuming 1000 Hz sampling rate
+cutoff_freq = 30; % 20 Hz cutoff frequency
+[b, a] = butter(4, cutoff_freq / (fs / 2), 'low'); % 4th-order Butterworth filter
+
+% Apply low-pass filter to the averaged data
+supragranular_avg_PS_filtered = filtfilt(b, a, supragranular_avg_PS);
+supragranular_avg_NS_filtered = filtfilt(b, a, supragranular_avg_NS);
+
+granular_avg_PS_filtered = filtfilt(b, a, granular_avg_PS);
+granular_avg_NS_filtered = filtfilt(b, a, granular_avg_NS);
+
+infragranular_avg_PS_filtered = filtfilt(b, a, infragranular_avg_PS);
+infragranular_avg_NS_filtered = filtfilt(b, a, infragranular_avg_NS);
+
+% Apply low-pass filter to the difference between conditions
+supragranular_diff_filtered = filtfilt(b, a, supragranular_diff);
+granular_diff_filtered = filtfilt(b, a, granular_diff);
+infragranular_diff_filtered = filtfilt(b, a, infragranular_diff);
+
+% Create a modern muted color palette that is easier to differentiate
+colors = [
+    0.121, 0.466, 0.705; % Blue
+    0.682, 0.780, 0.902; % Light Blue
+    0.890, 0.102, 0.110; % Red
+    0.600, 0.400, 0.000; % Olive Green
+    0.659, 0.661, 0.661; % Gray
+];
+
+% Create figure for line plots
+f = figure;
+tm = -200:1800;
+% First plot: Supragranular
+subplot(3, 2, 1);
+plot(tm, supragranular_avg_PS_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'PS'); hold on;
+plot(tm, supragranular_avg_NS_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'NS');
+xlabel('Time (ms)');
+ylabel('Supragranular');
+legend;
+xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+box('off')
+
+% Second plot: Granular
+subplot(3, 2, 3);
+plot(tm, granular_avg_PS_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'PS'); hold on;
+plot(tm, granular_avg_NS_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'NS');
+xlabel('Time (ms)');
+ylabel('Granular');
+legend;
+xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+box('off')
+
+
+% Third plot: Infragranular
+subplot(3, 2, 5);
+plot(tm, infragranular_avg_PS_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'PS'); hold on;
+plot(tm, infragranular_avg_NS_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'NS');
+xlabel('Time (ms)');
+ylabel({'Infragranular','nA/mm^3'});
+legend;
+xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+box('off')
+
+
+% Fourth plot: Difference between conditions
+subplot(3, 2, [2 4 6]);
+plot(tm, supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 1.5, 'DisplayName', 'Supragranular Diff'); hold on;
+plot(tm, granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 1.5, 'DisplayName', 'Granular Diff');
+plot(tm, infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 1.5, 'DisplayName', 'Infragranular Diff');
+xlabel('Time (ms)');
+ylabel('Difference (nA/mm^3)');
+title('Difference between Conditions');
+legend;
+xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(800, '--', 'Stimulus offset', 'LineWidth', 2);
+hline(0)
+box('off')
+
+
+
+%% Save output
+%save fig
+answer = questdlg('Would you like to save this figure? _BRFS', ...
+	'Y', ...
+	'N');
+% Handle response
+switch answer
+    case 'Yes'
+        disp('alright, saving figure to plotdir')
+        cd(plotDir)
+        saveName = strcat('CSDlinePlot_BRFS.png');
+        saveas(f,saveName) 
+        saveName = strcat('CSDlinePlot_BRFS.svg');
+        saveas(f,saveName)
+    case 'No'
+        cd(plotDir)
+        disp('please see plotdir for last save')
+end
+
+
