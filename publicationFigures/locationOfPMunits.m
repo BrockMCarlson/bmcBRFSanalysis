@@ -16,8 +16,14 @@ officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscript
 
 
 %% load DATAOUT
-cd(dataDir)
-load("DATAOUT_trials.mat")
+
+if ~exist('DATAOUT_trials','var')
+    tic
+    cd(dataDir)
+    load("DATAOUT_trials.mat")
+    toc
+end
+
 
 %% statistics
 % Find perceptually modulated units. 
@@ -35,8 +41,8 @@ for i = 1:32 % penetrations
             susta_ps(k) = mean(DATAOUT_ps{i}(1400:1801,j,k));
             susta_ns(k) = mean(DATAOUT_ns{i}(1400:1801,j,k));
         end
-        [h_trans(j,1),p_trans(j,1)] = ttest2(trans_ns,trans_ps,"Tail","left");
-        [h_susta(j,1),p_susta(j,1)] = ttest2(susta_ns,susta_ps,"Tail","left");
+        [h_trans(j,1),p_trans(j,1)] = ttest2(trans_ns,trans_ps,"Tail","both");
+        [h_susta(j,1),p_susta(j,1)] = ttest2(susta_ns,susta_ps,"Tail","both");
         dOut_trans = meanEffectSize(trans_ps,trans_ns,Effect="cohen");
         d_trans(j,1) = dOut_trans.Effect;
         dOut_susta = meanEffectSize(susta_ps,susta_ns,Effect="cohen");
@@ -63,16 +69,20 @@ aligned_100_susta_d = nan(100,size(officLamAssign,1));
 for i = 1:size(officLamAssign,1)-1
 
     % Calculate V1 ch boundaries
-    granBtm = officLamAssign.Probe11stFold4c(i); % channel corresponding to the bottom of layer 4c
-
-    v1Top_new = 50-granBtm+1;
-    v1Btm_new = 50+(32-granBtm);
-    v1Ch_new = v1Top_new:v1Btm_new;
-    
-    aligned_100_trans_h(v1Ch_new,i) = tuned_trans(1:32,i);
-    aligned_100_susta_h(v1Ch_new,i) = tuned_susta(1:32,i); 
-    aligned_100_trans_d(v1Ch_new,i) = effect_trans(1:32,i);
-    aligned_100_susta_d(v1Ch_new,i) = effect_susta(1:32,i);
+    granBtm = officLamAssign.stFold4c(i); % channel corresponding to the bottom of layer 4c
+    if ~isnan(granBtm)
+        v1Top_new = 50-granBtm+1;
+        v1Btm_new = 50+(32-granBtm);
+        v1Ch_new = v1Top_new:v1Btm_new;
+        if ~any(v1Ch_new < 0)       
+            aligned_100_trans_h(v1Ch_new,i) = tuned_trans(1:32,i);
+            aligned_100_susta_h(v1Ch_new,i) = tuned_susta(1:32,i); 
+            aligned_100_trans_d(v1Ch_new,i) = effect_trans(1:32,i);
+            aligned_100_susta_d(v1Ch_new,i) = effect_susta(1:32,i);
+        else
+            continue
+        end
+    end
 end
 figure
 subplot(1,2,1)
@@ -144,15 +154,20 @@ for i = 1:size(officLamAssign,1)-1 % penetrations
         end
     end
 
-    % Calculate V1 ch boundaries
-    granBtm = officLamAssign.Probe11stFold4c(i); % channel corresponding to the bottom of layer 4c
 
-    v1Top_new = 50-granBtm+1;
-    v1Btm_new = 50+(32-granBtm);
-    v1Ch_new = v1Top_new:v1Btm_new;
-    
-    aligned_100_data_ps(v1Ch_new,:,i) = data_ps(:,:,i);
-    aligned_100_data_ns(v1Ch_new,:,i) = data_ns(:,:,i); 
+
+    granBtm = officLamAssign.stFold4c(i); % channel corresponding to the bottom of layer 4c
+    if ~isnan(granBtm)
+        v1Top_new = 50-granBtm+1;
+        v1Btm_new = 50+(32-granBtm);
+        v1Ch_new = v1Top_new:v1Btm_new;
+        if ~any(v1Ch_new < 0)       
+            aligned_100_data_ps(v1Ch_new,:,i) = data_ps(:,:,i);
+            aligned_100_data_ns(v1Ch_new,:,i) = data_ns(:,:,i); 
+        else
+            continue
+        end
+    end
 
 end
 
