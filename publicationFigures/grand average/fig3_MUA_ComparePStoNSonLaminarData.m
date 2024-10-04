@@ -193,7 +193,7 @@ for penetration = 1:size(MUA_trials,1)
     end
    
 
-    %% MUA in percent change
+    % MUA in percent change
     % BRFS pref vs null
     % Get the number of trials for the chosen condition
     for i = 1:length(v1Ch)
@@ -369,7 +369,7 @@ nexttile
     title('Infragranular')
     box("off")
 
-titleText = {'MEAN MUA of 135 electrodes (27 penetrations) per laminar compartment'};
+titleText = {'MEAN MUA of 135 electrodes (27 penetrations) per laminar compartment','BRFS'};
 title(t,titleText,'Interpreter','none')
 
 
@@ -382,9 +382,242 @@ switch answer
     case 'Yes'
        disp('alright, saving figure to plotdir')
         cd(plotDir)
-        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.png');
+        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','BRFS','.png');
         saveas(lamCom,figName_lamCom)
-        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','.svg');
+        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','BRFS','.svg');
+        saveas(lamCom,figName_lamCom)
+    case 'No'
+        cd(plotDir)
+        disp('please see plotdir for last save')
+end
+
+
+
+%% dioptic vs dichoptic
+%%% %%% %%% %%%%%%%%% %%%%%%%%% %%%%%%%% %%% %%% %%%%%%%%%%%%%%%
+%%%% %%% %%% %%%%%%%%%%%%% %%%%%%%%%%%% %%% %%% %%%%%%%%%%%%%%%%
+%%%%% %%% %%% %%%%%%%%  %%%%%  %%%%%%% %%% %%% %%%%%%%%%%%%%%%%%
+%%%%%% %%% %%% %%%%%%%%%     %%%%%%%% %%% %%% %%%%%%%%%%%%%%%%%%
+%% Organize data
+averageMUAMatrix_dioptic = nan(2001,15,31);
+averageLFPMatrix_dichoptic = nan(2001,15,31);
+for penetration = 1:size(MUA_trials,1)
+    
+    probeName = char(officLamAssign.Session_probe_(penetration,1));
+    fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
+
+    granBtm = officLamAssign.stFold4c(penetration); % channel corresponding to the bottom of layer 4c
+    if isnan(granBtm)
+        warning(strcat('no sink found on _',fileToLoad))
+        continue
+    end
+    % Calculate V1 ch boundaries
+    v1Top = granBtm - 9;
+    v1Btm = granBtm + 5;
+    v1Ch = v1Top:v1Btm;
+    % limit ch to cortex only
+    if strcmp(string(officLamAssign.ChToUse(penetration)),"1:32")
+        if any(v1Ch > 32) || any(v1Ch < 1)
+            warning('skipping session without full column for now')
+            disp(fileToLoad)
+            continue
+        end
+    elseif strcmp(string(officLamAssign.ChToUse(penetration)),"33:64")
+        if any(v1Ch > 64) || any(v1Ch < 33)
+            warning('skipping session without full column for now')
+            disp(fileToLoad)
+            continue
+        end
+    end
+    % MUA in percent change
+    % Dioptic vs Dichoptic
+    % Get the number of trials for the chosen condition
+    for i = 1:length(v1Ch)
+        numTrials_dioptic = size(MUA_trials{penetration,1}{1,1},1);
+        MUAflashOut_dioptic = nan(2001,numTrials_dioptic);
+        for trl = 1:numTrials_dioptic
+            MUAflashOut_dioptic(:,trl) = MUA_trials{penetration,1}{1,1}{trl,1}(:,v1Ch(i));
+        end
+        
+        % median across trials
+        dioiptic_avg = median(MUAflashOut_dioptic,2,"omitmissing"); % input is (tm,trl)    
+        % Calculate as Percent Change
+        %              X(t) - avgBl
+        % %Ch = 100 * -------------
+        %                 avgBl
+        psBl = median(dioiptic_avg(1:200,:));
+        if psBl == 0
+            psBl = .1;
+        end
+        dioiptic_PercentC = 100*((dioiptic_avg-psBl)./psBl);
+        averageMUAMatrix_dioptic(:,i,penetration) = dioiptic_PercentC;
+
+    
+        % Get the number of trials for the chosen condition
+        numTrials_dichoptic = size(MUA_trials{penetration,1}{3,1},1);
+        MUAflashOut_dichoptic = nan(2001,numTrials_dichoptic);
+        for trl = 1:numTrials_dichoptic
+            MUAflashOut_dichoptic(:,trl) = MUA_trials{penetration,1}{3,1}{trl,1}(:,v1Ch(i));
+        end
+        % Average across trials and save output
+        dichoptic_avg = median(MUAflashOut_dichoptic,2,"omitmissing"); % input is (tm,trl)    
+        nsBl = median(dichoptic_avg(1:200,:));
+        if nsBl == 0
+            nsBl = .1;
+        end
+        dichoptic_PercentC = 100*((dichoptic_avg-nsBl)./nsBl);  
+        averageMUAMatrix_dichoptic(:,i,penetration) = dichoptic_PercentC; % Average across trl. averageMUAMatrix is (tm x ch x x penetration)
+    end
+    disp(strcat('Done with file number: ',string(penetration)))
+end
+
+
+%% Organize into compartments, median and std across contacts+penetration
+% reshape
+useIdx = squeeze(~isnan(averageMUAMatrix_dioptic(1,1,:))); 
+dioiptic_S = reshape(averageMUAMatrix_dioptic(:,1:5,useIdx),[2001,135]);
+dioiptic_G = reshape(averageMUAMatrix_dioptic(:,6:10,useIdx),[2001,135]);
+dioiptic_I = reshape(averageMUAMatrix_dioptic(:,11:15,useIdx),[2001,135]);
+dichoptic_S = reshape(averageMUAMatrix_dichoptic(:,1:5,useIdx),[2001,135]);
+dichoptic_G = reshape(averageMUAMatrix_dichoptic(:,6:10,useIdx),[2001,135]);
+dichoptic_I = reshape(averageMUAMatrix_dichoptic(:,11:15,useIdx),[2001,135]);
+
+% Average across penetrations
+dioiptic_S_avg = smoothdata(mean(dioiptic_S,2,"omitmissing"),"gaussian",50);
+dioiptic_G_avg = smoothdata(mean(dioiptic_G,2,"omitmissing"),"gaussian",50);
+dioiptic_I_avg = smoothdata(mean(dioiptic_I,2,"omitmissing"),"gaussian",50);
+dichoptic_S_avg = smoothdata(mean(dichoptic_S,2,"omitmissing"),"gaussian",50);
+dichoptic_G_avg = smoothdata(mean(dichoptic_G,2,"omitmissing"),"gaussian",50);
+dichoptic_I_avg = smoothdata(mean(dichoptic_I,2,"omitmissing"),"gaussian",50);
+% % dioiptic_S_avg = median(dioiptic_S,2,"omitmissing");
+% % dioiptic_G_avg = median(dioiptic_G,2,"omitmissing");
+% % dioiptic_I_avg = median(dioiptic_I,2,"omitmissing");
+% % dichoptic_S_avg = median(dichoptic_S,2,"omitmissing");
+% % dichoptic_G_avg = median(dichoptic_G,2,"omitmissing");
+% % dichoptic_I_avg = median(dichoptic_I,2,"omitmissing");
+
+% Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
+contactNum = size(dioiptic_S,2);
+dioiptic_S_sem = std(dioiptic_S,0,2,"omitmissing")./sqrt(contactNum); 
+dioiptic_G_sem = std(dioiptic_G,0,2,"omitmissing")./sqrt(contactNum); 
+dioiptic_I_sem = std(dioiptic_I,0,2,"omitmissing")./sqrt(contactNum); 
+dichoptic_S_sem = std(dichoptic_S,0,2,"omitmissing")./sqrt(contactNum); 
+dichoptic_G_sem = std(dichoptic_G,0,2,"omitmissing")./sqrt(contactNum); 
+dichoptic_I_sem = std(dichoptic_I,0,2,"omitmissing")./sqrt(contactNum); 
+
+% Mean +/- SEM
+dioiptic_S_avgPlusSEM = dioiptic_S_avg + dioiptic_S_sem; %pref stim -- median plus sem 1 
+dioiptic_S_avgMinusSEM = dioiptic_S_avg - dioiptic_S_sem; %pref stim -- median minus sem 1 
+dioiptic_G_avgPlusSEM = dioiptic_G_avg + dioiptic_G_sem; %pref stim -- median plus sem 1 
+dioiptic_G_avgMinusSEM = dioiptic_G_avg - dioiptic_G_sem; %pref stim -- median minus sem 1 
+dioiptic_I_avgPlusSEM = dioiptic_I_avg + dioiptic_I_sem; %pref stim -- median plus sem 1 
+dioiptic_I_avgMinusSEM = dioiptic_I_avg - dioiptic_I_sem; %pref stim -- median minus sem 1 
+
+dichoptic_S_avgPlusSEM = dichoptic_S_avg + dichoptic_S_sem; 
+dichoptic_S_avgMinusSEM = dichoptic_S_avg - dichoptic_S_sem;  
+dichoptic_G_avgPlusSEM = dichoptic_G_avg + dichoptic_G_sem; 
+dichoptic_G_avgMinusSEM = dichoptic_G_avg - dichoptic_G_sem; 
+dichoptic_I_avgPlusSEM = dichoptic_I_avg + dichoptic_I_sem; 
+dichoptic_I_avgMinusSEM = dichoptic_I_avg - dichoptic_I_sem; 
+
+%% statistics
+% Ok, the data is together for plotting, now lets run statistics on
+% each laminar compartment to see if perceptual modulation occurs. The
+% goal here is to run a t-test to see if the average response between
+% 1200 and 1600ms significantly differs between ps and ns
+% % % % useIdx = squeeze(~isnan(averageMUAMatrix_dioptic(1,1,:))); 
+% % % % tInput_dioptic_S_trans = reshape(squeeze(mean(averageMUAMatrix_dioptic(1050:1200,1:5,useIdx),1)),[],1);
+% % % % tInput_dioptic_G_trans = reshape(squeeze(mean(averageMUAMatrix_dioptic(1050:1200,6:10,useIdx),1)),[],1);
+% % % % tInput_dioptic_I_trans = reshape(squeeze(mean(averageMUAMatrix_dioptic(1050:1200,11:15,useIdx),1)),[],1);
+% % % % tInput_dichoptic_S_trans = reshape(squeeze(mean(averageMUAMatrix_dichoptic(1050:1200,1:5,useIdx),1)),[],1);
+% % % % tInput_dichoptic_G_trans = reshape(squeeze(mean(averageMUAMatrix_dichoptic(1050:1200,6:10,useIdx),1)),[],1);
+% % % % tInput_dichoptic_I_trans = reshape(squeeze(mean(averageMUAMatrix_dichoptic(1050:1200,11:15,useIdx),1)),[],1);
+% % % % tInput_dioptic_S_susta = reshape(squeeze(mean(averageMUAMatrix_dioptic(1400:1801,1:5,useIdx),1)),[],1);
+% % % % tInput_dioptic_G_susta = reshape(squeeze(mean(averageMUAMatrix_dioptic(1400:1801,6:10,useIdx),1)),[],1);
+% % % % tInput_dioptic_I_susta = reshape(squeeze(mean(averageMUAMatrix_dioptic(1400:1801,11:15,useIdx),1)),[],1);
+% % % % tInput_dichoptic_S_susta = reshape(squeeze(mean(averageMUAMatrix_dichoptic(1400:1801,1:5,useIdx),1)),[],1);
+% % % % tInput_dichoptic_G_susta = reshape(squeeze(mean(averageMUAMatrix_dichoptic(1400:1801,6:10,useIdx),1)),[],1);
+% % % % tInput_dichoptic_I_susta = reshape(squeeze(mean(averageMUAMatrix_dichoptic(1400:1801,11:15,useIdx),1)),[],1);
+% % % % 
+% % % % [h_S_trans,p_S_trans] = ttest2(tInput_dioptic_S_trans,tInput_dichoptic_S_trans);
+% % % % [h_G_trans,p_G_trans] = ttest2(tInput_dioptic_G_trans,tInput_dichoptic_G_trans);
+% % % % [h_I_trans,p_I_trans] = ttest2(tInput_dioptic_I_trans,tInput_dichoptic_I_trans);
+% % % % [h_S_susta,p_S_susta] = ttest2(tInput_dioptic_S_susta,tInput_dichoptic_S_susta);
+% % % % [h_G_susta,p_G_susta] = ttest2(tInput_dioptic_G_susta,tInput_dichoptic_G_susta);
+% % % % [h_I_susta,p_I_susta] = ttest2(tInput_dioptic_I_susta,tInput_dichoptic_I_susta);
+
+
+%% Figure generation! 
+% tiledLayout plot
+% close all
+tm_full = -200:1800; % 1801 total timepoints
+lamCom = figure;
+set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
+t = tiledlayout(3,1);
+nexttile
+    plot(tm_full,dioiptic_S_avg,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+    plot(tm_full,dioiptic_S_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,dioiptic_S_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,dichoptic_S_avg,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+    plot(tm_full,dichoptic_S_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,dichoptic_S_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    ylim([0 40])
+    vline(0)
+    vline(1633)
+    % xregion(850,1000)
+    % xregion(1200,1600)
+    title('Supragranular')
+    set(gca,'xtick',[])
+    box("off")
+    legend('Preferred stimulus','Null stimulus')
+nexttile
+    plot(tm_full,dioiptic_G_avg,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+    plot(tm_full,dioiptic_G_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,dioiptic_G_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,dichoptic_G_avg,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+    plot(tm_full,dichoptic_G_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,dichoptic_G_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    ylim([0 40])
+    vline(0)
+    vline(1633)
+    % xregion(850,1000)
+    % xregion(1200,1600)
+    title('Granular')
+    set(gca,'xtick',[])
+    box("off")
+nexttile
+    plot(tm_full,dioiptic_I_avg,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
+    plot(tm_full,dioiptic_I_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,dioiptic_I_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,dichoptic_I_avg,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
+    plot(tm_full,dichoptic_I_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
+    plot(tm_full,dichoptic_I_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':');
+    ylim([0 40])
+    vline(0)
+    vline(1633)
+    % xregion(850,1000)
+    % xregion(1200,1600)
+    ylabel({'% change from baseline'})
+    xlabel('Time (ms)')
+    title('Infragranular')
+    box("off")
+
+titleText = {'MEAN MUA of 135 electrodes (27 penetrations) per laminar compartment','DiopticVsDichoptic'};
+title(t,titleText,'Interpreter','none')
+
+
+%save fig
+answer = questdlg('Would you like to save this figure?', ...
+	'Y', ...
+	'N');
+% Handle response
+switch answer
+    case 'Yes'
+       disp('alright, saving figure to plotdir')
+        cd(plotDir)
+        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','diopticDichoptic','.png');
+        saveas(lamCom,figName_lamCom)
+        figName_lamCom = strcat('MUA_laminarCompartment_','_grandAvg_','diopticDichoptic','.svg');
         saveas(lamCom,figName_lamCom)
     case 'No'
         cd(plotDir)

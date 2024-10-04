@@ -246,119 +246,149 @@ for penetration = 1:size(LFP_trials,1)
 end
 
 
-%% plot dioptic vs dichoptic
-% Set smoothing factor (adjust if needed)
-smoothing_factor = 20;  % You can tweak this value for more/less smoothing
+%% plot dioptic vs dichoptic: averageCSDMatrix_diopDichop
+
+% Organize the data
+data_diop = squeeze(averageCSDMatrix_diopDichop(:, :, 1, :));  % Dioptic condition
+data_dichop = squeeze(averageCSDMatrix_diopDichop(:, :, 2, :));  % Dichoptic condition
 
 % half-wave rectify the data
-% halfWaveRectify = averageCSDMatrix_BRFS;
-halfWaveRectify = averageCSDMatrix_diopDichop;
-halfWaveRectify(halfWaveRectify > 0) = 0;
-rectifiedCSD = abs(halfWaveRectify);
+halfWave_diop = data_diop;
+halfWave_diop(halfWave_diop >= 0) = NaN;
+halfWaveRectifiedCSD_diop = abs(halfWave_diop);
 
-% Average over the recording sessions
-grandAverageCSD = median(rectifiedCSD, 4, "omitmissing"); % Average across sessions
-
-% Extract the data for dioptic and dichoptic conditions
-dioptic_data = grandAverageCSD(:, :, 1);  % Dioptic condition
-dichoptic_data = grandAverageCSD(:, :, 2);  % Dichoptic condition
-
-
-% Smoothing the data before averaging
-dioptic_data_smooth = smoothdata(dioptic_data, 'gaussian', smoothing_factor);
-dichoptic_data_smooth = smoothdata(dichoptic_data, 'gaussian', smoothing_factor);
+halfWave_dichop = data_dichop;
+halfWave_dichop(halfWave_dichop >= 0) = NaN;
+halfWaveRectifiedCSD_dichop = abs(halfWave_dichop);
 
 % Compute averages for each laminar compartment (across channels)
-supragranular_avg_diop = mean(dioptic_data_smooth(:, 1:5), 2);   % Channels 1:5 for dioptic
-supragranular_avg_dicho = mean(dichoptic_data_smooth(:, 1:5), 2);  % Channels 1:5 for dichoptic
+supragranular_avg_diop = squeeze(mean(halfWaveRectifiedCSD_diop(:, 1:5, :), 2,"omitmissing"));   % Channels 1:5 for dioptic
+supragranular_avg_dicho = squeeze(mean(halfWaveRectifiedCSD_dichop(:, 1:5, :), 2,"omitmissing"));  % Channels 1:5 for dichoptic
 
-granular_avg_diop = mean(dioptic_data_smooth(:, 6:10), 2);  % Channels 6:10 for dioptic
-granular_avg_dicho = mean(dichoptic_data_smooth(:, 6:10), 2);  % Channels 6:10 for dichoptic
+granular_avg_diop = squeeze(mean(halfWaveRectifiedCSD_diop(:, 6:10, :), 2,"omitmissing"));  % Channels 6:10 for dioptic
+granular_avg_dicho = squeeze(mean(halfWaveRectifiedCSD_dichop(:, 6:10, :), 2,"omitmissing"));  % Channels 6:10 for dichoptic
 
-infragranular_avg_diop = mean(dioptic_data_smooth(:, 11:15), 2);  % Channels 11:15 for dioptic
-infragranular_avg_dicho = mean(dichoptic_data_smooth(:, 11:15), 2);  % Channels 11:15 for dichoptic
+infragranular_avg_diop = squeeze(mean(halfWaveRectifiedCSD_diop(:, 11:15, :), 2,"omitmissing"));  % Channels 11:15 for dioptic
+infragranular_avg_dicho = squeeze(mean(halfWaveRectifiedCSD_dichop(:, 11:15, :), 2,"omitmissing"));  % Channels 11:15 for dichoptic
 
-% Difference between conditions (before filtering)
-supragranular_diff = supragranular_avg_diop - supragranular_avg_dicho;
-granular_diff = granular_avg_diop - granular_avg_dicho;
-infragranular_diff = infragranular_avg_diop - infragranular_avg_dicho;
+% Percent change from baseline
+bl_diop_s = mean(supragranular_avg_diop(1:200,:),1,"omitmissing");
+percentChangeFromBl_diop_s = ((supragranular_avg_diop-bl_diop_s)./bl_diop_s)*100; % percent change from baseline
+bl_dichop_s = mean(supragranular_avg_dicho(1:200,:),1,"omitmissing");
+percentChangeFromBl_dichop_s = ((supragranular_avg_dicho-bl_dichop_s)./bl_dichop_s)*100; % percent change from baseline
 
-% Define the cutoff frequency and sample rate for the low-pass filter
+bl_diop_g = mean(granular_avg_diop(1:200,:),1,"omitmissing");
+percentChangeFromBl_diop_g = ((granular_avg_diop-bl_diop_g)./bl_diop_g)*100; % percent change from baseline
+bl_dichop_g = mean(granular_avg_dicho(1:200,:),1,"omitmissing");
+percentChangeFromBl_dichop_g = ((granular_avg_dicho-bl_dichop_g)./bl_dichop_g)*100; % percent change from baseline
+
+bl_diop_i = mean(infragranular_avg_diop(1:200,:),1,"omitmissing");
+percentChangeFromBl_diop_i = ((infragranular_avg_diop-bl_diop_i)./bl_diop_i)*100; % percent change from baseline
+bl_dichop_i = mean(infragranular_avg_dicho(1:200,:),1,"omitmissing");
+percentChangeFromBl_dichop_i = ((infragranular_avg_dicho-bl_dichop_i)./bl_dichop_i)*100; % percent change from baseline
+
+% Average over the recording sessions
+grandAverageCSD_diop_s = mean(percentChangeFromBl_diop_s, 2, "omitmissing"); % Average across sessions
+grandAverageCSD_dichop_s = mean(percentChangeFromBl_dichop_s, 2, "omitmissing"); % Average across sessions
+
+grandAverageCSD_diop_g = mean(percentChangeFromBl_diop_g, 2, "omitmissing"); % Average across sessions
+grandAverageCSD_dichop_g = mean(percentChangeFromBl_dichop_g, 2, "omitmissing"); % Average across sessions
+
+grandAverageCSD_diop_i = mean(percentChangeFromBl_diop_i, 2, "omitmissing"); % Average across sessions
+grandAverageCSD_dichop_i = mean(percentChangeFromBl_dichop_i, 2, "omitmissing"); % Average across sessions
+
+% Difference between conditions 
+supragranular_diff = grandAverageCSD_diop_s - grandAverageCSD_dichop_s;
+granular_diff = grandAverageCSD_diop_g - grandAverageCSD_dichop_g;
+infragranular_diff = grandAverageCSD_diop_i - grandAverageCSD_dichop_i;
+
+% Low pass filter the data
 fs = 1000; % Assuming 1000 Hz sampling rate
-cutoff_freq = 30; % 20 Hz cutoff frequency
+cutoff_freq = 45; % 20 Hz cutoff frequency
 [b, a] = butter(4, cutoff_freq / (fs / 2), 'low'); % 4th-order Butterworth filter
 
 % Apply low-pass filter to the averaged data
-supragranular_avg_diop_filtered = filtfilt(b, a, supragranular_avg_diop);
-supragranular_avg_dicho_filtered = filtfilt(b, a, supragranular_avg_dicho);
+supragranular_avg_diop_filtered = filtfilt(b, a, grandAverageCSD_diop_s);
+supragranular_avg_dicho_filtered = filtfilt(b, a, grandAverageCSD_dichop_s);
 
-granular_avg_diop_filtered = filtfilt(b, a, granular_avg_diop);
-granular_avg_dicho_filtered = filtfilt(b, a, granular_avg_dicho);
+granular_avg_diop_filtered = filtfilt(b, a, grandAverageCSD_diop_g);
+granular_avg_dicho_filtered = filtfilt(b, a, grandAverageCSD_dichop_g);
 
-infragranular_avg_diop_filtered = filtfilt(b, a, infragranular_avg_diop);
-infragranular_avg_dicho_filtered = filtfilt(b, a, infragranular_avg_dicho);
+infragranular_avg_diop_filtered = filtfilt(b, a, grandAverageCSD_diop_i);
+infragranular_avg_dicho_filtered = filtfilt(b, a, grandAverageCSD_dichop_i);
 
 % Apply low-pass filter to the difference between conditions
+cutoff_freq = 10; % 20 Hz cutoff frequency
+[b, a] = butter(4, cutoff_freq / (fs / 2), 'low'); % 4th-order Butterworth filter
 supragranular_diff_filtered = filtfilt(b, a, supragranular_diff);
 granular_diff_filtered = filtfilt(b, a, granular_diff);
 infragranular_diff_filtered = filtfilt(b, a, infragranular_diff);
 
 % Create a modern muted color palette that is easier to differentiate
-colors = [
-    0.121, 0.466, 0.705; % Blue
-    0.682, 0.780, 0.902; % Light Blue
-    0.890, 0.102, 0.110; % Red
-    0.600, 0.400, 0.000; % Olive Green
-    0.659, 0.661, 0.661; % Gray
+% Whole number RGB values (0 to 255)
+colors_whole = [
+    179, 203, 205; % Sky Dioptic/PS
+    148, 110, 36;  % Oak Dichoptic/NS
+    236, 183, 72;  % Highlight -- Gran
+    139, 161, 142; % Sage -- SupraGran
+    119, 119, 119; % Dark Gray Diff - Infragran
 ];
+
+% Convert to decimal format (0 to 1)
+colors = colors_whole / 255;
 
 % Create figure for line plots
 f = figure;
+set(f,"Position",[-1861 -48 1734 866])
+set(f,'defaultLegendAutoUpdate','off')
+
 tm = -200:1800;
 % First plot: Supragranular
 subplot(3, 2, 1);
-plot(tm, supragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
-plot(tm, supragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+plot(tm, supragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 2, 'DisplayName', 'Dioptic'); hold on;
+plot(tm, supragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 2, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
 ylabel('Supragranular');
-legend;
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(1600, '--', 'Stimulus offset', 'LineWidth', 2);
 box('off')
 
 % Second plot: Granular
 subplot(3, 2, 3);
-plot(tm, granular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
-plot(tm, granular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+plot(tm, granular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 2, 'DisplayName', 'Dioptic'); hold on;
+plot(tm, granular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 2, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
 ylabel('Granular');
-legend;
+legend({'Dioptic','Dichoptic'});
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(1600, '--', 'Stimulus offset', 'LineWidth', 2);
 box('off')
 
 
 % Third plot: Infragranular
 subplot(3, 2, 5);
-plot(tm, infragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'Dioptic'); hold on;
-plot(tm, infragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'Dichoptic');
+plot(tm, infragranular_avg_diop_filtered, 'Color', colors(1,:), 'LineWidth', 2, 'DisplayName', 'Dioptic'); hold on;
+plot(tm, infragranular_avg_dicho_filtered, 'Color', colors(2,:), 'LineWidth', 2, 'DisplayName', 'Dichoptic');
 xlabel('Time (ms)');
-ylabel({'Infragranular','nA/mm^3'});
-legend;
+ylabel({'Infragranular','% Change'});
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(1600, '--', 'Stimulus offset', 'LineWidth', 2);
 box('off')
 
 
 % Fourth plot: Difference between conditions
 subplot(3, 2, [2 4 6]);
-plot(tm, supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 1.5, 'DisplayName', 'Supragranular Diff'); hold on;
-plot(tm, granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 1.5, 'DisplayName', 'Granular Diff');
-plot(tm, infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 1.5, 'DisplayName', 'Infragranular Diff');
+plot(tm, supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 3, 'DisplayName', 'Supragranular Diff'); hold on;
+plot(tm, granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 3, 'DisplayName', 'Granular Diff');
+plot(tm, infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 3, 'DisplayName', 'Infragranular Diff');
 xlabel('Time (ms)');
-ylabel('Difference (nA/mm^3)');
+ylabel('Difference in % Change');
 title('Difference between Conditions');
-legend;
+legend({'Supragranular','Granular','Infragranular'});
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
-xline(800, '--', 'Stimulus offset', 'LineWidth', 2);
-hline(0)
+xline(1600, '--', 'Stimulus offset', 'LineWidth', 2);
+yline(0, '--', 'LineWidth', 2);
+xlim([-200 1800])
 box('off')
 
 
@@ -382,126 +412,157 @@ end
 
 
 
-%% plot BRFS
-% Set smoothing factor (adjust if needed)
-smoothing_factor = 20;  % You can tweak this value for more/less smoothing
+%% plot BRFS: averageCSDMatrix_BRFS
+
+% Organize the data
+data_PS = squeeze(averageCSDMatrix_BRFS(:, :, 1, :));  % Dioptic condition
+data_NS = squeeze(averageCSDMatrix_BRFS(:, :, 2, :));  % Dichoptic condition
 
 % half-wave rectify the data
-% halfWaveRectify = averageCSDMatrix_BRFS;
-halfWaveRectify = averageCSDMatrix_BRFS;
-halfWaveRectify(halfWaveRectify > 0) = 0;
-rectifiedCSD = abs(halfWaveRectify);
+halfWave_PS = data_PS;
+halfWave_PS(halfWave_PS >= 0) = NaN;
+halfWaveRectifiedCSD_PS = abs(halfWave_PS);
 
-% Average over the recording sessions
-grandAverageCSD = median(rectifiedCSD, 4, "omitmissing"); % Average across sessions
-
-% Extract the data for dioptic and dichoptic conditions
-PS_data = grandAverageCSD(:, :, 1);  % PS condition
-NS_data = grandAverageCSD(:, :, 2);  % NS condition
-
-
-% Smoothing the data before averaging
-PS_data_smooth = smoothdata(PS_data, 'gaussian', smoothing_factor);
-NS_data_smooth = smoothdata(NS_data, 'gaussian', smoothing_factor);
+halfWave_NS = data_NS;
+halfWave_NS(halfWave_NS >= 0) = NaN;
+halfWaveRectifiedCSD_NS = abs(halfWave_NS);
 
 % Compute averages for each laminar compartment (across channels)
-supragranular_avg_PS = mean(PS_data_smooth(:, 1:5), 2);   % Channels 1:5 for PS
-supragranular_avg_NS = mean(NS_data_smooth(:, 1:5), 2);  % Channels 1:5 for NS
+supragranular_avg_PS = squeeze(mean(halfWaveRectifiedCSD_PS(:, 1:5, :), 2,"omitmissing"));   % Channels 1:5 for dioptic
+supragranular_avg_NS = squeeze(mean(halfWaveRectifiedCSD_NS(:, 1:5, :), 2,"omitmissing"));  % Channels 1:5 for dichoptic
 
-granular_avg_PS = mean(PS_data_smooth(:, 6:10), 2);  % Channels 6:10 for PS
-granular_avg_NS = mean(NS_data_smooth(:, 6:10), 2);  % Channels 6:10 for NS
+granular_avg_PS = squeeze(mean(halfWaveRectifiedCSD_PS(:, 6:10, :), 2,"omitmissing"));  % Channels 6:10 for dioptic
+granular_avg_NS = squeeze(mean(halfWaveRectifiedCSD_NS(:, 6:10, :), 2,"omitmissing"));  % Channels 6:10 for dichoptic
 
-infragranular_avg_PS = mean(PS_data_smooth(:, 11:15), 2);  % Channels 11:15 for PS
-infragranular_avg_NS = mean(NS_data_smooth(:, 11:15), 2);  % Channels 11:15 for NS
+infragranular_avg_PS = squeeze(mean(halfWaveRectifiedCSD_PS(:, 11:15, :), 2,"omitmissing"));  % Channels 11:15 for dioptic
+infragranular_avg_NS = squeeze(mean(halfWaveRectifiedCSD_NS(:, 11:15, :), 2,"omitmissing"));  % Channels 11:15 for dichoptic
 
-% Difference between conditions (before filtering)
-supragranular_diff = supragranular_avg_PS - supragranular_avg_NS;
-granular_diff = granular_avg_PS - granular_avg_NS;
-infragranular_diff = infragranular_avg_PS - infragranular_avg_NS;
+% Percent change from baseline
+bl_PS_s = mean(supragranular_avg_PS(1:200,:),1,"omitmissing");
+percentChangeFromBl_PS_s = ((supragranular_avg_PS-bl_PS_s)./bl_PS_s)*100; % percent change from baseline
+bl_NS_s = mean(supragranular_avg_NS(1:200,:),1,"omitmissing");
+percentChangeFromBl_NS_s = ((supragranular_avg_NS-bl_NS_s)./bl_NS_s)*100; % percent change from baseline
 
-% Define the cutoff frequency and sample rate for the low-pass filter
+bl_PS_g = mean(granular_avg_PS(1:200,:),1,"omitmissing");
+percentChangeFromBl_PS_g = ((granular_avg_PS-bl_PS_g)./bl_PS_g)*100; % percent change from baseline
+bl_NS_g = mean(granular_avg_NS(1:200,:),1,"omitmissing");
+percentChangeFromBl_NS_g = ((granular_avg_NS-bl_NS_g)./bl_NS_g)*100; % percent change from baseline
+
+bl_PS_i = mean(infragranular_avg_PS(1:200,:),1,"omitmissing");
+percentChangeFromBl_PS_i = ((infragranular_avg_PS-bl_PS_i)./bl_PS_i)*100; % percent change from baseline
+bl_NS_i = mean(infragranular_avg_NS(1:200,:),1,"omitmissing");
+percentChangeFromBl_NS_i = ((infragranular_avg_NS-bl_NS_i)./bl_NS_i)*100; % percent change from baseline
+
+% Average over the recording sessions
+grandAverageCSD_PS_s = mean(percentChangeFromBl_PS_s, 2, "omitmissing"); % Average across sessions
+grandAverageCSD_NS_s = mean(percentChangeFromBl_NS_s, 2, "omitmissing"); % Average across sessions
+
+grandAverageCSD_PS_g = mean(percentChangeFromBl_PS_g, 2, "omitmissing"); % Average across sessions
+grandAverageCSD_NS_g = mean(percentChangeFromBl_NS_g, 2, "omitmissing"); % Average across sessions
+
+grandAverageCSD_PS_i = mean(percentChangeFromBl_PS_i, 2, "omitmissing"); % Average across sessions
+grandAverageCSD_NS_i = mean(percentChangeFromBl_NS_i, 2, "omitmissing"); % Average across sessions
+
+% Difference between conditions 
+supragranular_diff = grandAverageCSD_PS_s - grandAverageCSD_NS_s;
+granular_diff = grandAverageCSD_PS_g - grandAverageCSD_NS_g;
+infragranular_diff = grandAverageCSD_PS_i - grandAverageCSD_NS_i;
+
+% Low pass filter the data
 fs = 1000; % Assuming 1000 Hz sampling rate
-cutoff_freq = 30; % 20 Hz cutoff frequency
+cutoff_freq = 45; % 20 Hz cutoff frequency
 [b, a] = butter(4, cutoff_freq / (fs / 2), 'low'); % 4th-order Butterworth filter
 
 % Apply low-pass filter to the averaged data
-supragranular_avg_PS_filtered = filtfilt(b, a, supragranular_avg_PS);
-supragranular_avg_NS_filtered = filtfilt(b, a, supragranular_avg_NS);
+supragranular_avg_PS_filtered = filtfilt(b, a, grandAverageCSD_PS_s);
+supragranular_avg_NS_filtered = filtfilt(b, a, grandAverageCSD_NS_s);
 
-granular_avg_PS_filtered = filtfilt(b, a, granular_avg_PS);
-granular_avg_NS_filtered = filtfilt(b, a, granular_avg_NS);
+granular_avg_PS_filtered = filtfilt(b, a, grandAverageCSD_PS_g);
+granular_avg_NS_filtered = filtfilt(b, a, grandAverageCSD_NS_g);
 
-infragranular_avg_PS_filtered = filtfilt(b, a, infragranular_avg_PS);
-infragranular_avg_NS_filtered = filtfilt(b, a, infragranular_avg_NS);
+infragranular_avg_PS_filtered = filtfilt(b, a, grandAverageCSD_PS_i);
+infragranular_avg_NS_filtered = filtfilt(b, a, grandAverageCSD_NS_i);
 
 % Apply low-pass filter to the difference between conditions
+cutoff_freq = 10; % 20 Hz cutoff frequency
+[b, a] = butter(4, cutoff_freq / (fs / 2), 'low'); % 4th-order Butterworth filter
 supragranular_diff_filtered = filtfilt(b, a, supragranular_diff);
 granular_diff_filtered = filtfilt(b, a, granular_diff);
 infragranular_diff_filtered = filtfilt(b, a, infragranular_diff);
 
 % Create a modern muted color palette that is easier to differentiate
-colors = [
-    0.121, 0.466, 0.705; % Blue
-    0.682, 0.780, 0.902; % Light Blue
-    0.890, 0.102, 0.110; % Red
-    0.600, 0.400, 0.000; % Olive Green
-    0.659, 0.661, 0.661; % Gray
+% Whole number RGB values (0 to 255)
+colors_whole = [
+    179, 203, 205; % Sky Dioptic/PS
+    148, 110, 36;  % Oak Dichoptic/NS
+    236, 183, 72;  % Highlight -- Gran
+    139, 161, 142; % Sage -- SupraGran
+    119, 119, 119; % Dark Gray Diff - Infragran
 ];
+
+% Convert to decimal format (0 to 1)
+colors = colors_whole / 255;
 
 % Create figure for line plots
 f = figure;
+set(f,"Position",[-1861 -48 1734 866])
+set(f,'defaultLegendAutoUpdate','off')
+
 tm = -200:1800;
 % First plot: Supragranular
 subplot(3, 2, 1);
-plot(tm, supragranular_avg_PS_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'PS'); hold on;
-plot(tm, supragranular_avg_NS_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'NS');
+plot(tm, supragranular_avg_PS_filtered, 'Color', colors(1,:), 'LineWidth', 2, 'DisplayName', 'PS'); hold on;
+plot(tm, supragranular_avg_NS_filtered, 'Color', colors(2,:), 'LineWidth', 2, 'DisplayName', 'NS');
 xlabel('Time (ms)');
 ylabel('Supragranular');
-legend;
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(800, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(1600, '--', 'Stimulus offset', 'LineWidth', 2);
 box('off')
 
 % Second plot: Granular
 subplot(3, 2, 3);
-plot(tm, granular_avg_PS_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'PS'); hold on;
-plot(tm, granular_avg_NS_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'NS');
+plot(tm, granular_avg_PS_filtered, 'Color', colors(1,:), 'LineWidth', 2, 'DisplayName', 'PS'); hold on;
+plot(tm, granular_avg_NS_filtered, 'Color', colors(2,:), 'LineWidth', 2, 'DisplayName', 'NS');
 xlabel('Time (ms)');
 ylabel('Granular');
-legend;
+legend({'PS','NS'});
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(800, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(1600, '--', 'Stimulus offset', 'LineWidth', 2);
 box('off')
 
 
 % Third plot: Infragranular
 subplot(3, 2, 5);
-plot(tm, infragranular_avg_PS_filtered, 'Color', colors(1,:), 'LineWidth', 1.5, 'DisplayName', 'PS'); hold on;
-plot(tm, infragranular_avg_NS_filtered, 'Color', colors(2,:), 'LineWidth', 1.5, 'DisplayName', 'NS');
+plot(tm, infragranular_avg_PS_filtered, 'Color', colors(1,:), 'LineWidth', 2, 'DisplayName', 'PS'); hold on;
+plot(tm, infragranular_avg_NS_filtered, 'Color', colors(2,:), 'LineWidth', 2, 'DisplayName', 'NS');
 xlabel('Time (ms)');
-ylabel({'Infragranular','nA/mm^3'});
-legend;
+ylabel({'Infragranular','% Change'});
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(800, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(1600, '--', 'Stimulus offset', 'LineWidth', 2);
 box('off')
 
 
 % Fourth plot: Difference between conditions
 subplot(3, 2, [2 4 6]);
-plot(tm, supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 1.5, 'DisplayName', 'Supragranular Diff'); hold on;
-plot(tm, granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 1.5, 'DisplayName', 'Granular Diff');
-plot(tm, infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 1.5, 'DisplayName', 'Infragranular Diff');
+plot(tm, supragranular_diff_filtered, 'Color', colors(4,:), 'LineWidth', 3, 'DisplayName', 'Supragranular Diff'); hold on;
+plot(tm, granular_diff_filtered, 'Color', colors(3,:), 'LineWidth', 3, 'DisplayName', 'Granular Diff');
+plot(tm, infragranular_diff_filtered, 'Color', colors(5,:), 'LineWidth', 3, 'DisplayName', 'Infragranular Diff');
 xlabel('Time (ms)');
-ylabel('Difference (nA/mm^3)');
+ylabel('Difference in % Change');
 title('Difference between Conditions');
-legend;
+legend({'Supragranular','Granular','Infragranular'});
 xline(0, '--', 'Stimulus onset', 'LineWidth', 2);
-xline(800, '--', 'Stimulus offset', 'LineWidth', 2);
-hline(0)
+xline(800, '--', 'Stimulus onset', 'LineWidth', 2);
+xline(1600, '--', 'Stimulus offset', 'LineWidth', 2);
+yline(0, '--', 'LineWidth', 2);
+xlim([-200 1800])
 box('off')
 
 
-
-%% Save output
-%save fig
-answer = questdlg('Would you like to save this figure? _BRFS', ...
+answer = questdlg('Would you like to save this figure? _PSticNS', ...
 	'Y', ...
 	'N');
 % Handle response
@@ -509,13 +570,11 @@ switch answer
     case 'Yes'
         disp('alright, saving figure to plotdir')
         cd(plotDir)
-        saveName = strcat('CSDlinePlot_BRFS.png');
+        saveName = strcat('CSDlinePlot_PSticNS.png');
         saveas(f,saveName) 
-        saveName = strcat('CSDlinePlot_BRFS.svg');
+        saveName = strcat('CSDlinePlot_PSticNS.svg');
         saveas(f,saveName)
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')
 end
-
-

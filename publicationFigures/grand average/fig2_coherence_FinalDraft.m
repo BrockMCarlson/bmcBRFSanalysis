@@ -214,7 +214,7 @@ for penetration = 1:size(LFP_trials,1)
     tm_1stOnset = 201:1000; %800ms adapter
     tm_2ndOnset = 1001:1800;
     tm_offset = 1801:2001;
-    tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
+    tm_coher = 300:812; % Time window of data. Last 512ms of trial. 
     % Dioptic vs dichoptic
     count = 0;
     for conditionNumber = [1 3]        
@@ -275,6 +275,7 @@ for penetration = 1:size(LFP_trials,1)
                     lfp_blsub_2 = lfpGammaData2 - bl2;
     
                     % Compute coherence
+                    tm_coher = 1000:1512; % Time window of data. Last 512ms of trial. 
                     [coherence, freq] = mscohere(lfp_blsub_1(tm_coher), lfp_blsub_2(tm_coher), windowSize, overlap, [], fs);
         
                     % Store coherence in the matrix
@@ -433,6 +434,7 @@ switch answer
         sgtitle('Coherence Penetration Average')
         cd(plotDir)
         saveName = strcat('coherencePenetrationAvg.png');
+        saveName = strcat('coherencePenetrationAvg.svg');
         saveas(f,saveName) 
     case 'No'
         cd(plotDir)
