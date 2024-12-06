@@ -6,7 +6,7 @@ disp('start time')
 datetime
 close
 clearvars -except MUA_trials
-workingPC = 'home'; % options: 'home', 'office'
+workingPC = 'office'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
