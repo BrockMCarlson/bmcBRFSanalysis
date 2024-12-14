@@ -45,23 +45,20 @@ g.axe_property('Grid', 'on');
 g.draw();
 
 %% Save output to plotDir
-% Get the current directory
-originalDir = pwd;
-
-try
-    % Change to the plotDir directory (as defined in the original script)
-    cd(plotDir);
-    
-    % Save the figure in multiple formats
-    saveas(f, 'anova_grouped_bar_plots.png');
-    saveas(f, 'anova_grouped_bar_plots.svg');
-    
-    disp('Grouped bar plots successfully saved to plotDir.');
-catch ME
-    % If an error occurs, display a message and return to the original directory
-    disp('An error occurred while saving the bar plots.');
-    disp(ME.message);
+%save fig
+answer = questdlg('Would you like to save this figure?', ...
+	'Y', ...
+	'N');
+% Handle response
+switch answer
+    case 'Yes'
+        disp('alright, saving figure to plotdir')
+        sgtitle('Coherence Penetration Average')
+        cd(plotDir)
+        saveas(f, 'fig2d_anova_grouped_bar_plots.png');
+        saveas(f, 'fig2d_anova_grouped_bar_plots.svg');
+    case 'No'
+        cd(plotDir)
+        disp('please see plotdir for last save')
 end
 
-% Return to the original directory
-cd(originalDir);

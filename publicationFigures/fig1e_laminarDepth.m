@@ -95,16 +95,42 @@ xlabel('Time (ms)');
 ylabel('Depth Channels');
 title('MUA Grand Average by Laminar Depth');
 
+% Significance asterisks for 100 ms bins
+bin_width = 100; % ms
+time_bins = 0:bin_width:max(tm_full); % Define 100 ms bins
+
+% Calculate the y-position to plot the asterisks above the data
+y_pos = max([psAvg(:); nsAvg(:)]) + 20; % Maximum value from both conditions, plus 20 for visual offset
+
+for i = 1:length(time_bins)-1
+    bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
+    
+    % Extract responses for current time bin
+    ps_data = mean(psAvg(bin_indices, :), 2, 'omitnan');
+    ns_data = mean(nsAvg(bin_indices, :), 2, 'omitnan');
+    
+    % Perform t-test
+    [~, p] = ttest2(ps_data, ns_data);
+    if p < 0.05 / (length(time_bins) - 1) % Bonferroni correction
+        x_pos = mean(time_bins(i:i+1)); % Midpoint of the bin
+        text(x_pos, y_pos, '*', 'FontSize', 12, 'Color', 'k', 'HorizontalAlignment', 'center');
+    end
+end
+
+
+xlabel('Time (ms)');
+ylabel('Depth Channels');
+title('MUA Grand Average by Laminar Depth');
+hold off;
+
 %% Save figure
 answer = questdlg('Would you like to save this figure?', 'Save Figures', 'Yes', 'No', 'No');
 switch answer
     case 'Yes'
         disp('Saving figure to plotDir...');
         cd(plotDir);
-        figName = strcat('MUA_fig1e_laminarDepth_', '.png');
-        saveas(gcf, figName);
-        figName = strcat('MUA_fig1e_laminarDepth_', '.svg');
-        saveas(gcf, figName);
+        saveas(gcf, 'MUA_fig1e_laminarDepth.png');
+        saveas(gcf, 'MUA_fig1e_laminarDepth.svg');
     case 'No'
         disp('See plotDir for last saved versions.');
 end

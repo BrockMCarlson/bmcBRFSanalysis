@@ -8,12 +8,12 @@ datetime
 clearvars -except LFP_trials
 workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
-    codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
+    codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
     plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\CSDFigs';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
-    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures\grand average';
+    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir    = 'D:\TrialTriggeredLFPandMUA';
     plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\CSDFigs';
     officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
@@ -570,9 +570,9 @@ switch answer
     case 'Yes'
         disp('alright, saving figure to plotdir')
         cd(plotDir)
-        saveName = strcat('CSDlinePlot_PSticNS.png');
+        saveName = strcat('fig4_CSDlinePlot_PSticNS.png');
         saveas(f,saveName) 
-        saveName = strcat('CSDlinePlot_PSticNS.svg');
+        saveName = strcat('fig4_CSDlinePlot_PSticNS.svg');
         saveas(f,saveName)
     case 'No'
         cd(plotDir)
