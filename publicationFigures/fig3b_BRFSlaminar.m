@@ -7,7 +7,7 @@ disp('start time')
 datetime
 close
 clearvars -except MUA_trials
-workingPC = 'home'; % options: 'home', 'office'
+workingPC = 'office'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
@@ -236,74 +236,65 @@ for penetration = 1:size(MUA_trials,1)
 end
 
 
-%% Organize into compartments, median and std across contacts+penetration
-% reshape
+%% Organize into compartments, median and std across contacts + penetration
 useIdx = squeeze(~isnan(averageMUAMatrix_BRFSps(1,1,:))); 
-ps_S = reshape(averageMUAMatrix_BRFSps(:,1:5,useIdx),[2001,135]);
-ps_G = reshape(averageMUAMatrix_BRFSps(:,6:10,useIdx),[2001,135]);
-ps_I = reshape(averageMUAMatrix_BRFSps(:,11:15,useIdx),[2001,135]);
-ns_S = reshape(averageMUAMatrix_BRFSns(:,1:5,useIdx),[2001,135]);
-ns_G = reshape(averageMUAMatrix_BRFSns(:,6:10,useIdx),[2001,135]);
-ns_I = reshape(averageMUAMatrix_BRFSns(:,11:15,useIdx),[2001,135]);
+ps_S = reshape(averageMUAMatrix_BRFSps(:,1:5,useIdx), [2001, 135]);
+ps_G = reshape(averageMUAMatrix_BRFSps(:,6:10,useIdx), [2001, 135]);
+ps_I = reshape(averageMUAMatrix_BRFSps(:,11:15,useIdx), [2001, 135]);
+ns_S = reshape(averageMUAMatrix_BRFSns(:,1:5,useIdx), [2001, 135]);
+ns_G = reshape(averageMUAMatrix_BRFSns(:,6:10,useIdx), [2001, 135]);
+ns_I = reshape(averageMUAMatrix_BRFSns(:,11:15,useIdx), [2001, 135]);
 
-% Average across penetrations
-ps_S_avg = smoothdata(mean(ps_S,2,"omitmissing"),"gaussian",50);
-ps_G_avg = smoothdata(mean(ps_G,2,"omitmissing"),"gaussian",50);
-ps_I_avg = smoothdata(mean(ps_I,2,"omitmissing"),"gaussian",50);
-ns_S_avg = smoothdata(mean(ns_S,2,"omitmissing"),"gaussian",50);
-ns_G_avg = smoothdata(mean(ns_G,2,"omitmissing"),"gaussian",50);
-ns_I_avg = smoothdata(mean(ns_I,2,"omitmissing"),"gaussian",50);
+% Smoothed averages for plotting
+ps_S_avg = smoothdata(mean(ps_S, 2, "omitmissing"), "gaussian", 50);
+ps_G_avg = smoothdata(mean(ps_G, 2, "omitmissing"), "gaussian", 50);
+ps_I_avg = smoothdata(mean(ps_I, 2, "omitmissing"), "gaussian", 50);
+ns_S_avg = smoothdata(mean(ns_S, 2, "omitmissing"), "gaussian", 50);
+ns_G_avg = smoothdata(mean(ns_G, 2, "omitmissing"), "gaussian", 50);
+ns_I_avg = smoothdata(mean(ns_I, 2, "omitmissing"), "gaussian", 50);
 
-
-% Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
-contactNum = size(ps_S,2);
-ps_S_sem = std(ps_S,0,2,"omitmissing")./sqrt(contactNum); 
-ps_G_sem = std(ps_G,0,2,"omitmissing")./sqrt(contactNum); 
-ps_I_sem = std(ps_I,0,2,"omitmissing")./sqrt(contactNum); 
-ns_S_sem = std(ns_S,0,2,"omitmissing")./sqrt(contactNum); 
-ns_G_sem = std(ns_G,0,2,"omitmissing")./sqrt(contactNum); 
-ns_I_sem = std(ns_I,0,2,"omitmissing")./sqrt(contactNum); 
-
-% Mean +/- SEM
-ps_S_avgPlusSEM = ps_S_avg + ps_S_sem; %pref stim -- median plus sem 1 
-ps_S_avgMinusSEM = ps_S_avg - ps_S_sem; %pref stim -- median minus sem 1 
-ps_G_avgPlusSEM = ps_G_avg + ps_G_sem; %pref stim -- median plus sem 1 
-ps_G_avgMinusSEM = ps_G_avg - ps_G_sem; %pref stim -- median minus sem 1 
-ps_I_avgPlusSEM = ps_I_avg + ps_I_sem; %pref stim -- median plus sem 1 
-ps_I_avgMinusSEM = ps_I_avg - ps_I_sem; %pref stim -- median minus sem 1 
-
-ns_S_avgPlusSEM = ns_S_avg + ns_S_sem; 
-ns_S_avgMinusSEM = ns_S_avg - ns_S_sem;  
-ns_G_avgPlusSEM = ns_G_avg + ns_G_sem; 
-ns_G_avgMinusSEM = ns_G_avg - ns_G_sem; 
-ns_I_avgPlusSEM = ns_I_avg + ns_I_sem; 
-ns_I_avgMinusSEM = ns_I_avg - ns_I_sem; 
-
-
-
-
-%% Calculate Bonferroni-Adjusted Significance for 100ms Bins for each compartment
+%% Statistical Analysis for Significance Testing
 tm_full = -200:1800;
 bin_width = 50; % ms
 time_bins = 0:bin_width:max(tm_full);
 num_bins = length(time_bins) - 1;
 original_threshold = 0.05;
-bonferroni_threshold = original_threshold / num_bins;
+bonferroni_threshold = 3 * (original_threshold / num_bins);
 
 compartments = {'Supragranular', 'Granular', 'Infragranular'};
-ps_avgs = {ps_S_avg, ps_G_avg, ps_I_avg};
-ns_avgs = {ns_S_avg, ns_G_avg, ns_I_avg};
+ps_data_all = {ps_S, ps_G, ps_I};
+ns_data_all = {ns_S, ns_G, ns_I};
+ps_avg_all = {ps_S_avg, ps_G_avg, ps_I_avg};
+ns_avg_all = {ns_S_avg, ns_G_avg, ns_I_avg};
 
 lamCom = figure;
-set(gcf, "Position", [1000 123.6667 757.6667 1.1140e+03])
+set(gcf, "Position", [1000 123.6667 757.6667 1.1140e+03]);
 t = tiledlayout(3, 1);
 
+%% Plot smoothed data with SEM
 for idx = 1:3
     nexttile
-    ps_avg = ps_avgs{idx};
-    ns_avg = ns_avgs{idx};
     
-    plot(tm_full, ps_avg, 'color', [230/255 97/255 1/255], 'LineWidth', 1.5); hold on
+    ps_data = ps_data_all{idx};
+    ns_data = ns_data_all{idx};
+    ps_avg = ps_avg_all{idx};
+    ns_avg = ns_avg_all{idx};
+    
+    % Calculate SEM for each time point
+    contactNum = size(ps_data, 2);
+    ps_sem = std(ps_data, 0, 2, 'omitnan') ./ sqrt(contactNum);
+    ns_sem = std(ns_data, 0, 2, 'omitnan') ./ sqrt(contactNum);
+    
+    % Plot shaded SEM regions
+    fill([tm_full, fliplr(tm_full)], ...
+         [ps_avg' + ps_sem', fliplr(ps_avg' - ps_sem')], ...
+         [230/255 97/255 1/255], 'FaceAlpha', 0.2, 'EdgeColor', 'none'); hold on;
+    fill([tm_full, fliplr(tm_full)], ...
+         [ns_avg' + ns_sem', fliplr(ns_avg' - ns_sem')], ...
+         [94/255 60/255 153/255], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
+    
+    % Plot smoothed data
+    plot(tm_full, ps_avg, 'color', [230/255 97/255 1/255], 'LineWidth', 1.5);
     plot(tm_full, ns_avg, 'color', [94/255 60/255 153/255], 'LineWidth', 1.5);
     
     % Add dark black lines for stimulus onset and offset times
@@ -311,27 +302,33 @@ for idx = 1:3
     xline(800, 'k', 'LineWidth', 2);
     xline(1600, 'k', 'LineWidth', 2);
     
+    % Plot asterisks for significant bins
     y_pos = max(max(ps_avg), max(ns_avg)) - 0.1 * range([ps_avg(:); ns_avg(:)]); 
-    
     for i = 1:num_bins
         bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
-        ps_data = ps_avg(bin_indices);
-        ns_data = ns_avg(bin_indices);
-        [~, p] = ttest2(ps_data, ns_data);
+        
+        % Extract raw data for the current bin
+        ps_bin_data = mean(ps_data(bin_indices, :), 1, 'omitnan'); % Mean across time bin
+        ns_bin_data = mean(ns_data(bin_indices, :), 1, 'omitnan');
+        
+        % Perform t-test across electrodes
+        [~, p] = ttest2(ps_bin_data, ns_bin_data);
+        
+        % Annotate significance if p < Bonferroni threshold
         if p < bonferroni_threshold
-            x_pos = mean(time_bins(i:i+1)); 
+            x_pos = mean(time_bins(i:i+1));
             text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
         end
     end
     
     xlabel('Time (ms)');
     ylabel('Percent Change');
-    ylim([0 35])
+    ylim([0 35]);
     title([compartments{idx}, ' Compartment']);
     hold off
 end
 
-title(t, 'Laminar Compartmental MUA Responses')
+title(t, 'Laminar Compartmental MUA Responses');
 
 
 
