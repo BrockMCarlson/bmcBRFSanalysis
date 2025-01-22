@@ -1,4 +1,4 @@
-%% fig3
+%% fig3b
 % The goal of this script is to average together data from each laminar
 % compartment to see if differential perceptual modulations occur
 
@@ -11,12 +11,12 @@ workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig3_MUA';
+    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
     codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir    = 'D:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig3_MUA';
+    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir';
     officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 end
 cd(codeDir)
@@ -27,7 +27,6 @@ if ~exist('MUA_trials','var')
     load('MUA_trials.mat') % format is MUA_trials{penetration,1}{cond,1}{trial,flash}
     toc
 end
-
 
 
 %%
@@ -237,53 +236,44 @@ end
 
 
 %% Organize into compartments, median and std across contacts+penetration
-% reshape
+% Reshape the data into laminar compartments
 useIdx = squeeze(~isnan(averageMUAMatrix_BRFSps(1,1,:))); 
-ps_S = reshape(averageMUAMatrix_BRFSps(:,1:5,useIdx),[2001,135]);
-ps_G = reshape(averageMUAMatrix_BRFSps(:,6:10,useIdx),[2001,135]);
-ps_I = reshape(averageMUAMatrix_BRFSps(:,11:15,useIdx),[2001,135]);
-ns_S = reshape(averageMUAMatrix_BRFSns(:,1:5,useIdx),[2001,135]);
-ns_G = reshape(averageMUAMatrix_BRFSns(:,6:10,useIdx),[2001,135]);
-ns_I = reshape(averageMUAMatrix_BRFSns(:,11:15,useIdx),[2001,135]);
+ps = {
+    reshape(averageMUAMatrix_BRFSps(:,  1:5, useIdx), [2001, 135]), ... % Supragranular
+    reshape(averageMUAMatrix_BRFSps(:,  6:10, useIdx), [2001, 135]), ... % Granular
+    reshape(averageMUAMatrix_BRFSps(:, 11:15, useIdx), [2001, 135]) ... % Infragranular
+};
 
-% Average across penetrations
-ps_S_avg = smoothdata(mean(ps_S,2,"omitmissing"),"gaussian",50);
-ps_G_avg = smoothdata(mean(ps_G,2,"omitmissing"),"gaussian",50);
-ps_I_avg = smoothdata(mean(ps_I,2,"omitmissing"),"gaussian",50);
-ns_S_avg = smoothdata(mean(ns_S,2,"omitmissing"),"gaussian",50);
-ns_G_avg = smoothdata(mean(ns_G,2,"omitmissing"),"gaussian",50);
-ns_I_avg = smoothdata(mean(ns_I,2,"omitmissing"),"gaussian",50);
+ns = {
+    reshape(averageMUAMatrix_BRFSns(:,  1:5, useIdx), [2001, 135]), ... % Supragranular
+    reshape(averageMUAMatrix_BRFSns(:,  6:10, useIdx), [2001, 135]), ... % Granular
+    reshape(averageMUAMatrix_BRFSns(:, 11:15, useIdx), [2001, 135]) ... % Infragranular
+};
 
+% Average and SEM calculations for each compartment
+ps_avg = cell(1, 3);
+ns_avg = cell(1, 3);
+ps_sem = cell(1, 3);
+ns_sem = cell(1, 3);
 
-% Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
-contactNum = size(ps_S,2);
-ps_S_sem = std(ps_S,0,2,"omitmissing")./sqrt(contactNum); 
-ps_G_sem = std(ps_G,0,2,"omitmissing")./sqrt(contactNum); 
-ps_I_sem = std(ps_I,0,2,"omitmissing")./sqrt(contactNum); 
-ns_S_sem = std(ns_S,0,2,"omitmissing")./sqrt(contactNum); 
-ns_G_sem = std(ns_G,0,2,"omitmissing")./sqrt(contactNum); 
-ns_I_sem = std(ns_I,0,2,"omitmissing")./sqrt(contactNum); 
+contactNum = size(ps{1}, 2);
 
-% Mean +/- SEM
-ps_S_avgPlusSEM = ps_S_avg + ps_S_sem; %pref stim -- median plus sem 1 
-ps_S_avgMinusSEM = ps_S_avg - ps_S_sem; %pref stim -- median minus sem 1 
-ps_G_avgPlusSEM = ps_G_avg + ps_G_sem; %pref stim -- median plus sem 1 
-ps_G_avgMinusSEM = ps_G_avg - ps_G_sem; %pref stim -- median minus sem 1 
-ps_I_avgPlusSEM = ps_I_avg + ps_I_sem; %pref stim -- median plus sem 1 
-ps_I_avgMinusSEM = ps_I_avg - ps_I_sem; %pref stim -- median minus sem 1 
+for i = 1:3  % Loop over compartments (1 = Supragranular, 2 = Granular, 3 = Infragranular)
+    ps_avg{i} = smoothdata(mean(ps{i}, 2, "omitmissing"), "gaussian", 50);
+    ns_avg{i} = smoothdata(mean(ns{i}, 2, "omitmissing"), "gaussian", 50);
+    ps_sem{i} = std(ps{i}, 0, 2, "omitmissing") / sqrt(contactNum);
+    ns_sem{i} = std(ns{i}, 0, 2, "omitmissing") / sqrt(contactNum);
+end
 
-ns_S_avgPlusSEM = ns_S_avg + ns_S_sem; 
-ns_S_avgMinusSEM = ns_S_avg - ns_S_sem;  
-ns_G_avgPlusSEM = ns_G_avg + ns_G_sem; 
-ns_G_avgMinusSEM = ns_G_avg - ns_G_sem; 
-ns_I_avgPlusSEM = ns_I_avg + ns_I_sem; 
-ns_I_avgMinusSEM = ns_I_avg - ns_I_sem; 
+% Calculate plus/minus SEM bands
+ps_avgPlusSEM = cellfun(@(avg, sem) avg + sem, ps_avg, ps_sem, 'UniformOutput', false);
+ps_avgMinusSEM = cellfun(@(avg, sem) avg - sem, ps_avg, ps_sem, 'UniformOutput', false);
 
-
-
+ns_avgPlusSEM = cellfun(@(avg, sem) avg + sem, ns_avg, ns_sem, 'UniformOutput', false);
+ns_avgMinusSEM = cellfun(@(avg, sem) avg - sem, ns_avg, ns_sem, 'UniformOutput', false);
 
 %% Calculate Bonferroni-Adjusted Significance for 100ms Bins for each compartment
-tm_full = -200:1800;
+tm_full = (-200:1800)'; % 1801 total timepoints
 bin_width = 50; % ms
 time_bins = 0:bin_width:max(tm_full);
 num_bins = length(time_bins) - 1;
@@ -291,33 +281,46 @@ original_threshold = 0.05;
 bonferroni_threshold = original_threshold / num_bins;
 
 compartments = {'Supragranular', 'Granular', 'Infragranular'};
-ps_avgs = {ps_S_avg, ps_G_avg, ps_I_avg};
-ns_avgs = {ns_S_avg, ns_G_avg, ns_I_avg};
 
 lamCom = figure;
-set(gcf, "Position", [1000 123.6667 757.6667 1.1140e+03])
+hold on;
+set(gcf, "Position", [1000 123.6667 757.6667 1.1140e+03]);
 t = tiledlayout(3, 1);
 
 for idx = 1:3
     nexttile
-    ps_avg = ps_avgs{idx};
-    ns_avg = ns_avgs{idx};
+    ps_avg_data = ps_avg{idx};
+    ns_avg_data = ns_avg{idx};
+    ps_plus = ps_avgPlusSEM{idx};
+    ps_minus = ps_avgMinusSEM{idx};
+    ns_plus = ns_avgPlusSEM{idx};
+    ns_minus = ns_avgMinusSEM{idx};
     
-    plot(tm_full, ps_avg, 'color', [230/255 97/255 1/255], 'LineWidth', 1.5); hold on
-    plot(tm_full, ns_avg, 'color', [94/255 60/255 153/255], 'LineWidth', 1.5);
+
+
+    % Plot the shaded region for dioptic (psAvg) in light blue
+    fill([tm_full; flipud(tm_full)], [ps_plus; flipud(ps_minus)], [230/255 97/255 1/255], 'FaceAlpha', 0.4, 'EdgeColor', [0 0 0.5]); 
+    hold on
     
-    % Add dark black lines for stimulus onset and offset times
+    % Plot the shaded region for dichoptic (nsAvg) in light red
+    fill([tm_full; flipud(tm_full)], [ns_plus; flipud(ns_minus)], [94/255 60/255 153/255], 'FaceAlpha', 0.4, 'EdgeColor', [0.5 0 0]); 
+    
+    % Plot main lines for dioptic and dichoptic
+    plot(tm_full, ps_avg_data, 'Color', [230/255 97/255 1/255], 'LineWidth', 1.5); 
+    plot(tm_full, ns_avg_data, 'Color', [94/255 60/255 153/255], 'LineWidth', 1.5); 
+    
+    % Add black lines for stimulus onset and offset times
     xline(0, 'k', 'LineWidth', 2);
     xline(800, 'k', 'LineWidth', 2);
     xline(1600, 'k', 'LineWidth', 2);
     
-    y_pos = max(max(ps_avg), max(ns_avg)) - 0.1 * range([ps_avg(:); ns_avg(:)]); 
-    
+    % Bonferroni-adjusted significance testing
+    y_pos = max(max(ps_avg_data), max(ns_avg_data)) - 0.1 * range([ps_avg_data(:); ns_avg_data(:)]); 
     for i = 1:num_bins
         bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
-        ps_data = ps_avg(bin_indices);
-        ns_data = ns_avg(bin_indices);
-        [~, p] = ttest2(ps_data, ns_data);
+        ps_data_bin = ps_avg_data(bin_indices);
+        ns_data_bin = ns_avg_data(bin_indices);
+        [~, p] = ttest2(ps_data_bin, ns_data_bin);
         if p < bonferroni_threshold
             x_pos = mean(time_bins(i:i+1)); 
             text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
@@ -326,14 +329,12 @@ for idx = 1:3
     
     xlabel('Time (ms)');
     ylabel('Percent Change');
-    ylim([0 35])
+    ylim([-1 40]);
     title([compartments{idx}, ' Compartment']);
-    hold off
 end
 
-title(t, 'Laminar Compartmental MUA Responses')
-
-
+% Add global title
+title(t, 'Laminar Compartmental MUA Responses');
 
 %% Save figure
 answer = questdlg('Would you like to save this figure?', 'Y', 'N');

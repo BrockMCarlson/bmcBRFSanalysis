@@ -343,9 +343,9 @@ switch answer
     case 'Yes'
        disp('alright, saving figure to plotdir')
         cd(plotDir)
-        figName_lamCom = strcat('MUA_fig1b','_MonocAvg_','.png');
+        figName_lamCom = strcat('fig1b','_MonocAvg_','.png');
         saveas(lamCom,figName_lamCom)
-        figName_lamCom = strcat('MUA_fig1b','_MonocAvg_','.svg');
+        figName_lamCom = strcat('fig1b','_MonocAvg_','.svg');
         saveas(lamCom,figName_lamCom)
     case 'No'
         cd(plotDir)

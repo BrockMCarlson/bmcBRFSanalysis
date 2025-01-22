@@ -454,15 +454,15 @@ switch answer
         cd(plotDir)
         
         % Save diopticVsDichoptic figure
-        figName_lamCom_png = strcat('MUA_fig1d','_DiopticVsDichoptic_','.png');
+        figName_lamCom_png = strcat('fig1d','_DiopticVsDichoptic_','.png');
         saveas(lamCom, figName_lamCom_png)
-        figName_lamCom_svg = strcat('MUA_fig1d','_DiopticVsDichoptic_','.svg');
+        figName_lamCom_svg = strcat('fig1d','_DiopticVsDichoptic_','.svg');
         saveas(lamCom, figName_lamCom_svg)
         
         % Save difference figure
-        figName_difference_png = strcat('MUA_fig1d','_Difference_','.png');
+        figName_difference_png = strcat('fig1d','_Difference_','.png');
         saveas(gcf, figName_difference_png) % Assuming the difference plot is the current figure
-        figName_difference_svg = strcat('MUA_fig1d','_Difference_','.svg');
+        figName_difference_svg = strcat('fig1d','_Difference_','.svg');
         saveas(gcf, figName_difference_svg)
         
     case 'No'
