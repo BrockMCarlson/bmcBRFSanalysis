@@ -1,4 +1,4 @@
-%% fig2_coherence
+%% bmcBRFS_coherenceMatrix
 % Are there observable differences between trial-types with LFP coherence?
 % initialize variables
 clearvars -except LFP_trials
@@ -215,9 +215,9 @@ for penetration = 1:size(LFP_trials,1)
     tm_2ndOnset = 1001:1800;
     tm_offset = 1801:2001;
     tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
-    % Dioptic vs dichoptic
+    % BRFS pref vs null
     count = 0;
-    for conditionNumber = [1 3]        
+    for conditionNumber = [overallPref overallNull]        
         % Get the number of trials for the chosen condition
         numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
         % Initialize coherence matrix
@@ -246,47 +246,42 @@ for penetration = 1:size(LFP_trials,1)
         end
         % Average across trials and save output
         count = count + 1; % for pref vs null
-        averageCoherenceMatrix_diopDichop(:,:,count,penetration) = median(coherenceMatrix,3); % Average across trl. averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
+        averageCoherenceMatrix_BRFS(:,:,count,penetration) = median(coherenceMatrix,3); % Average across trl. averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
     end
-
     disp(strcat('Done with file number: ',string(penetration)))
 end
 
 
-%% plot dioptic vs dichoptic
-grandAverageCoherence_diopDichop = median(averageCoherenceMatrix_diopDichop,4,"omitmissing"); % average across penetration
-  
-disp('analyzing freq')
-disp(freq(2:9))
-
+%% plot BRFS
+grandAverageCoherence_BRFS = median(averageCoherenceMatrix_BRFS,4,"omitmissing"); % average across penetration
 
 % Visualize the coherence matrix
 f = figure;
 set(f,"Position",[-1611 318 1499 268])
 ax(1) = subplot(1,4,1);
-imagesc(grandAverageCoherence_diopDichop(:,:,1));
+imagesc(grandAverageCoherence_BRFS(:,:,1));
 colormap(ax(1),'jet');
 colorbar;
 xlabel('Channel');
 ylabel('Channel');
-title('Dioptic');
+title('Preferred Stimulus BRFS flash');
 
 ax(2) = subplot(1,4,2);
-imagesc(grandAverageCoherence_diopDichop(:,:,2));
+imagesc(grandAverageCoherence_BRFS(:,:,2));
 colormap(ax(2),'jet');
 colorbar;
 xlabel('Channel');
 ylabel('Channel');
-title('Dichoptic');
+title('Non-preferred stimulus BRFS flash');
 
 
-% Difference plot 
-coherenceMatrix1 = squeeze(averageCoherenceMatrix_diopDichop(:,:,1,:)); 
-coherenceMatrix2 = squeeze(averageCoherenceMatrix_diopDichop(:,:,2,:));
-diff_1 = grandAverageCoherence_diopDichop(:,:,1)-grandAverageCoherence_diopDichop(:,:,2);
+% Difference plot - with tStat
+coherenceMatrix1 = squeeze(averageCoherenceMatrix_BRFS(:,:,1,:)); 
+coherenceMatrix2 = squeeze(averageCoherenceMatrix_BRFS(:,:,2,:));
+diff_2 = grandAverageCoherence_BRFS(:,:,1)-grandAverageCoherence_BRFS(:,:,2);
 
 ax(3) = subplot(1,4,3);
-imagesc(diff_1);
+imagesc(diff_2);
 hline(5.5)
 hline(10.5)
 vline(5.5)
@@ -300,42 +295,47 @@ xlabel('Channel');
 ylabel('Channel');
 title('difference');
 
+sgtitle('Coherence Penetration Average')
+
 
 
 
 %% Statistical test - ANOVA between compartment comparisons
-SxS_1 = diff_1(1:5,1:5); %half block
-GxS_1 = diff_1(6:10,1:5);
-IxS_1 = diff_1(11:15,1:5);
-GxG_1 = diff_1(6:10,6:10); % half block
-IxG_1 = diff_1(11:15,6:10);
-IxI_1 = diff_1(11:15,11:15); % half block
+
+% BRFS
+SxS_2 = diff_2(1:5,1:5); %half block
+GxS_2 = diff_2(6:10,1:5);
+IxS_2 = diff_2(11:15,1:5);
+GxG_2 = diff_2(6:10,6:10); % half block
+IxG_2 = diff_2(11:15,6:10);
+IxI_2 = diff_2(11:15,11:15); % half block
 
 % aov = anova(y) performs a one-way ANOVA and returns the anova object...
 % aov for the response data in the matrix y. Each column of y is treated...
 % as a different factor value.
 % construct y for ANOVA
-holder_cross_1(:,1) = reshape(GxS_1,[25,1]);
-holder_cross_1(:,2) = reshape(IxS_1,[25,1]);
-holder_cross_1(:,3) = reshape(IxG_1,[25,1]);
-aov_cross_1 = anova1(holder_cross_1,[],"off");
-disp(aov_cross_1)
+holder_cross_2(:,1) = reshape(GxS_2,[25,1]);
+holder_cross_2(:,2) = reshape(IxS_2,[25,1]);
+holder_cross_2(:,3) = reshape(IxG_2,[25,1]);
+aov_cross_2 = anova1(holder_cross_2,[],"off");
+disp(aov_cross_2)
 
 %turn 0 to NaN
-SxS_1(SxS_1 == 0) = NaN;
-GxG_1(GxG_1 == 0) = NaN;
-IxI_1(IxI_1 == 0) = NaN;
-holder_same_1(:,1) = reshape(SxS_1,[25,1]);
-holder_same_1(:,2) = reshape(GxG_1,[25,1]);
-holder_same_1(:,3) = reshape(IxI_1,[25,1]);
-aov_same_1 = anova1(holder_same_1,[],"off");
-disp(aov_same_1)
+SxS_2(SxS_2 == 0) = NaN;
+GxG_2(GxG_2 == 0) = NaN;
+IxI_2(IxI_2 == 0) = NaN;
+holder_same_2(:,1) = reshape(SxS_2,[25,1]);
+holder_same_2(:,2) = reshape(GxG_2,[25,1]);
+holder_same_2(:,3) = reshape(IxI_2,[25,1]);
+aov_same_2 = anova1(holder_same_2,[],"off");
+disp(aov_same_2)
+
 
 %% Plotting the results of aov_cross_1 as bar plots
 
 % Calculate means and standard errors for cross comparisons
-means_cross = nanmean(holder_cross_1);
-sems_cross = nanstd(holder_cross_1) ./ sqrt(sum(~isnan(holder_cross_1))); % standard error of the mean (SEM)
+means_cross = nanmean(holder_cross_2);
+sems_cross = nanstd(holder_cross_2) ./ sqrt(sum(~isnan(holder_cross_2))); % standard error of the mean (SEM)
 
 % Plot bar plot for cross comparisons
 ax(4) = subplot(1,4,4);
@@ -364,6 +364,7 @@ hold off;
 
 %% Save output
 %save fig
+toc
 answer = questdlg('Would you like to save this figure?', ...
 	'Y', ...
 	'N');
@@ -373,13 +374,12 @@ switch answer
         disp('alright, saving figure to plotdir')
         sgtitle('Coherence Penetration Average')
         cd(plotDir)
-        saveName = strcat('fig2_coherence.png');
+        saveName = strcat('fig3_coherence.png');
         saveas(f,saveName) 
-        saveName = strcat('fig2_coherence.svg');
+        saveName = strcat('fig3_coherence.svg');
         saveas(f,saveName) 
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')
 end
-
 

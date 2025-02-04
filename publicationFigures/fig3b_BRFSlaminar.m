@@ -1,4 +1,4 @@
-%% fig3
+%% fig3b
 % The goal of this script is to average together data from each laminar
 % compartment to see if differential perceptual modulations occur
 
@@ -7,16 +7,16 @@ disp('start time')
 datetime
 close
 clearvars -except MUA_trials
-workingPC = 'office'; % options: 'home', 'office'
+workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig3_MUA';
+    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
     codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir    = 'D:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig3_MUA';
+    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir';
     officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 end
 cd(codeDir)
@@ -27,7 +27,6 @@ if ~exist('MUA_trials','var')
     load('MUA_trials.mat') % format is MUA_trials{penetration,1}{cond,1}{trial,flash}
     toc
 end
-
 
 
 %%
@@ -236,6 +235,7 @@ for penetration = 1:size(MUA_trials,1)
 end
 
 
+
 %% Organize into compartments, median and std across contacts + penetration
 useIdx = squeeze(~isnan(averageMUAMatrix_BRFSps(1,1,:))); 
 ps_S = reshape(averageMUAMatrix_BRFSps(:,1:5,useIdx), [2001, 135]);
@@ -262,6 +262,7 @@ original_threshold = 0.05;
 bonferroni_threshold = 3 * (original_threshold / num_bins);
 
 compartments = {'Supragranular', 'Granular', 'Infragranular'};
+
 ps_data_all = {ps_S, ps_G, ps_I};
 ns_data_all = {ns_S, ns_G, ns_I};
 ps_avg_all = {ps_S_avg, ps_G_avg, ps_I_avg};
@@ -274,7 +275,6 @@ t = tiledlayout(3, 1);
 %% Plot smoothed data with SEM
 for idx = 1:3
     nexttile
-    
     ps_data = ps_data_all{idx};
     ns_data = ns_data_all{idx};
     ps_avg = ps_avg_all{idx};
@@ -296,12 +296,8 @@ for idx = 1:3
     % Plot smoothed data
     plot(tm_full, ps_avg, 'color', [230/255 97/255 1/255], 'LineWidth', 1.5);
     plot(tm_full, ns_avg, 'color', [94/255 60/255 153/255], 'LineWidth', 1.5);
-    
-    % Add dark black lines for stimulus onset and offset times
-    xline(0, 'k', 'LineWidth', 2);
-    xline(800, 'k', 'LineWidth', 2);
-    xline(1600, 'k', 'LineWidth', 2);
-    
+
+
     % Plot asterisks for significant bins
     y_pos = max(max(ps_avg), max(ns_avg)) - 0.1 * range([ps_avg(:); ns_avg(:)]); 
     for i = 1:num_bins
@@ -325,11 +321,9 @@ for idx = 1:3
     ylabel('Percent Change');
     ylim([0 35]);
     title([compartments{idx}, ' Compartment']);
-    hold off
 end
 
 title(t, 'Laminar Compartmental MUA Responses');
-
 
 
 %% Save figure

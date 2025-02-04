@@ -1,4 +1,4 @@
-%% fig3
+%% fig3a
 % MUA grand average
 
 %% Setup
@@ -10,12 +10,12 @@ workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig3_MUA';
+    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
     codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir    = 'D:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\fig3_MUA';
+    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir';
     officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 end
 cd(codeDir)
@@ -268,32 +268,63 @@ ns_S_avgMinusSEM = nsAvg - nsSEM;
 
 
 %% Figure generation! 
-% tiledLayout plot
-close all
-tm_full = -200:1800; % 1801 total timepoints
-lamCom = figure;
-% set(gcf,"Position",[1000 123.6667 757.6667 1.1140e+03])
-plot(tm_full,psAvg,'color',[230/255 97/255 1/255],'LineWidth',1.5); hold on
-plot(tm_full,nsAvg,'color',[94/255 60/255 153/255],'LineWidth',1.5); 
-plot(tm_full,ps_S_avgPlusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-plot(tm_full,ps_S_avgMinusSEM,'color',[230/255 97/255 1/255],'LineWidth',1,'Linestyle',':'); 
-plot(tm_full,ns_S_avgPlusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-plot(tm_full,ns_S_avgMinusSEM,'color',[94/255 60/255 153/255],'LineWidth',1,'Linestyle',':'); 
-ylim([0 40])
-vline(0)
-vline(833)
-vline(1633)
-% xregion(850,1000)
-% xregion(1200,1600)
-title('Grand Average')
-% % set(gca,'xtick',[])
-xlabel('Time (ms)')
-ylabel('% change from baseline')
-box("off")
-legend('Preferred stimulus','Null stimulus')
+
+tm_full = (-200:1800)'; % 1801 total timepoints
+bin_width = 50; % ms
+time_bins = 0:bin_width:max(tm_full);
+num_bins = length(time_bins) - 1;
+original_threshold = 0.05;
+bonferroni_threshold = original_threshold / num_bins;
+
+f = figure;
+hold on;
+
+ps_avg_data = psAvg;
+ns_avg_data = nsAvg;
+ps_plus = ps_S_avgPlusSEM;
+ps_minus = ps_S_avgMinusSEM;
+ns_plus = ns_S_avgPlusSEM;
+ns_minus = ns_S_avgMinusSEM;
 
 
-%save fig
+
+% Plot the shaded region for dioptic (psAvg) in light blue
+fill([tm_full; flipud(tm_full)], [ps_plus; flipud(ps_minus)], [230/255 97/255 1/255], 'FaceAlpha', 0.4, 'EdgeColor', [0 0 0.5]); 
+hold on
+
+% Plot the shaded region for dichoptic (nsAvg) in light red
+fill([tm_full; flipud(tm_full)], [ns_plus; flipud(ns_minus)], [94/255 60/255 153/255], 'FaceAlpha', 0.4, 'EdgeColor', [0.5 0 0]); 
+
+% Plot main lines for dioptic and dichoptic
+plot(tm_full, ps_avg_data, 'Color', [230/255 97/255 1/255], 'LineWidth', 1.5); 
+plot(tm_full, ns_avg_data, 'Color', [94/255 60/255 153/255], 'LineWidth', 1.5); 
+
+% Add black lines for stimulus onset and offset times
+xline(0, 'k', 'LineWidth', 2);
+xline(800, 'k', 'LineWidth', 2);
+xline(1600, 'k', 'LineWidth', 2);
+
+% Bonferroni-adjusted significance testing
+y_pos = max(max(ps_avg_data), max(ns_avg_data)) - 0.1 * range([ps_avg_data(:); ns_avg_data(:)]); 
+for i = 1:num_bins
+    bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
+    ps_data_bin = ps_avg_data(bin_indices);
+    ns_data_bin = ns_avg_data(bin_indices);
+    [~, p] = ttest2(ps_data_bin, ns_data_bin);
+    if p < bonferroni_threshold
+        x_pos = mean(time_bins(i:i+1)); 
+        text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
+    end
+end
+
+xlabel('Time (ms)');
+ylabel('Percent Change');
+
+
+% Add global title
+title('Laminar Compartmental MUA Responses');
+
+%% save fig
 answer = questdlg('Would you like to save this figure?', ...
 	'Y', ...
 	'N');
@@ -302,8 +333,8 @@ switch answer
     case 'Yes'
        disp('alright, saving figure to plotdir')
         cd(plotDir)
-        saveas(lamCom, 'fig3a_BRFSgrandAvg.png');
-        saveas(lamCom, 'fig3a_BRFSgrandAvg.svg');
+        saveas(f, 'fig3a_BRFSgrandAvg.png');
+        saveas(f, 'fig3a_BRFSgrandAvg.svg');
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')
