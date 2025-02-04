@@ -21,7 +21,8 @@ cd(dataDir)
 allDataFiles = dir('**/*sortedData*.mat');
 officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
-for file = 20:size(officLamAssign,1)
+% % for file = 20:size(officLamAssign,1)
+for file = 2
     
     % load data
     cd(dataDir)
@@ -359,7 +360,7 @@ for file = 20:size(officLamAssign,1)
 
      %% Save figure
     cd(plotDir)
-    figName = strcat('laminarFig_',probeName(1:end-1),'.png');
+    figName = strcat('2025laminarFig_',probeName(1:end-1),'.png');
     saveas(gcf,figName)
 
     close
