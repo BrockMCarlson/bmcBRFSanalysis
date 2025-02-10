@@ -11,15 +11,18 @@ clear
 %% Setup
 
 % Directories
-codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
+% codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
+codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures'; 
 cd(codeDir)
-dataDir = 'D:\sortedData_240229';
-plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\laminarLabeling';
+% dataDir = 'D:\sortedData_240229';
+dataDir = 'S:\TrialTriggeredLFPandMUA';
+% plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\laminarLabeling';
+plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig1_laminarLabeling';
 
 %% Create dir loop
 cd(dataDir)
-allDataFiles = dir('**/*sortedData*.mat');
-officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+allDataFiles = dir('**/*trialTriggeredData*.mat');
+officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 % % for file = 20:size(officLamAssign,1)
 for file = 2
