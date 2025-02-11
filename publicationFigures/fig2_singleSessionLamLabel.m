@@ -29,7 +29,7 @@ for file = 2
     
     % load data
     cd(dataDir)
-    probeName = char(officLamAssign.SessionProbe(file,1));
+    probeName = char(officLamAssign.Session_probe_(file,1));
     fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
     load(fileToLoad)
     chStr = officLamAssign.ChtoUse(file,1);

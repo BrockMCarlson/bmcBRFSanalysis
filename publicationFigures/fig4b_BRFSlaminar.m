@@ -259,7 +259,7 @@ bin_width = 50; % ms
 time_bins = 0:bin_width:max(tm_full);
 num_bins = length(time_bins) - 1;
 original_threshold = 0.05;
-bonferroni_threshold = 3 * (original_threshold / num_bins);
+bonferroni_threshold = (original_threshold / (3*num_bins));
 
 compartments = {'Supragranular', 'Granular', 'Infragranular'};
 

@@ -272,9 +272,9 @@ ns_S_avgMinusSEM = nsAvg - nsSEM;
 tm_full = (-200:1800)'; % 1801 total timepoints
 bin_width = 50; % ms
 time_bins = 0:bin_width:max(tm_full);
-num_bins = length(time_bins) - 1;
+num_bins = length(time_bins)-1;
 original_threshold = 0.05;
-bonferroni_threshold = original_threshold / num_bins;
+bonferroni_threshold =  (original_threshold / (3*num_bins));
 
 f = figure;
 hold on;
@@ -312,8 +312,11 @@ for i = 1:num_bins
     ns_data_bin = ns_avg_data(bin_indices);
     [~, p] = ttest2(ps_data_bin, ns_data_bin);
     if p < bonferroni_threshold
+        test(i) = true;
         x_pos = mean(time_bins(i:i+1)); 
         text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
+    else
+        test(i) = false;
     end
 end
 
