@@ -326,7 +326,7 @@ time_bins = 0:bin_width:max(tm_full); % Divide time into 100 ms bins
 num_bins = length(time_bins) - 1; % Total number of bins for multiple comparisons correction
 
 % Calculate the Bonferroni-adjusted significance threshold
-original_threshold = 0.05; % Original p-value threshold for significance
+original_threshold = 0.1; % Original p-value threshold for significance
 bonferroni_threshold = original_threshold / num_bins; % Adjust for multiple comparisons
 
 % Set y_pos to a constant position above the highest point in the plot
@@ -336,15 +336,16 @@ for i = 1:num_bins
     % Find indices for this 100 ms bin
     bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
     
-    % Extract responses within this bin
-    ps_data = psAvg(bin_indices);
-    ns_data = nsAvg(bin_indices);
+    % Extract raw data for the current bin
+    ps_bin_data = mean(ps_reshaped(bin_indices, :), 1, 'omitnan'); % Mean across time bin
+    ns_bin_data = mean(ns_reshaped(bin_indices, :), 1, 'omitnan');
     
     % Run a t-test (can be replaced with ranksum if data is non-normal)
-    [~, p] = ttest2(ps_data, ns_data);
+    [~, p] = ttest2(ps_bin_data, ns_bin_data,'Tail','right');
+    pout(i) = p;
     
     % If the p-value is below the Bonferroni-adjusted threshold, plot an asterisk above the two lines
-    if p < bonferroni_threshold
+    if p < original_threshold
         % Get the x-position for the middle of the bin (this ensures a scalar)
         x_pos = mean(time_bins(i:i+1)); 
         
@@ -356,90 +357,90 @@ end
 
 
 
-%%
-% ----------------------
-% PLOT THE DIFFERENCE BETWEEN DICHOPTIC AND DIOPTIC
-% ----------------------
-
-% Compute the difference (dichoptic - dioptic)
-difference = nsAvg - psAvg;
-
-% Calculate the standard error of the mean (SEM) for the difference
-diffSEM = sqrt(psSEM.^2 + nsSEM.^2); % SEM propagation for difference
-
-% 1. Difference plot with Y-axis limits from -3 to 2, and labeling peak values
-figure;
-hold on;
-
-% Plot shaded region for ±SEM around the difference
-fill([tm_full; flipud(tm_full)], ...
-    [difference + diffSEM; flipud(difference - diffSEM)], ...
-    [0.8 0.8 0.8], 'EdgeColor', 'none'); % Gray shaded region
-
-% Plot the difference line
-plot(tm_full, difference, 'k', 'LineWidth', 1.5); % Black line for the difference
-
-% Set Y-axis limits explicitly from -3 to 2
-ylim([-3 2]);
-xlim([-200 1800])
-
-% Add labels to indicate peak values (max and min)
-y_max = max(difference); % Find the maximum value of the difference
-y_min = min(difference); % Find the minimum value of the difference
-
-% Add text to show max and min values at the right edge of the plot
-text(tm_full(end) + 50, y_max, sprintf('Peak = %.2f', y_max), 'FontSize', 12, 'VerticalAlignment', 'bottom');
-text(tm_full(end) + 50, y_min, sprintf('Trough = %.2f', y_min), 'FontSize', 12, 'VerticalAlignment', 'top');
-
-% 2. Plot cosmetics
-% Significance asterisks for 100ms bins (for the difference plot)
-bin_width = 50; % ms
-time_bins = 0:bin_width:max(tm_full); % Divide time into 100 ms bins
-significance_threshold = 0.05; % p-value threshold for significance
-
-% Set y_pos to a constant position above the highest point in the difference plot
-y_pos = max(difference) - 0.2 * range(difference); % Adjust y_pos slightly above max of the difference
-
-for i = 1:length(time_bins)-1
-    % Find indices for this 100 ms bin
-    bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
-    
-    % Extract the difference data within this bin
-    diff_data = difference(bin_indices);
-    
-    % Run a one-sample t-test (testing if the difference is significantly different from 0)
-    [~, p] = ttest(diff_data, 0); % t-test against 0
-    
-    % If the p-value is below the threshold, plot an asterisk above the difference line
-    if p < significance_threshold
-        % Get the x-position for the middle of the bin (this ensures a scalar)
-        x_pos = mean(time_bins(i:i+1)); 
-        
-        % Plot the asterisk at a consistent vertical position
-        text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
-    end
-end
-
-
-% Create bold black vertical lines at 0 ms and 1600 ms
-plot([0 0], ylim, 'k', 'LineWidth', 2); % Vertical line at 0 ms
-plot([1600 1600], ylim, 'k', 'LineWidth', 2); % Vertical line at 1600 ms
-
-% Create a bold black horizontal line at 0
-plot(xlim, [0 0], 'k', 'LineWidth', 2); % Horizontal line at 0
-
-% Set custom x-ticks and y-ticks for better readability
-set(gca, 'XTick', [0 800 1600], 'YTick', [-3 0 2]);
-
-% Set font size and make the axes bold
-set(gca, 'FontSize', 12, 'FontWeight', 'bold');
-xlabel('Time (ms)', 'FontSize', 14, 'FontWeight', 'bold');
-ylabel('Difference (Dichoptic - Dioptic)', 'FontSize', 14, 'FontWeight', 'bold');
-
-% Add title
-title('Difference Between Dichoptic and Dioptic Traces', 'FontSize', 16, 'FontWeight', 'bold');
-
-hold off;
+% % %%
+% % % ----------------------
+% % % PLOT THE DIFFERENCE BETWEEN DICHOPTIC AND DIOPTIC
+% % % ----------------------
+% % 
+% % % Compute the difference (dichoptic - dioptic)
+% % difference = nsAvg - psAvg;
+% % 
+% % % Calculate the standard error of the mean (SEM) for the difference
+% % diffSEM = sqrt(psSEM.^2 + nsSEM.^2); % SEM propagation for difference
+% % 
+% % % 1. Difference plot with Y-axis limits from -3 to 2, and labeling peak values
+% % figure;
+% % hold on;
+% % 
+% % % Plot shaded region for ±SEM around the difference
+% % fill([tm_full; flipud(tm_full)], ...
+% %     [difference + diffSEM; flipud(difference - diffSEM)], ...
+% %     [0.8 0.8 0.8], 'EdgeColor', 'none'); % Gray shaded region
+% % 
+% % % Plot the difference line
+% % plot(tm_full, difference, 'k', 'LineWidth', 1.5); % Black line for the difference
+% % 
+% % % Set Y-axis limits explicitly from -3 to 2
+% % ylim([-3 2]);
+% % xlim([-200 1800])
+% % 
+% % % Add labels to indicate peak values (max and min)
+% % y_max = max(difference); % Find the maximum value of the difference
+% % y_min = min(difference); % Find the minimum value of the difference
+% % 
+% % % Add text to show max and min values at the right edge of the plot
+% % text(tm_full(end) + 50, y_max, sprintf('Peak = %.2f', y_max), 'FontSize', 12, 'VerticalAlignment', 'bottom');
+% % text(tm_full(end) + 50, y_min, sprintf('Trough = %.2f', y_min), 'FontSize', 12, 'VerticalAlignment', 'top');
+% % 
+% % % 2. Plot cosmetics
+% % % Significance asterisks for 100ms bins (for the difference plot)
+% % bin_width = 50; % ms
+% % time_bins = 0:bin_width:max(tm_full); % Divide time into 100 ms bins
+% % significance_threshold = 0.05; % p-value threshold for significance
+% % 
+% % % Set y_pos to a constant position above the highest point in the difference plot
+% % y_pos = max(difference) - 0.2 * range(difference); % Adjust y_pos slightly above max of the difference
+% % 
+% % for i = 1:length(time_bins)-1
+% %     % Find indices for this 100 ms bin
+% %     bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
+% % 
+% %     % Extract the difference data within this bin
+% %     diff_data = difference(bin_indices);
+% % 
+% %     % Run a one-sample t-test (testing if the difference is significantly different from 0)
+% %     [~, p] = ttest(diff_data, 0); % t-test against 0
+% % 
+% %     % If the p-value is below the threshold, plot an asterisk above the difference line
+% %     if p < significance_threshold
+% %         % Get the x-position for the middle of the bin (this ensures a scalar)
+% %         x_pos = mean(time_bins(i:i+1)); 
+% % 
+% %         % Plot the asterisk at a consistent vertical position
+% %         text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
+% %     end
+% % end
+% % 
+% % 
+% % % Create bold black vertical lines at 0 ms and 1600 ms
+% % plot([0 0], ylim, 'k', 'LineWidth', 2); % Vertical line at 0 ms
+% % plot([1600 1600], ylim, 'k', 'LineWidth', 2); % Vertical line at 1600 ms
+% % 
+% % % Create a bold black horizontal line at 0
+% % plot(xlim, [0 0], 'k', 'LineWidth', 2); % Horizontal line at 0
+% % 
+% % % Set custom x-ticks and y-ticks for better readability
+% % set(gca, 'XTick', [0 800 1600], 'YTick', [-3 0 2]);
+% % 
+% % % Set font size and make the axes bold
+% % set(gca, 'FontSize', 12, 'FontWeight', 'bold');
+% % xlabel('Time (ms)', 'FontSize', 14, 'FontWeight', 'bold');
+% % ylabel('Difference (Dichoptic - Dioptic)', 'FontSize', 14, 'FontWeight', 'bold');
+% % 
+% % % Add title
+% % title('Difference Between Dichoptic and Dioptic Traces', 'FontSize', 16, 'FontWeight', 'bold');
+% % 
+% % hold off;
 
 
 %% save fig
@@ -459,11 +460,11 @@ switch answer
         figName_lamCom_svg = strcat('fig1d','_DiopticVsDichoptic_','.svg');
         saveas(lamCom, figName_lamCom_svg)
         
-        % Save difference figure
-        figName_difference_png = strcat('fig1d','_Difference_','.png');
-        saveas(gcf, figName_difference_png) % Assuming the difference plot is the current figure
-        figName_difference_svg = strcat('fig1d','_Difference_','.svg');
-        saveas(gcf, figName_difference_svg)
+        % % % Save difference figure
+        % % figName_difference_png = strcat('fig1d','_Difference_','.png');
+        % % saveas(gcf, figName_difference_png) % Assuming the difference plot is the current figure
+        % % figName_difference_svg = strcat('fig1d','_Difference_','.svg');
+        % % saveas(gcf, figName_difference_svg)
         
     case 'No'
         disp(plotDir)

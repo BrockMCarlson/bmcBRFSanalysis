@@ -308,15 +308,13 @@ xline(1600, 'k', 'LineWidth', 2);
 y_pos = max(max(ps_avg_data), max(ns_avg_data)) - 0.1 * range([ps_avg_data(:); ns_avg_data(:)]); 
 for i = 1:num_bins
     bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
-    ps_data_bin = ps_avg_data(bin_indices);
-    ns_data_bin = ns_avg_data(bin_indices);
-    [~, p] = ttest2(ps_data_bin, ns_data_bin);
+    % Extract raw data for the current bin
+    ps_bin_data = mean(ps_reshaped(bin_indices, :), 1, 'omitnan'); % Mean across time bin
+    ns_bin_data = mean(ns_reshaped(bin_indices, :), 1, 'omitnan');
+    [~, p] = ttest2(ps_bin_data, ns_bin_data);
     if p < bonferroni_threshold
-        test(i) = true;
         x_pos = mean(time_bins(i:i+1)); 
         text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
-    else
-        test(i) = false;
     end
 end
 

@@ -235,50 +235,35 @@ for penetration = 1:size(MUA_trials,1)
 end
 
 
-%% Organize into compartments, median and std across contacts+penetration
-% Reshape the data into laminar compartments
+%% Organize into compartments, median and std across contacts + penetration
 useIdx = squeeze(~isnan(averageMUAMatrix_BRFSps(1,1,:))); 
-ps = {
-    reshape(averageMUAMatrix_BRFSps(:,  1:5, useIdx), [2001, 135]), ... % Supragranular
-    reshape(averageMUAMatrix_BRFSps(:,  6:10, useIdx), [2001, 135]), ... % Granular
-    reshape(averageMUAMatrix_BRFSps(:, 11:15, useIdx), [2001, 135]) ... % Infragranular
-};
+ps_S = reshape(averageMUAMatrix_BRFSps(:,1:5,useIdx), [2001, 135]);
+ps_G = reshape(averageMUAMatrix_BRFSps(:,6:10,useIdx), [2001, 135]);
+ps_I = reshape(averageMUAMatrix_BRFSps(:,11:15,useIdx), [2001, 135]);
+ns_S = reshape(averageMUAMatrix_BRFSns(:,1:5,useIdx), [2001, 135]);
+ns_G = reshape(averageMUAMatrix_BRFSns(:,6:10,useIdx), [2001, 135]);
+ns_I = reshape(averageMUAMatrix_BRFSns(:,11:15,useIdx), [2001, 135]);
 
-ns = {
-    reshape(averageMUAMatrix_BRFSns(:,  1:5, useIdx), [2001, 135]), ... % Supragranular
-    reshape(averageMUAMatrix_BRFSns(:,  6:10, useIdx), [2001, 135]), ... % Granular
-    reshape(averageMUAMatrix_BRFSns(:, 11:15, useIdx), [2001, 135]) ... % Infragranular
-};
+% Smoothed averages for plotting
+ps_S_avg = smoothdata(mean(ps_S, 2, "omitmissing"), "gaussian", 50);
+ps_G_avg = smoothdata(mean(ps_G, 2, "omitmissing"), "gaussian", 50);
+ps_I_avg = smoothdata(mean(ps_I, 2, "omitmissing"), "gaussian", 50);
+ns_S_avg = smoothdata(mean(ns_S, 2, "omitmissing"), "gaussian", 50);
+ns_G_avg = smoothdata(mean(ns_G, 2, "omitmissing"), "gaussian", 50);
+ns_I_avg = smoothdata(mean(ns_I, 2, "omitmissing"), "gaussian", 50);
 
-% Average and SEM calculations for each compartment
-ps_avg = cell(1, 3);
-ns_avg = cell(1, 3);
-ps_sem = cell(1, 3);
-ns_sem = cell(1, 3);
-
-contactNum = size(ps{1}, 2);
-
-for i = 1:3  % Loop over compartments (1 = Supragranular, 2 = Granular, 3 = Infragranular)
-    ps_avg{i} = smoothdata(mean(ps{i}, 2, "omitmissing"), "gaussian", 50);
-    ns_avg{i} = smoothdata(mean(ns{i}, 2, "omitmissing"), "gaussian", 50);
-    ps_sem{i} = std(ps{i}, 0, 2, "omitmissing") / sqrt(contactNum);
-    ns_sem{i} = std(ns{i}, 0, 2, "omitmissing") / sqrt(contactNum);
-end
-
-% Calculate plus/minus SEM bands
-ps_avgPlusSEM = cellfun(@(avg, sem) avg + sem, ps_avg, ps_sem, 'UniformOutput', false);
-ps_avgMinusSEM = cellfun(@(avg, sem) avg - sem, ps_avg, ps_sem, 'UniformOutput', false);
-
-ns_avgPlusSEM = cellfun(@(avg, sem) avg + sem, ns_avg, ns_sem, 'UniformOutput', false);
-ns_avgMinusSEM = cellfun(@(avg, sem) avg - sem, ns_avg, ns_sem, 'UniformOutput', false);
+ps_data_all = {ps_S, ps_G, ps_I}; % This takes the raw (unsmoothed) data)
+ns_data_all = {ns_S, ns_G, ns_I};
+ps_avg_all = {ps_S_avg, ps_G_avg, ps_I_avg};
+ns_avg_all = {ns_S_avg, ns_G_avg, ns_I_avg};
 
 %% Calculate Bonferroni-Adjusted Significance for 100ms Bins for each compartment
-tm_full = (-200:1800)'; % 1801 total timepoints
+tm_full = -200:1800; % 1801 total timepoints
 bin_width = 50; % ms
 time_bins = 0:bin_width:max(tm_full);
 num_bins = length(time_bins) - 1;
 original_threshold = 0.05;
-bonferroni_threshold = original_threshold / num_bins;
+bonferroni_threshold = original_threshold / (3*num_bins);
 
 compartments = {'Supragranular', 'Granular', 'Infragranular'};
 
@@ -289,49 +274,59 @@ t = tiledlayout(3, 1);
 
 for idx = 1:3
     nexttile
-    ps_avg_data = ps_avg{idx};
-    ns_avg_data = ns_avg{idx};
-    ps_plus = ps_avgPlusSEM{idx};
-    ps_minus = ps_avgMinusSEM{idx};
-    ns_plus = ns_avgPlusSEM{idx};
-    ns_minus = ns_avgMinusSEM{idx};
+    ps_data = ps_data_all{idx};
+    ns_data = ns_data_all{idx};
+    ps_avg = ps_avg_all{idx};
+    ns_avg = ns_avg_all{idx};
     
 
+    % Calculate SEM for each time point
+    contactNum = size(ps_data, 2);
+    ps_sem = std(ps_data, 0, 2, 'omitnan') ./ sqrt(contactNum);
+    ns_sem = std(ns_data, 0, 2, 'omitnan') ./ sqrt(contactNum);
+    
+    % Plot shaded SEM regions
+    fill([tm_full, fliplr(tm_full)], ...
+         [ps_avg' + ps_sem', fliplr(ps_avg' - ps_sem')], ...
+         [0.2, 0.4, 1], 'FaceAlpha', 0.2, 'EdgeColor', 'none'); hold on;
+    fill([tm_full, fliplr(tm_full)], ...
+         [ns_avg' + ns_sem', fliplr(ns_avg' - ns_sem')], ...
+        [1, 0.4, 0.4], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
+    
+    % Plot smoothed data
+    plot(tm_full, ps_avg, 'color',  [0, 0, 1], 'LineWidth', 1.5);
+    plot(tm_full, ns_avg, 'color',  [1, 0, 0], 'LineWidth', 1.5);
 
-    % Plot the shaded region for dioptic (psAvg) in light blue
-    fill([tm_full; flipud(tm_full)], [ps_plus; flipud(ps_minus)], "b", 'FaceAlpha', 0.4, 'EdgeColor', [0 0 0.5]); 
-    hold on
-    
-    % Plot the shaded region for dichoptic (nsAvg) in light red
-    fill([tm_full; flipud(tm_full)], [ns_plus; flipud(ns_minus)], "r", 'FaceAlpha', 0.4, 'EdgeColor', [0.5 0 0]); 
-    
-    % Plot main lines for dioptic and dichoptic
-    plot(tm_full, ps_avg_data, 'Color', "b", 'LineWidth', 1.5); 
-    plot(tm_full, ns_avg_data, 'Color', "r", 'LineWidth', 1.5); 
-    
-    % Add black lines for stimulus onset and offset times
-    xline(0, 'k', 'LineWidth', 2);
-    xline(800, 'k', 'LineWidth', 2);
-    xline(1600, 'k', 'LineWidth', 2);
-    
-    % Bonferroni-adjusted significance testing
-    y_pos = max(max(ps_avg_data), max(ns_avg_data)) - 0.1 * range([ps_avg_data(:); ns_avg_data(:)]); 
+
+    % Plot asterisks for significant bins
+    y_pos = max(max(ps_avg), max(ns_avg)) - 0.1 * range([ps_avg(:); ns_avg(:)]); 
     for i = 1:num_bins
         bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
-        ps_data_bin = ps_avg_data(bin_indices);
-        ns_data_bin = ns_avg_data(bin_indices);
-        [~, p] = ttest2(ps_data_bin, ns_data_bin);
-        if p < bonferroni_threshold
-            x_pos = mean(time_bins(i:i+1)); 
+        
+        % Extract raw data for the current bin
+        ps_bin_data = mean(ps_data(bin_indices, :), 1, 'omitnan'); % Mean across time bin
+        ns_bin_data = mean(ns_data(bin_indices, :), 1, 'omitnan');
+        
+        % Perform t-test across electrodes
+        [~, p] = ttest2(ps_bin_data, ns_bin_data);
+        
+        % Annotate significance if p < Bonferroni threshold
+        if p < original_threshold
+            x_pos = mean(time_bins(i:i+1));
             text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
         end
     end
     
     xlabel('Time (ms)');
     ylabel('Percent Change');
-    % ylim([0 35]);
+    ylim([0 40]);
     title([compartments{idx}, ' Compartment']);
+    % Add black lines for stimulus onset and offset times
+    xline(0, 'k', 'LineWidth', 2);
+    xline(800, 'k', 'LineWidth', 2);
+    xline(1600, 'k', 'LineWidth', 2);
 end
+
 
 % Add global title
 title(t, 'Laminar Compartmental MUA Responses');

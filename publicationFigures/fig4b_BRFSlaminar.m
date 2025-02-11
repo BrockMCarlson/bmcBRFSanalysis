@@ -253,6 +253,10 @@ ns_S_avg = smoothdata(mean(ns_S, 2, "omitmissing"), "gaussian", 50);
 ns_G_avg = smoothdata(mean(ns_G, 2, "omitmissing"), "gaussian", 50);
 ns_I_avg = smoothdata(mean(ns_I, 2, "omitmissing"), "gaussian", 50);
 
+ps_data_all = {ps_S, ps_G, ps_I}; % This takes the raw (unsmoothed) data)
+ns_data_all = {ns_S, ns_G, ns_I};
+ps_avg_all = {ps_S_avg, ps_G_avg, ps_I_avg};
+ns_avg_all = {ns_S_avg, ns_G_avg, ns_I_avg};
 %% Statistical Analysis for Significance Testing
 tm_full = -200:1800;
 bin_width = 50; % ms
@@ -262,11 +266,6 @@ original_threshold = 0.05;
 bonferroni_threshold = (original_threshold / (3*num_bins));
 
 compartments = {'Supragranular', 'Granular', 'Infragranular'};
-
-ps_data_all = {ps_S, ps_G, ps_I};
-ns_data_all = {ns_S, ns_G, ns_I};
-ps_avg_all = {ps_S_avg, ps_G_avg, ps_I_avg};
-ns_avg_all = {ns_S_avg, ns_G_avg, ns_I_avg};
 
 lamCom = figure;
 set(gcf, "Position", [1000 123.6667 757.6667 1.1140e+03]);
@@ -321,6 +320,10 @@ for idx = 1:3
     ylabel('Percent Change');
     ylim([0 35]);
     title([compartments{idx}, ' Compartment']);
+    % Add black lines for stimulus onset and offset times
+    xline(0, 'k', 'LineWidth', 2);
+    xline(800, 'k', 'LineWidth', 2);
+    xline(1600, 'k', 'LineWidth', 2);
 end
 
 title(t, 'Laminar Compartmental MUA Responses');

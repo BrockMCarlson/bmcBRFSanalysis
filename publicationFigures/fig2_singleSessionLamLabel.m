@@ -9,20 +9,28 @@
 clear
 
 %% Setup
-
-% Directories
-% codeDir = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis'; 
-codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures'; 
+disp('start time')
+datetime
+close
+clearvars -except MUA_trials
+workingPC = 'home'; % options: 'home', 'office'
+if strcmp(workingPC,'home')
+    codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
+    dataDir = 'S:\TrialTriggeredLFPandMUA';
+    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir';
+    officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+elseif strcmp(workingPC,'office')
+    codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
+    dataDir    = 'D:\TrialTriggeredLFPandMUA';
+    plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir';
+    officLamAssign = importLaminarAssignments("C:\Users\neuropixel\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+end
 cd(codeDir)
-% dataDir = 'D:\sortedData_240229';
-dataDir = 'S:\TrialTriggeredLFPandMUA';
-% plotDir = 'C:\Users\neuropixel\Box\Manuscripts\Maier\plotDir\laminarLabeling';
-plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir\fig1_laminarLabeling';
+cd(dataDir)
 
 %% Create dir loop
 cd(dataDir)
 allDataFiles = dir('**/*trialTriggeredData*.mat');
-officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 
 % % for file = 20:size(officLamAssign,1)
 for file = 2
@@ -30,9 +38,9 @@ for file = 2
     % load data
     cd(dataDir)
     probeName = char(officLamAssign.Session_probe_(file,1));
-    fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
+    fileToLoad = strcat('trialTriggeredData_',probeName(1:19),'.mat');
     load(fileToLoad)
-    chStr = officLamAssign.ChtoUse(file,1);
+    chStr = string(officLamAssign.ChToUse(file,1));
     if strcmp(chStr,"1:32")
         yAxisChannels = 1:32;
         yAxisLim =      [1 32];
@@ -46,7 +54,7 @@ for file = 2
     
     
     % Variables
-    sdftm = -200:1:1000;
+    sdftm = -200:1:1800;
     timeLength = length(sdftm);
     xAxisTime = sdftm;
     xAxisLim = [-100 400];
@@ -106,18 +114,14 @@ for file = 2
     ax2 = subplot(1,6,2);
     
     counter = 0;
-    clear csd_allLFPdata
-    % for cond = 1:20
-    for cond = 1:2
-        trlLength = size(IDX(cond).CSD_bb,1);
-        for trl = 1:trlLength
-            counter = counter + 1;
-            csd_allLFPdata(:,:,counter) = IDX(cond).CSD_bb{trl,1}(:,yAxisChannels);
-        end
+    clear csd
+    % calculate CSD from LFP
+    for trlNum = 1:size(lfpAllData,3)
+        csd(:,:,trlNum) = calcCSD_classic(lfpAllData(:,:,trlNum));
     end
 
     
-    csdRespmedian = median(csd_allLFPdata,3)';
+    csdRespmedian = median(csd,3)';
     csd_baselinemedian = median(csdRespmedian(:,baselineTimeIndex),2);
     csd_blSubAvg = csdRespmedian - csd_baselinemedian;
 
@@ -125,7 +129,7 @@ for file = 2
 
     
     imagesc(xAxisTime,yAxisChannels,CSDf)
-    climit = max(abs(get(gca,'CLim'))*.8);
+    climit = max(abs(get(gca,'CLim'))*.5);
     xlabel('Time (ms)');
     ylabel('contact number'); 
     set(ax2,'CLim',[-climit climit],'ytick',yAxisChannels); 
@@ -229,44 +233,38 @@ for file = 2
     title('PSD')
 
     %% Gamma x Beta Gamma Cross
-    ax4 = subplot(1,6,4);
-    title('Alpha x Gamma cross')
-    
-    % Get the Gamma x Beta cross
-    % Beta is 12 - 20Hz (for our purposes)
-    % Gamma is 30-59,61:100
-    beta_index = (freq_vector >= 4) & (freq_vector <= 12);
-    gamma_index = (freq_vector > 30) & (freq_vector < 100);
-    % % % gamma_index(idx60hz) = false;
-            
-    for j = 1:32
-        avgBeta(j,1) = mean(power_norm(beta_index,j));
-        avgGamma(j,1) = mean(power_norm(gamma_index,j));
-    end
-    
-    plot(avgBeta)
-    hold on
-    % plot(fliplr(avgGamma))
-    plot(avgGamma)
-    set(ax4, 'XDir','reverse')
-    view([90 -90])
-    xlim([1 32])
-    xticks(1:32)
-    xticklabels(yAxisChannels)
-    ylabel('Relative Power'); 
-    % set(ax4,'xtick',yAxisChannels,'Box','off'); 
-    legend('4-12 Hz','30-100 Hz','Location','northeast')
+    % % ax4 = subplot(1,6,4);
+    % % title('Alpha x Gamma cross')
+    % % 
+    % % % Get the Gamma x Beta cross
+    % % % Beta is 12 - 20Hz (for our purposes)
+    % % % Gamma is 30-59,61:100
+    % % beta_index = (freq_vector >= 4) & (freq_vector <= 12);
+    % % gamma_index = (freq_vector > 30) & (freq_vector < 100);
+    % % % % % gamma_index(idx60hz) = false;
+    % % 
+    % % for j = 1:32
+    % %     avgBeta(j,1) = mean(power_norm(beta_index,j));
+    % %     avgGamma(j,1) = mean(power_norm(gamma_index,j));
+    % % end
+    % % 
+    % % plot(avgBeta)
+    % % hold on
+    % % % plot(fliplr(avgGamma))
+    % % plot(avgGamma)
+    % % set(ax4, 'XDir','reverse')
+    % % view([90 -90])
+    % % xlim([1 32])
+    % % xticks(1:32)
+    % % xticklabels(yAxisChannels)
+    % % ylabel('Relative Power'); 
+    % % % set(ax4,'xtick',yAxisChannels,'Box','off'); 
+    % % legend('4-12 Hz','30-100 Hz','Location','northeast')
     
     
   %% Coherence
     ax4 = subplot(1,6,5);
     title('Dioptic coherence')
-
-    if strcmp(chStr,"1:32")
-        ch = 1:32;
-    elseif strcmp(chStr,"33:64")
-        ch = 33:64;
-    end
 
     % Parameters for mscohere
     fs = 1000;  % Sampling frequency in Hz
@@ -287,11 +285,11 @@ for file = 2
     for conditionNumber = 1:2
         for trialNumber = 1:size(IDX(conditionNumber).LFP_bb, 1)
             count = count + 1;
-            for channel1 = ch
-                for channel2 = ch(1):channel1
+            for channel1 = yAxisChannels
+                for channel2 = yAxisChannels(1):channel1
                     % Extract the LFP_bb data for the chosen channels and trial
-                    lfpGammaData1 = IDX(conditionNumber).LFP_bb{trialNumber, 2}(tm, channel1);
-                    lfpGammaData2 = IDX(conditionNumber).LFP_bb{trialNumber, 2}(tm, channel2);
+                    lfpGammaData1 = IDX(conditionNumber).LFP_bb{trialNumber, 1}(tm, channel1);
+                    lfpGammaData2 = IDX(conditionNumber).LFP_bb{trialNumber, 1}(tm, channel2);
                     %baseline subtract
                     bl1 = median(lfpGammaData1(1:200));
                     lfp_blsub_1 = lfpGammaData1 - bl1;
@@ -363,10 +361,12 @@ for file = 2
 
      %% Save figure
     cd(plotDir)
-    figName = strcat('2025laminarFig_',probeName(1:end-1),'.png');
-    saveas(gcf,figName)
+    figName_p = strcat('2025laminarFig_',probeName(1:end-1),'.png');
+    saveas(gcf,figName_p)
+    figName_s = strcat('2025laminarFig_',probeName(1:end-1),'.svg');
+    saveas(gcf,figName_s)
 
-    close
+
 
 end
 

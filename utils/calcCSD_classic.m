@@ -7,7 +7,7 @@ totchan = size(DAT,2);
 % electrode contact spacing in mm:
 d = .1; % This is the electrode spacing
 
-%padarray would also work here for simplicity.
+%padarray for Vaknin (1988) approximation.
 EVPvak = padarray(DAT,[0 1],NaN,'replicate');
 calcCSDonThis = permute(EVPvak,[2 1]); %dim chould be chan x ms
  
