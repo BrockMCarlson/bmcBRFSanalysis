@@ -259,11 +259,12 @@ ns_avg_all = {ns_S_avg, ns_G_avg, ns_I_avg};
 
 %% Calculate Bonferroni-Adjusted Significance for 100ms Bins for each compartment
 tm_full = -200:1800; % 1801 total timepoints
-bin_width = 50; % ms
-time_bins = 0:bin_width:max(tm_full);
-num_bins = length(time_bins) - 1;
-original_threshold = 0.05;
-bonferroni_threshold = original_threshold / (3*num_bins);
+bin_width = 100; % ms
+time_bins = 0:bin_width:1600; % Divide time into 100 ms bins
+num_bins = length(time_bins) - 1; % Total number of bins for multiple comparisons correction
+% Calculate the Bonferroni-adjusted significance threshold
+original_threshold = 0.05; % Original p-value threshold for significance
+bonferroni_threshold = original_threshold / num_bins; % Adjust for multiple comparisons
 
 compartments = {'Supragranular', 'Granular', 'Infragranular'};
 
@@ -299,7 +300,7 @@ for idx = 1:3
 
 
     % Plot asterisks for significant bins
-    y_pos = max(max(ps_avg), max(ns_avg)) - 0.1 * range([ps_avg(:); ns_avg(:)]); 
+    y_pos = max(max(ps_avg), max(ns_avg)) - 0.25 * range([ps_avg(:); ns_avg(:)]); 
     for i = 1:num_bins
         bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
         
@@ -308,10 +309,10 @@ for idx = 1:3
         ns_bin_data = mean(ns_data(bin_indices, :), 1, 'omitnan');
         
         % Perform t-test across electrodes
-        [~, p] = ttest2(ps_bin_data, ns_bin_data);
+        [~, p] = ttest(ps_bin_data, ns_bin_data);
         
         % Annotate significance if p < Bonferroni threshold
-        if p < original_threshold
+        if p < bonferroni_threshold
             x_pos = mean(time_bins(i:i+1));
             text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
         end

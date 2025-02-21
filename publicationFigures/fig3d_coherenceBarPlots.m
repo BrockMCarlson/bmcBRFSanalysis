@@ -1,4 +1,5 @@
 %% Plot ANOVA results as grouped bar plots and save outputs to plotDir
+% to be run aftyer fig3abc_coherence.m
 
 % Prepare data for bar plot
 x = {'Cross-Dioptic'; 'Within-Dioptic'}; % Each observation has its own row

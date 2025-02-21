@@ -1,5 +1,7 @@
-%% fig3a
-% MUA grand average
+%% fig1d_DiopDichopAvg.m
+% MUA grand average analysis with dioptic vs. dichoptic comparison
+% Using a paired one-tailed test (dioptic > dichoptic) in 50 ms bins
+% plus one a priori test in the final 500 ms of stimulation (no multiple-comparison correction).
 
 %% Setup
 disp('start time')
@@ -27,17 +29,17 @@ if ~exist('MUA_trials','var')
     toc
 end
 
-
-
-%%
+%% Preallocate
 averageMUAMatrix_BRFSps = nan(2001,15,31);
-averageLFPMatrix_BRFSns = nan(2001,15,31);
+averageMUAMatrix_BRFSns = nan(2001,15,31);
+
+%% Loop through each penetration
 for penetration = 1:size(MUA_trials,1)
     
     probeName = char(officLamAssign.Session_probe_(penetration,1));
     fileToLoad = strcat('sortedData_',probeName(1:19),'.mat');
 
-    granBtm = officLamAssign.stFold4c(penetration); % channel corresponding to the bottom of layer 4c
+    granBtm = officLamAssign.stFold4c(penetration); % channel corresponding to bottom of layer 4c
     if isnan(granBtm)
         warning(strcat('no sink found on _',fileToLoad))
         continue
@@ -61,7 +63,7 @@ for penetration = 1:size(MUA_trials,1)
         end
     end
 
-    %% Obtain Monocular preference
+    %% Obtain Monocular preference via ANOVA (for potential classification)
     % bl Sub at average level (better for plotting)
     clear array_ofMonoc1 array_ofMonoc2 array_ofMonoc3 array_ofMonoc4
     
@@ -190,155 +192,185 @@ for penetration = 1:size(MUA_trials,1)
         % % % end
 
     end
-   
-
-   
-
-    %% MUA in percent change
-    % BRFS pref vs null
-    % Get the number of trials for the chosen condition
+    %% MUA in percent change for the BRFS conditions
+    % Condition 1 (index=1): 'ps' (pref-stim?)
+    % Condition 3 (index=3): 'ns' (null-stim?), i.e., dichoptic condition
     for i = 1:length(v1Ch)
         if ~tuned(i,1)
             continue
         end
-        numTrials_ps = size(MUA_trials{penetration,1}{prefCondOnFlash(i,1),1},1);
+        % Dioptic/Pref
+        numTrials_ps = size(MUA_trials{penetration,1}{1,1},1);
         MUAflashOut_ps = nan(2001,numTrials_ps);
         for trl = 1:numTrials_ps
-            MUAflashOut_ps(:,trl) = MUA_trials{penetration,1}{prefCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
+            MUAflashOut_ps(:,trl) = MUA_trials{penetration,1}{1,1}{trl,1}(:,v1Ch(i));
         end
-        
-        % median across trials
-        ps_avg = median(MUAflashOut_ps,2,"omitmissing"); % input is (tm,trl)    
-        % Calculate as Percent Change
-        %              X(t) - avgBl
-        % %Ch = 100 * -------------
-        %                 avgBl
+        ps_avg = median(MUAflashOut_ps,2,"omitmissing");    
         psBl = median(ps_avg(1:200,:));
-        if psBl == 0
-            psBl = .1;
-        end
+        if psBl == 0, psBl = 0.1; end
         ps_PercentC = 100*((ps_avg-psBl)./psBl);
         averageMUAMatrix_BRFSps(:,i,penetration) = ps_PercentC;
 
-    
-        % Get the number of trials for the chosen condition
-        numTrials_ns = size(MUA_trials{penetration,1}{nullCondOnFlash(i,1) ,1},1);
+        % Dichoptic/Null
+        numTrials_ns = size(MUA_trials{penetration,1}{3,1},1);
         MUAflashOut_ns = nan(2001,numTrials_ns);
         for trl = 1:numTrials_ns
-            MUAflashOut_ns(:,trl) = MUA_trials{penetration,1}{nullCondOnFlash(i,1),1}{trl,1}(:,v1Ch(i));
+            MUAflashOut_ns(:,trl) = MUA_trials{penetration,1}{3,1}{trl,1}(:,v1Ch(i));
         end
-        % Average across trials and save output
-        ns_avg = median(MUAflashOut_ns,2,"omitmissing"); % input is (tm,trl)    
+        ns_avg = median(MUAflashOut_ns,2,"omitmissing");
         nsBl = median(ns_avg(1:200,:));
-        if nsBl == 0
-            nsBl = .1;
-        end
+        if nsBl == 0, nsBl = 0.1; end
         ns_PercentC = 100*((ns_avg-nsBl)./nsBl);  
-        averageMUAMatrix_BRFSns(:,i,penetration) = ns_PercentC; % Average across trl. averageMUAMatrix is (tm x ch x x penetration)
+        averageMUAMatrix_BRFSns(:,i,penetration) = ns_PercentC;
     end
     disp(strcat('Done with file number: ',string(penetration)))
 end
 
-
-%% Organize into compartments, median and std across contacts+penetration
-% reshape
-useIdx = squeeze(~isnan(averageMUAMatrix_BRFSps(1,1,:))); 
+%% Reshape across penetrations (405 contacts total if all included)
+useIdx = squeeze(~isnan(averageMUAMatrix_BRFSps(1,1,:)));
 ps_reshaped = reshape(averageMUAMatrix_BRFSps(:,:,useIdx),[2001,405]);
 ns_reshaped = reshape(averageMUAMatrix_BRFSns(:,:,useIdx),[2001,405]);
 
-% Average across penetrations
+%% Mean & SEM across all 405 "units" (or channels)
 psAvg = smoothdata(mean(ps_reshaped,2,"omitmissing"),"gaussian",20);
 nsAvg = smoothdata(mean(ns_reshaped,2,"omitmissing"),"gaussian",20);
 
-
-
-% Calculate variance (Using SEM) SEM = std(data)/sqrt(length(data)); 
 contactNum = size(ps_reshaped,2);
-psSEM = std(ps_reshaped,0,2,"omitmissing")./sqrt(contactNum); 
-nsSEM = std(ns_reshaped,0,2,"omitmissing")./sqrt(contactNum); 
+psSEM = std(ps_reshaped,0,2,"omitmissing")./sqrt(contactNum);
+nsSEM = std(ns_reshaped,0,2,"omitmissing")./sqrt(contactNum);
 
-% Mean +/- SEM
-ps_S_avgPlusSEM = psAvg + psSEM; %pref stim -- median plus sem 1 
-ps_S_avgMinusSEM = psAvg - psSEM; %pref stim -- median minus sem 1 
+ps_S_avgPlusSEM  = psAvg + psSEM;
+ps_S_avgMinusSEM = psAvg - psSEM;
+ns_S_avgPlusSEM  = nsAvg + nsSEM;
+ns_S_avgMinusSEM = nsAvg - nsSEM;
 
+% Time vector
+tm_full = (-200:1800)';  % Adjust if needed
 
-ns_S_avgPlusSEM = nsAvg + nsSEM; 
-ns_S_avgMinusSEM = nsAvg - nsSEM;  
+%% Figure generation
+lamCom = figure('Name','fig1d_DiopDichopAvg','Color','w');
+hold on; box off;
 
+% Shaded region for dioptic
+fill([tm_full; flipud(tm_full)], ...
+    [ps_S_avgPlusSEM; flipud(ps_S_avgMinusSEM)], ...
+    [0.2, 0.4, 1], 'FaceAlpha', 0.4, 'EdgeColor', [0 0 0.5]);
 
+% Shaded region for dichoptic
+fill([tm_full; flipud(tm_full)], ...
+    [ns_S_avgPlusSEM; flipud(ns_S_avgMinusSEM)], ...
+    [1, 0.4, 0.4], 'FaceAlpha', 0.4, 'EdgeColor', [0.5 0 0]);
 
-%% Figure generation! 
+% Mean lines
+plot(tm_full, psAvg, 'color', [0, 0, 1], 'LineWidth', 1.5); 
+plot(tm_full, nsAvg, 'color', [1, 0, 0], 'LineWidth', 1.5);
 
-tm_full = (-200:1800)'; % 1801 total timepoints
-bin_width = 50; % ms
-time_bins = 0:bin_width:max(tm_full);
-num_bins = length(time_bins)-1;
-original_threshold = 0.05;
-bonferroni_threshold =  (original_threshold / (num_bins));
+ylim([0 45])
+xlim([-200 1800])
+plot([0 0], ylim, 'k', 'LineWidth', 2);
+plot([1633 1633], ylim, 'k', 'LineWidth', 2);
+plot(xlim, [0 0], 'k', 'LineWidth', 2);
 
-f = figure;
-hold on;
+title('Grand Average: Dioptic vs. Dichoptic')
+xlabel('Time (ms)', 'FontSize', 14, 'FontWeight', 'bold')
+ylabel('% change from baseline', 'FontSize', 14, 'FontWeight', 'bold')
+legend({'Dioptic','Dichoptic'}, 'Location','best')
+set(gca, 'FontSize', 12, 'FontWeight', 'bold');
 
-ps_avg_data = psAvg;
-ns_avg_data = nsAvg;
-ps_plus = ps_S_avgPlusSEM;
-ps_minus = ps_S_avgMinusSEM;
-ns_plus = ns_S_avgPlusSEM;
-ns_minus = ns_S_avgMinusSEM;
+%% --------------- NEW SECTION FOR SIGNIFICANCE (PAIRED, ONE-TAILED) ---------------
 
+% 1) Bin-based test from 0 to 1600 ms in 50 ms intervals, Bonferroni corrected
+bin_width = 100; 
+time_bins = 0:bin_width:1600; % Bins from 0 to 1600 in steps of 50
+num_bins  = length(time_bins) - 1;
 
+alpha_original = 0.05;
+alpha_corrected = alpha_original / num_bins;
 
-% Plot the shaded region for dioptic (psAvg) in light blue
-fill([tm_full; flipud(tm_full)], [ps_plus; flipud(ps_minus)], [230/255 97/255 1/255], 'FaceAlpha', 0.4, 'EdgeColor', [0 0 0.5]); 
-hold on
+pvals = nan(num_bins,1);
+sigBins = false(num_bins,1);
 
-% Plot the shaded region for dichoptic (nsAvg) in light red
-fill([tm_full; flipud(tm_full)], [ns_plus; flipud(ns_minus)], [94/255 60/255 153/255], 'FaceAlpha', 0.4, 'EdgeColor', [0.5 0 0]); 
+% For plotting significance asterisks, pick a Y position above the max of the dioptic trace
+maxVal_all = max([psAvg; nsAvg]);
+y_pos = maxVal_all - 5;  % a bit below the highest average
 
-% Plot main lines for dioptic and dichoptic
-plot(tm_full, ps_avg_data, 'Color', [230/255 97/255 1/255], 'LineWidth', 1.5); 
-plot(tm_full, ns_avg_data, 'Color', [94/255 60/255 153/255], 'LineWidth', 1.5); 
-
-% Add black lines for stimulus onset and offset times
-xline(0, 'k', 'LineWidth', 2);
-xline(800, 'k', 'LineWidth', 2);
-xline(1600, 'k', 'LineWidth', 2);
-
-% Bonferroni-adjusted significance testing
-y_pos = max(max(ps_avg_data), max(ns_avg_data)) - 0.1 * range([ps_avg_data(:); ns_avg_data(:)]); 
 for i = 1:num_bins
-    bin_indices = find(tm_full >= time_bins(i) & tm_full < time_bins(i+1));
-    % Extract raw data for the current bin
-    ps_bin_data = mean(ps_reshaped(bin_indices, :), 1, 'omitnan'); % Mean across time bin
-    ns_bin_data = mean(ns_reshaped(bin_indices, :), 1, 'omitnan');
-    [~, p] = ttest2(ps_bin_data, ns_bin_data);
-    if p < bonferroni_threshold
-        x_pos = mean(time_bins(i:i+1)); 
-        text(x_pos, y_pos, '*', 'FontSize', 14, 'Color', 'k', 'HorizontalAlignment', 'center');
+    % Indices for this 50 ms window
+    bin_idx = tm_full >= time_bins(i) & tm_full < time_bins(i+1);
+    
+    % Average within this bin for each neuron
+    diop_bin   = mean(ps_reshaped(bin_idx, :), 1, 'omitnan');  % (1 x 405)
+    dichop_bin = mean(ns_reshaped(bin_idx, :), 1, 'omitnan');
+    
+    % Paired one-tailed test, dioptic > dichoptic
+    [~, p] = ttest(diop_bin, dichop_bin, 'Tail','right');
+    pvals(i) = p;
+    
+    if p < alpha_corrected
+        sigBins(i) = true;
+        % Mark significance at the bin's midpoint
+        x_pos = mean(time_bins(i:i+1));
+        text(x_pos, y_pos, '*', 'FontSize',14, 'HorizontalAlignment','center');
     end
 end
 
-xlabel('Time (ms)');
-ylabel('Percent Change');
-
-
-% Add global title
-title('Laminar Compartmental MUA Responses');
-
-%% save fig
-answer = questdlg('Would you like to save this figure?', ...
-	'Y', ...
-	'N');
-% Handle response
+%% Save figure
+answer = questdlg('Would you like to save these figures?', ...
+    'Save Figures', 'Yes', 'No', 'No');
 switch answer
     case 'Yes'
-       disp('alright, saving figure to plotdir')
+        disp('Saving figures to plotDir...')
         cd(plotDir)
-        saveas(f, 'fig3a_BRFSgrandAvg.png');
-        saveas(f, 'fig3a_BRFSgrandAvg.svg');
+        figName_lamCom_png = strcat('fig1d','_DiopticVsDichoptic_','.png');
+        saveas(lamCom, figName_lamCom_png)
+        figName_lamCom_svg = strcat('fig1d','_DiopticVsDichoptic_','.svg');
+        saveas(lamCom, figName_lamCom_svg)
     case 'No'
-        cd(plotDir)
-        disp('please see plotdir for last save')
+        disp(plotDir)
+        disp(codeDir)
+        disp('Please see plotDir for last saved versions if needed.')
 end
 
 
+%% 2) A priori single test (final 500 ms)
+
+startWindow = 1200;
+endWindow   = 1800;
+win_idx = tm_full >= startWindow & tm_full < endWindow;
+
+diop_window   = mean(ps_reshaped(win_idx, :), 1, 'omitnan');
+dichop_window = mean(ns_reshaped(win_idx, :), 1, 'omitnan');
+
+% One-tailed paired test for dioptic > dichoptic
+[H, p_500ms, CI, stats_500ms]  = ttest(diop_window, dichop_window, 'Tail','right');
+
+fprintf('\n==== A Priori 500 ms Window Test ====\n');
+fprintf('Paired one-tailed t-test (dioptic > dichoptic) in last 500 ms:\n');
+fprintf('p = %.5f (no multiple-comparison correction applied)\n\n', p_500ms);
+
+
+% Gather your data
+cond1Mean = mean(diop_window);      % dioptic
+cond1SD   = std(diop_window);
+cond2Mean = mean(dichop_window);    % dichoptic
+cond2SD   = std(dichop_window);
+
+meanDiff  = cond1Mean - cond2Mean;
+n         = length(diop_window);
+SE        = std(diop_window - dichop_window)/sqrt(n);
+
+tVal      = stats_500ms.tstat;
+dfVal     = stats_500ms.df;
+pVal      = p_500ms;
+
+% --- CREATE A TABLE ---
+contrastName = "Dioptic vs Dichoptic";
+resultsTable = table(contrastName, ...
+                     cond1Mean, cond1SD, ...
+                     cond2Mean, cond2SD, ...
+                     meanDiff, SE, tVal, dfVal, pVal, ...
+    'VariableNames', ...
+    {'Contrast','MeanCond1','SDCond1','MeanCond2','SDCond2','MeanDiff','SE','tVal','df','pValue'});
+
+% --- DISPLAY TABLE IN COMMAND WINDOW ---
+disp(resultsTable);

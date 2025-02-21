@@ -317,7 +317,8 @@ IxI_2 = diff_2(11:15,11:15); % half block
 holder_cross_2(:,1) = reshape(GxS_2,[25,1]);
 holder_cross_2(:,2) = reshape(IxS_2,[25,1]);
 holder_cross_2(:,3) = reshape(IxG_2,[25,1]);
-aov_cross_2 = anova1(holder_cross_2,[],"off");
+[aov_cross_2,tbl,stats] = anova1(holder_cross_2,[],"off");
+disp(tbl)
 disp(aov_cross_2)
 
 %turn 0 to NaN
@@ -328,7 +329,7 @@ holder_same_2(:,1) = reshape(SxS_2,[25,1]);
 holder_same_2(:,2) = reshape(GxG_2,[25,1]);
 holder_same_2(:,3) = reshape(IxI_2,[25,1]);
 aov_same_2 = anova1(holder_same_2,[],"off");
-disp(aov_same_2)
+% disp(aov_same_2)
 
 
 %% Plotting the results of aov_cross_1 as bar plots

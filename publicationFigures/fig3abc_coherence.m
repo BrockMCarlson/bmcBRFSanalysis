@@ -314,22 +314,22 @@ IxI_1 = diff_1(11:15,11:15); % half block
 % aov = anova(y) performs a one-way ANOVA and returns the anova object...
 % aov for the response data in the matrix y. Each column of y is treated...
 % as a different factor value.
-% construct y for ANOVA
+% construct y for ANOVA fro cross- compartment comparisons
 holder_cross_1(:,1) = reshape(GxS_1,[25,1]);
 holder_cross_1(:,2) = reshape(IxS_1,[25,1]);
 holder_cross_1(:,3) = reshape(IxG_1,[25,1]);
-aov_cross_1 = anova1(holder_cross_1,[],"off");
+[aov_cross_1,tbl,stats] = anova1(holder_cross_1,[],"off");
 disp(aov_cross_1)
 
-%turn 0 to NaN
+%ANOVA on within-compartment comparisons
 SxS_1(SxS_1 == 0) = NaN;
 GxG_1(GxG_1 == 0) = NaN;
 IxI_1(IxI_1 == 0) = NaN;
 holder_same_1(:,1) = reshape(SxS_1,[25,1]);
 holder_same_1(:,2) = reshape(GxG_1,[25,1]);
 holder_same_1(:,3) = reshape(IxI_1,[25,1]);
-aov_same_1 = anova1(holder_same_1,[],"off");
-disp(aov_same_1)
+[aov_same_1]= anova1(holder_same_1,[],"off");
+%  disp(aov_same_1)
 
 %% Plotting the results of aov_cross_1 as bar plots
 

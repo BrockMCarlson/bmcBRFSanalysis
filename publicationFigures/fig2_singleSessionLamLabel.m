@@ -64,7 +64,7 @@ for file = 2
     
     %% Figure settings
     f = figure;
-    set(gcf,"Position",[1000 218.3333 1.5263e+03 1.0193e+03]);
+    set(gcf,"Position",[158 504 1237 306]);
     sgtitle(probeName,'interpreter','none')
     % % f.Position = [1 1 2502 1224];
     
@@ -89,7 +89,7 @@ for file = 2
     
     
     
-    ax1 = subplot(1,6,1);
+    ax1 = subplot(1,5,1);
     
     counter = 0;
     for contact = contactToPlot
@@ -111,7 +111,7 @@ for file = 2
     
     
     %% CSD
-    ax2 = subplot(1,6,2);
+    ax2 = subplot(1,5,2);
     
     counter = 0;
     clear csd
@@ -148,7 +148,7 @@ for file = 2
     
     
     %% PSD
-    ax3 = subplot(1,6,3);
+    ax3 = subplot(1,5,3);
     
     % FFT
     Fs       = 1000; % Hz
@@ -233,7 +233,7 @@ for file = 2
     title('PSD')
 
     %% Gamma x Beta Gamma Cross
-    % % ax4 = subplot(1,6,4);
+    % % ax4 = subplot(1,5,4);
     % % title('Alpha x Gamma cross')
     % % 
     % % % Get the Gamma x Beta cross
@@ -263,7 +263,7 @@ for file = 2
     
     
   %% Coherence
-    ax4 = subplot(1,6,5);
+    ax4 = subplot(1,5,4);
     title('Dioptic coherence')
 
     % Parameters for mscohere
@@ -328,7 +328,7 @@ for file = 2
     
     
     %% MUAe
-    ax5 = subplot(1,6,6);
+    ax5 = subplot(1,5,5);
     counter = 0;
     clear muaAllData
     % for cond = 1:20 % There are 20 conditions, 20 rows in IDX.

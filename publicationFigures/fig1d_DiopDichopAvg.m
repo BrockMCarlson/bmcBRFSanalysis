@@ -297,7 +297,7 @@ plot(tm_full, nsAvg, 'color', [1, 0, 0], 'LineWidth', 1.5); % Bold Red for dicho
 % ----------------------
 % PLOT COSMETICS
 % ----------------------
-ylim([0 45])
+ylim([0 30])
 xlim([-200 1800])
 
 % Create bold black vertical lines at 0 ms and 1633 ms (you can change the second value)
@@ -320,17 +320,16 @@ set(gca, 'XTick', [0 800 1600], 'YTick', [0 15 30 45]);
 set(gca, 'FontSize', 12, 'FontWeight', 'bold');
 
 % Significance asterisks for 100ms bins
-
-bin_width = 50; % ms
-time_bins = 0:bin_width:max(tm_full); % Divide time into 100 ms bins
+bin_width = 100; % ms
+time_bins = 0:bin_width:1600; % Divide time into 100 ms bins
 num_bins = length(time_bins) - 1; % Total number of bins for multiple comparisons correction
 
 % Calculate the Bonferroni-adjusted significance threshold
-original_threshold = 0.1; % Original p-value threshold for significance
+original_threshold = 0.05; % Original p-value threshold for significance
 bonferroni_threshold = original_threshold / num_bins; % Adjust for multiple comparisons
 
 % Set y_pos to a constant position above the highest point in the plot
-y_pos = max(max(psAvg), max(nsAvg)) - 0.2 * range([psAvg(:); nsAvg(:)]); % Adjust y_pos slightly above max
+y_pos = 20; % Adjust y_pos slightly above max
 
 for i = 1:num_bins
     % Find indices for this 100 ms bin
@@ -341,11 +340,11 @@ for i = 1:num_bins
     ns_bin_data = mean(ns_reshaped(bin_indices, :), 1, 'omitnan');
     
     % Run a t-test (can be replaced with ranksum if data is non-normal)
-    [~, p] = ttest2(ps_bin_data, ns_bin_data,'Tail','right');
+    [~, p] = ttest(ps_bin_data, ns_bin_data,'Tail','right');
     pout(i) = p;
     
     % If the p-value is below the Bonferroni-adjusted threshold, plot an asterisk above the two lines
-    if p < original_threshold
+    if p < bonferroni_threshold
         % Get the x-position for the middle of the bin (this ensures a scalar)
         x_pos = mean(time_bins(i:i+1)); 
         
