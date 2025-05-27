@@ -375,9 +375,9 @@ switch answer
         disp('alright, saving figure to plotdir')
         sgtitle('Coherence Penetration Average')
         cd(plotDir)
-        saveName = strcat('fig3_coherence.png');
+        saveName = strcat('fig4_coherence_BRFSpreff.png');
         saveas(f,saveName) 
-        saveName = strcat('fig3_coherence.svg');
+        saveName = strcat('fig4_coherence_BRFSnull.svg');
         saveas(f,saveName) 
     case 'No'
         cd(plotDir)

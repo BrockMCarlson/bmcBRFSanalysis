@@ -28,7 +28,6 @@ if ~exist('LFP_trials','var')
 end
 
 averageCoherenceMatrix_diopDichop = nan(15,15,2,size(officLamAssign,1));
-averageCoherenceMatrix_BRFS = nan(15,15,2,size(officLamAssign,1));
 
 %% for loop
 for penetration = 1:size(LFP_trials,1)
@@ -172,37 +171,8 @@ for penetration = 1:size(LFP_trials,1)
 
 
 
-    for i = 1:length(v1Ch)
-        % % monoc_1 = [5, 11, 13, 19]; % PO RightEye
-        % % monoc_2 = [8, 10, 16, 18]; % PO LeftEye
-        % % monoc_3 = [7, 9, 15, 17];  % NPO RightEye
-        % % monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
-        if prefMonoc(i,1) == 1
-            prefCondOnFlash(i,1) = 12;
-            nullCondOnFlash(i,1) = 11;
-        elseif prefMonoc(i,1) == 2
-            prefCondOnFlash(i,1) = 9;
-            nullCondOnFlash(i,1) = 10;
-        elseif prefMonoc(i,1) == 3
-            prefCondOnFlash(i,1) = 10;
-            nullCondOnFlash(i,1) = 9;
-        elseif prefMonoc(i,1) == 4
-            prefCondOnFlash(i,1) = 11;
-            nullCondOnFlash(i,1) = 12;
-        end
-
-    end
         
-    overallPref = mode(prefCondOnFlash);
-    if overallPref == 9
-        overallNull = 10;
-    elseif overallPref == 10
-        overallNull = 9;
-    elseif overallPref == 11
-        overallNull = 12;
-    elseif overallPref == 12
-        overallNull = 11;
-    end
+
 
     %% Coherence matrix across channels
     % Parameters for mscohere
@@ -217,7 +187,7 @@ for penetration = 1:size(LFP_trials,1)
     tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
     % Dioptic vs dichoptic
     count = 0;
-    for conditionNumber = [1 3]        
+    for conditionNumber = [1 3]        % dioptic and dichoptic
         % Get the number of trials for the chosen condition
         numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
         % Initialize coherence matrix
@@ -373,9 +343,9 @@ switch answer
         disp('alright, saving figure to plotdir')
         sgtitle('Coherence Penetration Average')
         cd(plotDir)
-        saveName = strcat('fig2_coherence.png');
+        saveName = strcat('fig3_coherence_diopDichop.png');
         saveas(f,saveName) 
-        saveName = strcat('fig2_coherence.svg');
+        saveName = strcat('fig3_coherence_diopDichop.svg');
         saveas(f,saveName) 
     case 'No'
         cd(plotDir)
