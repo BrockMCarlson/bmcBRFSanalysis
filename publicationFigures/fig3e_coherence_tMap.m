@@ -1,10 +1,10 @@
 %% bmcBRFS_fig4g_coherence_tMap
 
 %% plot BRFS
-grandAverageCoherence_BRFS = median(averageCoherenceMatrix_BRFS,4,"omitmissing"); % average across penetration
-coh_pref  = squeeze(grandAverageCoherence_BRFS(:,:,1,:)); % (15 x 15 x N)
-coh_null = squeeze(grandAverageCoherence_BRFS(:,:,2,:)); % (15 x 15 x N)
-[~, ~, ~, stats] = ttest(coh_pref, coh_null, 'dim', 3); % operates across penetrations
+% averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
+coh_diop  = squeeze(averageCoherenceMatrix_diopDichop(:,:,1,:)); % (15 x 15 x N) coh_pref
+coh_dichop = squeeze(averageCoherenceMatrix_diopDichop(:,:,2,:)); % (15 x 15 x N) coh_null
+[~, ~, ~, stats] = ttest(coh_diop, coh_dichop,'Dim',3); % operates across penetrations
 tMap = stats.tstat; % t-values matrix (15 x 15)
 figure;
 imagesc(tMap);
@@ -13,8 +13,8 @@ colorbar;
 title('Paired t-score map (Dioptic - Dichoptic)');
 xlabel('Channel'); ylabel('Channel');
 caxis([-max(abs(tMap(:))) max(abs(tMap(:)))]); % symmetric color scaling
-[~, p] = ttest(coh_pref, coh_null, 'dim', 3);
-sigMask = p < 0.05;
+[~, p] = ttest(coh_diop, coh_dichop, 'dim', 3);
+sigMask = p < (0.05/112);
 hold on;
 contour(sigMask, 1, 'k', 'LineWidth', 1); % outline significant regions
 

@@ -27,7 +27,6 @@ if ~exist('LFP_trials','var')
     load('LFP_trials.mat') % format is LFP_trials{penetration,1}{cond,1}{trial,1}(2001tm x 65Ch)
 end
 
-averageCoherenceMatrix_diopDichop = nan(15,15,2,size(officLamAssign,1));
 averageCoherenceMatrix_BRFS = nan(15,15,2,size(officLamAssign,1));
 
 %% for loop
@@ -377,7 +376,7 @@ switch answer
         cd(plotDir)
         saveName = strcat('fig4_coherence_BRFSpreff.png');
         saveas(f,saveName) 
-        saveName = strcat('fig4_coherence_BRFSnull.svg');
+        saveName = strcat('fig4_coherence_BRFSpreff.svg');
         saveas(f,saveName) 
     case 'No'
         cd(plotDir)
