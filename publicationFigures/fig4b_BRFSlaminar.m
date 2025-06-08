@@ -334,8 +334,8 @@ answer = questdlg('Would you like to save this figure?', 'Y', 'N');
 switch answer
     case 'Yes'
         cd(plotDir)
-        saveas(lamCom, 'fig3b_BRFSlaminar.png');
-        saveas(lamCom, 'fig3b_BRFSlaminar.svg');
+        saveas(lamCom, 'fig4b_BRFSlaminar.png');
+        saveas(lamCom, 'fig4b_BRFSlaminar.svg');
     case 'No'
         disp('Figure not saved.')
 end

@@ -27,6 +27,7 @@ if ~exist('LFP_trials','var')
     load('LFP_trials.mat') % format is LFP_trials{penetration,1}{cond,1}{trial,1}(2001tm x 65Ch)
 end
 
+averageCoherenceMatrix_diopDichop = nan(15,15,2,size(officLamAssign,1));
 averageCoherenceMatrix_BRFS = nan(15,15,2,size(officLamAssign,1));
 
 %% for loop
@@ -204,167 +205,147 @@ for penetration = 1:size(LFP_trials,1)
     end
 
     %% Coherence matrix across channels
-    % Parameters for mscohere
-    fs = 1000;  % Sampling frequency in Hz
-    windowSize = 256;  % Window size for computing the coherence
-    overlap = windowSize/2;  % Overlap between windows
-    tm_full = 1:2001;
-    tm_bl = 1:200;
-    tm_1stOnset = 201:1000; %800ms adapter
-    tm_2ndOnset = 1001:1800;
-    tm_offset = 1801:2001;
     tm_coher = 1289:1800; % Time window of data. Last 512ms of trial. 
-    % BRFS pref vs null
+
+
+    %% PSD
+    % Compute average PSD for each conditions 
     count = 0;
-    for conditionNumber = [overallPref overallNull]        
-        % Get the number of trials for the chosen condition
-        numTrials = size(LFP_trials{penetration,1}{conditionNumber,1},1);
-        % Initialize coherence matrix
-        coherenceMatrix = nan(15,15, numTrials);
-        % Loop through all trials and compute coherence for each channel pair
-        for trialNumber = 1:numTrials
-            for channel1 = v1Ch
-                for channel2 = v1Ch(1):channel1
-                    % Extract the LFP_bb data for the chosen channels and trial
-                    % format is LFP_trials{penetration,1}{cond,1}{trial,flash}
-                    lfpGammaData1 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel1);
-                    lfpGammaData2 = LFP_trials{penetration,1}{conditionNumber,1}{trialNumber,1}(:,channel2);
-                    %baseline subtract
-                    bl1 = median(lfpGammaData1(tm_bl));
-                    lfp_blsub_1 = lfpGammaData1 - bl1;
-                    bl2 = median(lfpGammaData2(tm_bl));
-                    lfp_blsub_2 = lfpGammaData2 - bl2;
-    
-                    % Compute coherence
-                    [coherence, freq] = mscohere(lfp_blsub_1(tm_coher), lfp_blsub_2(tm_coher), windowSize, overlap, [], fs);
-        
-                    % Store coherence in the matrix
-                    coherenceMatrix(channel1-v1Ch(1)+1, channel2-v1Ch(1)+1, trialNumber) = median(coherence(2:9));  % coherenceMatrix is (ch1 x ch2 x trialNum)
-                end
-            end
+    for cond = [1 3 overallPref overallNull]
+        count = count + 1; % for condition index
+        % format is LFP_trials{penetration,1}{cond,1}{trial}(tm,ch)
+        for trl = 1:size(LFP_trials{penetration,1}{cond,1},1);
+            DATA_PSDin = LFP_trials{penetration,1}{cond,1}{trl,1}(:,v1Ch);
+            % Compute PSD
+            [PSD, freq] = calcPSD(DATA_PSDin,tm_coher); %input is tm x ch, output is freq x ch 
+            % Store PSD across trials
+            PSD_trls(:,:,trl) = PSD;  %(freq x ch x trl)
         end
-        % Average across trials and save output
-        count = count + 1; % for pref vs null
-        averageCoherenceMatrix_BRFS(:,:,count,penetration) = median(coherenceMatrix,3); % Average across trl. averageCoherenceMatrix is (ch1 x ch2 x cond x penetration)
+
+        % average power across. trials
+        powerAvg = mean(PSD_trls,3,"omitnan");       
+        
+        % normalize power. At each frequency, we divide the power of each channel
+        % by that of the channel with the highest power.
+        PSD_norm = nan(size(powerAvg)); 
+        for freq = 1:size(powerAvg,1)
+            powerOfAllChAtThisFreq = powerAvg(freq,:);
+            [maxPower,chWithMaxPower] = max(powerOfAllChAtThisFreq);
+            PSD_norm(freq,:) = powerOfAllChAtThisFreq ./ maxPower; 
+            % output of power_norm is (freq,ch)
+        end
+        % Store output for condition and penetration
+        if cond == 1
+            PSD_normCond.dioptic(:,:,penetration) = PSD_norm;
+        elseif cond == 3
+            PSD_normCond.dichoptic(:,:,penetration) = PSD_norm;
+        elseif cond == overallPref
+            PSD_normCond.BRFSps(:,:,penetration) = PSD_norm;
+        elseif cond == overallNull
+            PSD_normCond.BRFSns(:,:,penetration) = PSD_norm;
+        end
+
     end
-    disp(strcat('Done with file number: ',string(penetration)))
-end
+        disp(strcat('Done with file number: ',string(penetration)))
+
+end %% END OF penetration = 1:size(LFP_trials,1).
 
 
-%% plot BRFS
-grandAverageCoherence_BRFS = median(averageCoherenceMatrix_BRFS,4,"omitmissing"); % average across penetration
+
+
+
+%% PSD 
+%%%%%%%%%%%%%
+%%% POWER %%%
+%%%%%%%%%%%%%
+
+%% Average variables across penetration
+PSD_grandAvg.dioptic = median(PSD_normCond.dioptic,3,"omitmissing"); % average across penetration
+PSD_grandAvg.dichoptic = median(PSD_normCond.dichoptic,3,"omitmissing"); % average across penetration
+PSD_grandAvg.BRFSps = median(PSD_normCond.BRFSps,3,"omitmissing"); % average across penetration
+PSD_grandAvg.BRFSns = median(PSD_normCond.BRFSns,3,"omitmissing"); % average across penetration
+
+%% Plot PSD
 
 % Visualize the coherence matrix
 f = figure;
-set(f,"Position",[-1611 318 1499 268])
-ax(1) = subplot(1,4,1);
-imagesc(grandAverageCoherence_BRFS(:,:,1));
-colormap(ax(1),'jet');
+% set(f,"Position",[-1238 -55 1126 641])
+ax(1) = subplot(2,3,1);
+imagesc(PSD_grandAvg.dioptic(1:50,:)'); % expected input is ch x freq
+colormap(ax(1),'parula');
 colorbar;
-xlabel('Channel');
+% clim([.75 1])
+xlabel('Frequency');
 ylabel('Channel');
-title('Preferred Stimulus BRFS flash');
+title('Dioptic');
 
-ax(2) = subplot(1,4,2);
-imagesc(grandAverageCoherence_BRFS(:,:,2));
-colormap(ax(2),'jet');
+ax(2) = subplot(2,3,2);
+imagesc(PSD_grandAvg.dichoptic(1:50,:)');
+colormap(ax(2),'parula');
 colorbar;
-xlabel('Channel');
+% clim([.75 1])
+xlabel('Frequency');
 ylabel('Channel');
-title('Non-preferred stimulus BRFS flash');
+title('Dichoptic');
 
 
-% Difference plot - with tStat
-coherenceMatrix1 = squeeze(averageCoherenceMatrix_BRFS(:,:,1,:)); 
-coherenceMatrix2 = squeeze(averageCoherenceMatrix_BRFS(:,:,2,:));
-diff_2 = grandAverageCoherence_BRFS(:,:,1)-grandAverageCoherence_BRFS(:,:,2);
-
-ax(3) = subplot(1,4,3);
-imagesc(diff_2);
-hline(5.5)
-hline(10.5)
-vline(5.5)
-vline(10.5)
+% Difference plot 
+diff_1 = PSD_grandAvg.dioptic(1:50,:)'-PSD_grandAvg.dichoptic(1:50,:)';
+ax(3) = subplot(2,3,3);
+imagesc(diff_1);
 colormap(ax(3),'bone');
-clim([-.04 .04])
+clim([0 .3])
 e = colorbar;
-e.Label.String = "Coherence Difference";
+e.Label.String = "PSD Difference";
 e.Label.Rotation = 270;
-xlabel('Channel');
+xlabel('Frequency');
 ylabel('Channel');
 title('difference');
 
-sgtitle('Coherence Penetration Average')
 
 
 
 
-%% Statistical test - ANOVA between compartment comparisons
 
-% BRFS
-SxS_2 = diff_2(1:5,1:5); %half block
-GxS_2 = diff_2(6:10,1:5);
-IxS_2 = diff_2(11:15,1:5);
-GxG_2 = diff_2(6:10,6:10); % half block
-IxG_2 = diff_2(11:15,6:10);
-IxI_2 = diff_2(11:15,11:15); % half block
+%% plot BRFS
+% Visualize the coherence matrix
+% set(f,"Position",[-1238 -55 1126 641])
+ax(1) = subplot(2,3,4);
+imagesc(PSD_grandAvg.BRFSps(1:50,:)'); % expected input is ch x freq
+colormap(ax(1),'parula');
+colorbar;
+% clim([.75 1])
+xlabel('Frequency');
+ylabel('Channel');
+title('BRFS preferred stimulus flash');
 
-% aov = anova(y) performs a one-way ANOVA and returns the anova object...
-% aov for the response data in the matrix y. Each column of y is treated...
-% as a different factor value.
-% construct y for ANOVA
-holder_cross_2(:,1) = reshape(GxS_2,[25,1]);
-holder_cross_2(:,2) = reshape(IxS_2,[25,1]);
-holder_cross_2(:,3) = reshape(IxG_2,[25,1]);
-[aov_cross_2,tbl,stats] = anova1(holder_cross_2,[],"off");
-disp(tbl)
-disp(aov_cross_2)
-
-%turn 0 to NaN
-SxS_2(SxS_2 == 0) = NaN;
-GxG_2(GxG_2 == 0) = NaN;
-IxI_2(IxI_2 == 0) = NaN;
-holder_same_2(:,1) = reshape(SxS_2,[25,1]);
-holder_same_2(:,2) = reshape(GxG_2,[25,1]);
-holder_same_2(:,3) = reshape(IxI_2,[25,1]);
-aov_same_2 = anova1(holder_same_2,[],"off");
-% disp(aov_same_2)
+ax(2) = subplot(2,3,5);
+imagesc(PSD_grandAvg.BRFSns(1:50,:)');
+colormap(ax(2),'parula');
+colorbar;
+% clim([.75 1])
+xlabel('Frequency');
+ylabel('Channel');
+title('BRFS null stimulus flash');
 
 
-%% Plotting the results of aov_cross_1 as bar plots
+% Difference plot 
+diff_2 = PSD_grandAvg.BRFSps(1:50,:)'-PSD_grandAvg.BRFSns(1:50,:)';
+ax(3) = subplot(2,3,6);
+imagesc(diff_2);
+colormap(ax(3),'bone');
+clim([0 .3])
+e = colorbar;
+e.Label.String = "PSD Difference";
+e.Label.Rotation = 270;
+xlabel('Frequency');
+ylabel('Channel');
+title('difference');
 
-% Calculate means and standard errors for cross comparisons
-means_cross = nanmean(holder_cross_2);
-sems_cross = nanstd(holder_cross_2) ./ sqrt(sum(~isnan(holder_cross_2))); % standard error of the mean (SEM)
-
-% Plot bar plot for cross comparisons
-ax(4) = subplot(1,4,4);
-b = bar(means_cross, 'FaceColor', [0.2 0.2 0.8]); % Blue color for bars
-hold on;
-
-% Add error bars
-num_groups = length(means_cross);
-errorbar(1:num_groups, means_cross, sems_cross, 'k', 'LineStyle', 'none', 'LineWidth', 1.5); % Add error bars
-
-% Add significance indicators (for example, between bars 1 and 2)
-x1 = 1; x2 = 3; % Positions of the bars to connect
-y = max(means_cross + sems_cross) * 1.1; % Height of the line above the highest bar
-plot([x1, x2], [y, y], 'k-', 'LineWidth', 1.5); % Horizontal line
-text(mean([x1, x2]), y * 1.05, '*', 'HorizontalAlignment', 'center', 'FontSize', 16); % Star to indicate significance
-
-% Customize the plot
-title('Cross-Compartment Comparisons');
-xticks(1:3);
-xticklabels({'GxS', 'IxS', 'IxG'});
-ylabel('Mean Value');
-xlabel('Group');
-grid on;
-hold off;
 
 
 %% Save output
-%save fig
-toc
+save fig
 answer = questdlg('Would you like to save this figure?', ...
 	'Y', ...
 	'N');
@@ -374,12 +355,15 @@ switch answer
         disp('alright, saving figure to plotdir')
         sgtitle('Coherence Penetration Average')
         cd(plotDir)
-        saveName = strcat('fig4cde_coherence_BRFS.png');
+        saveName = 'fig5_noPowerChange.png';
         saveas(f,saveName) 
-        saveName = strcat('fig4cde_coherence_BRFS.svg');
+        saveName = 'fig5_noPowerChange.svg';
         saveas(f,saveName) 
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')
 end
+
+
+
 

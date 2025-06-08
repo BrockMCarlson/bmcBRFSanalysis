@@ -334,8 +334,8 @@ switch answer
     case 'Yes'
        disp('alright, saving figure to plotdir')
         cd(plotDir)
-        saveas(f, 'fig3a_BRFSgrandAvg.png');
-        saveas(f, 'fig3a_BRFSgrandAvg.svg');
+        saveas(f, 'fig4a_BRFSgrandAvg.png');
+        saveas(f, 'fig4a_BRFSgrandAvg.svg');
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')
