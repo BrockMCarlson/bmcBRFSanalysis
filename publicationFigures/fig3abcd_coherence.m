@@ -9,10 +9,10 @@ workingPC = 'home'; % options: 'home', 'office'
 disp('start time')
 datetime
 if strcmp(workingPC,'home')
-    codeDir     = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
+    codeDir     = 'C:\Users\Brock\Documents\MATLAB\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir';
-    officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
+    plotDir = 'C:\Users\Brock\Box\Manuscripts\Maier\plotDir';
+    officLamAssign = importLaminarAssignments("C:\Users\Brock\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
     codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'D:\TrialTriggeredLFPandMUA';
@@ -22,7 +22,7 @@ end
 cd(codeDir)
 
 
-cd(dataDir)
+% % cd(dataDir)
 if ~exist('LFP_trials','var')
     load('LFP_trials.mat') % format is LFP_trials{penetration,1}{cond,1}{trial,1}(2001tm x 65Ch)
 end
@@ -291,15 +291,44 @@ holder_cross_1(:,3) = reshape(IxG_1,[25,1]);
 [aov_cross_1,tbl,stats] = anova1(holder_cross_1,[],"off");
 disp(aov_cross_1)
 
-%ANOVA on within-compartment comparisons
-SxS_1(SxS_1 == 0) = NaN;
-GxG_1(GxG_1 == 0) = NaN;
-IxI_1(IxI_1 == 0) = NaN;
-holder_same_1(:,1) = reshape(SxS_1,[25,1]);
-holder_same_1(:,2) = reshape(GxG_1,[25,1]);
-holder_same_1(:,3) = reshape(IxI_1,[25,1]);
-[aov_same_1]= anova1(holder_same_1,[],"off");
-%  disp(aov_same_1)
+%ANOVA across all session data:
+% Get size info
+[numCh1, numCh2, numConds, numPens] = size(averageCoherenceMatrix_diopDichop);
+
+% Extract the coherence matrices
+coherenceMatrix1 = squeeze(averageCoherenceMatrix_diopDichop(:,:,1,:)); % Dioptic
+coherenceMatrix2 = squeeze(averageCoherenceMatrix_diopDichop(:,:,2,:)); % Dichoptic
+
+% Compute the difference per penetration
+diffMatrix = coherenceMatrix1 - coherenceMatrix2;  % (ch1 x ch2 x penetration)
+
+% Initialize storage for compartment differences across penetrations
+nPen = size(diffMatrix,3);
+GxS_all = zeros(25, nPen);
+IxS_all = zeros(25, nPen);
+IxG_all = zeros(25, nPen);
+
+for p = 1:nPen
+    diff_1_p = diffMatrix(:,:,p);
+
+    % Extract compartment blocks for this penetration
+    GxS_all(:,p) = reshape(diff_1_p(6:10,1:5),[25,1]);
+    IxS_all(:,p) = reshape(diff_1_p(11:15,1:5),[25,1]);
+    IxG_all(:,p) = reshape(diff_1_p(11:15,6:10),[25,1]);
+end
+
+% Combine all penetrations into one long vector per condition
+GxS_long = reshape(GxS_all, [], 1);
+IxS_long = reshape(IxS_all, [], 1);
+IxG_long = reshape(IxG_all, [], 1);
+
+% Stack into ANOVA input
+anova_input = [GxS_long, IxS_long, IxG_long];
+
+% Run one-way ANOVA across compartment comparisons
+[aov_cross_full, tbl, stats] = anova1(anova_input, [], "off");
+disp(tbl);
+
 
 %% Plotting the results of aov_cross_1 as bar plots
 
