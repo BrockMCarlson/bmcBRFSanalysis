@@ -2,9 +2,9 @@
 Brock Carlson - brock.m.carlson@vanderbilt.edu
 MaierLab, Vanderbilt University.
 
-This repository produces the figures for __________________ (submission).
+This repository produces the figures for the PNAS (submission).
 Raw data is available from the authors upon request (2.5 TB).
-Epoched data is available for download with this repository at ____________ (200 MB). 
+Epoched data is available for download with this repository at Zenodo ________ (200 MB). 
 Data was recorded from V1 in two awake macaques.
 
 
