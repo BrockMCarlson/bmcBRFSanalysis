@@ -4,8 +4,9 @@ MaierLab, Vanderbilt University.
 
 This repository produces the figures for the PNAS (submission).
 Raw data is available from the authors upon request (2.5 TB).
-Epoched data is available for download with this repository at Zenodo ________ (200 MB). 
-Data was recorded from V1 in two awake macaques.
+Epoched data is available for download with this repository at Zenodo https://doi.org/10.5281/zenodo.18602727 (13GB). 
+The raw data is quite large (>100 GB), and can be made available upon request.
+Data was recorded from V1 in two awake macaques. We utilized 32 channel Plexon probes. 
 
 
 ## EXPERIMENTAL MODEL AND STUDY PARTICIPANT DETAILS
@@ -49,9 +50,12 @@ The results of this analysis are stored in officialLaminarAssignments.xlsx
 - V2: 10 penetrations had clear V2 laminar presentations.
 - 10 penetrations in J occured simultaneously - potentially allowing for furure analysis of horizontal interlaminar communication.
 
+# 2) createDATAOUT_MUA.m
+This script takes the raw data and epoches it.
+The raw data is large, and is therefore not avaialbe online. It will be made available upon request to the authors (brockmcarlson@gmail.com || carl4616@umn.edu)
 
+# 3) makeAllSessionVar_LFPMUA_trials.m
+This script takes the epoched data and organizes it into LFP_trials.mat and MUA_trials.mat. These epoched data files can be found on Zenodo https://doi.org/10.5281/zenodo.18602727 (13GB). 
 
-# 2) createTrialTriggeredLFPandMUA.m
-This script demonstrates how the the rawData is epoched and sorted by different visual stimulation condition.
-A dependency for this code is the laminar assignments
-The following 20 unique conditions were sorted for each session
+# 4) Figure creation scripts
+Each figure is identified in the title of the script. All of these scripts load in LFP_trials.mat or MUA_trials.mat for visualization and statistical analysis. 
