@@ -1,5 +1,5 @@
 ### intralaminarCoherenceAnalysis
-Brock Carlson - brock.m.carlson@vanderbilt.edu
+Brock Carlson - brockmcarlson@gmail.com || carl4616@umn.edu
 MaierLab, Vanderbilt University.
 
 This repository produces the figures for the PNAS (submission).
