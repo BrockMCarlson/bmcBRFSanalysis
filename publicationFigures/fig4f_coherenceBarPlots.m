@@ -55,8 +55,8 @@ switch answer
         disp('alright, saving figure to plotdir')
         sgtitle('Coherence Penetration Average')
         cd(plotDir)
-        saveas(f, 'fig2d_anova_grouped_bar_plots.png');
-        saveas(f, 'fig2d_anova_grouped_bar_plots.svg');
+        saveas(f, 'fig4f_coherenceBarPlots.png');
+        saveas(f, 'fig4f_coherenceBarPlots.svg');
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')

@@ -11,7 +11,7 @@ datetime
 if strcmp(workingPC,'home')
     codeDir     = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir';
+    plotDir = 'C:\Users\Brock Carlson\Documents\Coherence manuscript - home pc\officialFigureOutputsFromMATLAB';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
     codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
@@ -374,11 +374,11 @@ switch answer
         disp('alright, saving figure to plotdir')
         sgtitle('Coherence Penetration Average')
         cd(plotDir)
-        saveName = strcat('suppFig_copyOf4cde_coherence_MonocAlt.png');
+        saveName = strcat('suppFig_copyOf4cde_coherence_withPhysicalAlt.png');
         saveas(f,saveName) 
-        saveName = strcat('suppFig_copyOf4cde_coherence_MonocAlt.svg');
+        saveName = strcat('suppFig_copyOf4cde_coherence_withPhysicalAlt.svg');
         saveas(f,saveName) 
-        saveName = strcat('suppFig_copyOf4cde_coherence_MonocAlt.fig');
+        saveName = strcat('suppFig_copyOf4cde_coherence_withPhysicalAlt.fig');
         saveas(f,saveName) 
     case 'No'
         cd(plotDir)

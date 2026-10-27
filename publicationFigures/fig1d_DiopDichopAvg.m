@@ -10,7 +10,7 @@ workingPC = 'home'; % options: 'home', 'office'
 if strcmp(workingPC,'home')
     codeDir = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir';
+    plotDir = 'C:\Users\Brock Carlson\Documents\Coherence manuscript - home pc\officialFigureOutputsFromMATLAB';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
     codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
@@ -297,7 +297,7 @@ plot(tm_full, nsAvg, 'color', [1, 0, 0], 'LineWidth', 1.5); % Bold Red for dicho
 % ----------------------
 % PLOT COSMETICS
 % ----------------------
-ylim([0 30])
+ylim([0 45])
 xlim([-200 1800])
 
 % Create bold black vertical lines at 0 ms and 1633 ms (you can change the second value)

@@ -11,7 +11,7 @@ datetime
 if strcmp(workingPC,'home')
     codeDir     = 'C:\Users\Brock Carlson\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
     dataDir = 'S:\TrialTriggeredLFPandMUA';
-    plotDir = 'C:\Users\Brock Carlson\Box\Manuscripts\Maier\plotDir';
+    plotDir = 'C:\Users\Brock Carlson\Documents\Coherence manuscript - home pc\officialFigureOutputsFromMATLAB';
     officLamAssign = importLaminarAssignments("C:\Users\Brock Carlson\Box\Manuscripts\Maier\officialLaminarAssignment_bmcBRFS.xlsx", "AnalysisList", [2, Inf]);
 elseif strcmp(workingPC,'office')
     codeDir     = 'C:\Users\neuropixel\Documents\GitHub\bmcBRFSanalysis\publicationFigures';
@@ -380,20 +380,16 @@ for p = 1:length(params)
     sgtitle(sprintf('Coherence Penetration Average | %s', params(p).name))
 
     %% --- Save (parameterized) ---
-    baseName = sprintf('fig4cde_coherence_BRFS_%s', params(p).name);
-    saveas(f, strcat(baseName,'.png'))
-    saveas(f, strcat(baseName,'.svg'))
-    % % answer = questdlg('Would you like to save this figure?', 'Y', 'N');
-    % % 
-    % % switch answer
-    % %     case 'Yes'
-    % %         cd(plotDir)
-    % %         baseName = sprintf('fig4cde_coherence_BRFS_%s', params(p).name);
-    % %         saveas(f, strcat(baseName,'.png'))
-    % %         saveas(f, strcat(baseName,'.svg'))
-    % %     case 'No'
-    % %         cd(plotDir)
-    % % end
+    answer = questdlg('Would you like to save this figure?', 'Y', 'N');
+    switch answer
+        case 'Yes'
+            cd(plotDir)
+            baseName = sprintf('suppFig_coherenceAcrossTimeAndFreq', params(p).name);
+            saveas(f, strcat(baseName,'.png'))
+            saveas(f, strcat(baseName,'.svg'))
+        case 'No'
+            cd(plotDir)
+    end
 
 end
 
