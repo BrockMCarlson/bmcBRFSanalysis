@@ -378,6 +378,8 @@ switch answer
         saveas(f,saveName) 
         saveName = strcat('fig4cde_coherence_BRFS.svg');
         saveas(f,saveName) 
+        saveName = strcat('fig4cde_coherence_BRFS.fig');
+        saveas(f,saveName) 
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')

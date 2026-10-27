@@ -8,7 +8,7 @@ coh_null = squeeze(averageCoherenceMatrix_BRFS(:,:,2,:)); % (15 x 15 x N)
 tMap = stats.tstat; % t-values matrix (15 x 15)
 g = figure;
 imagesc(tMap);
-colormap('jet'); % blue-white-red diverging colormap (you can also use other perceptual maps)
+colormap('parula'); % blue-white-red diverging colormap (you can also use other perceptual maps)
 colorbar;
 title('Paired t-score map (Pref - Null)');
 xlabel('Channel'); ylabel('Channel');
@@ -34,6 +34,8 @@ switch answer
         saveName = strcat('fig4g_coherence_tMap.png');
         saveas(g,saveName) 
         saveName = strcat('fig4g_coherence_tMap.svg');
+        saveas(g,saveName) 
+        saveName = strcat('fig4g_coherence_tMap.fig');
         saveas(g,saveName) 
     case 'No'
         cd(plotDir)

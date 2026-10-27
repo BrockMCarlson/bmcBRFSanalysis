@@ -8,7 +8,7 @@ coh_dichop = squeeze(averageCoherenceMatrix_diopDichop(:,:,2,:)); % (15 x 15 x N
 tMap = stats.tstat; % t-values matrix (15 x 15)
 e = figure;
 imagesc(tMap);
-colormap('jet'); % blue-white-red diverging colormap (you can also use other perceptual maps)
+colormap('parula'); % blue-white-red diverging colormap (you can also use other perceptual maps)
 colorbar;
 title('Paired t-score map (Dioptic - Dichoptic)');
 xlabel('Channel'); ylabel('Channel');
@@ -34,6 +34,8 @@ switch answer
         saveName = strcat('fig3e_coherence_tMap.png');
         saveas(e,saveName) 
         saveName = strcat('fig3e_coherence_tMap.svg');
+        saveas(e,saveName) 
+        saveName = strcat('fig3e_coherence_tMap.fig');
         saveas(e,saveName) 
     case 'No'
         cd(plotDir)

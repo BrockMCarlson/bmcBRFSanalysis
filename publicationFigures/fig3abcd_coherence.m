@@ -347,6 +347,8 @@ switch answer
         saveas(f,saveName) 
         saveName = strcat('fig3_coherence_diopDichop.svg');
         saveas(f,saveName) 
+        saveName = strcat('fig3_coherence_diopDichop.fig');
+        saveas(f,saveName) 
     case 'No'
         cd(plotDir)
         disp('please see plotdir for last save')
