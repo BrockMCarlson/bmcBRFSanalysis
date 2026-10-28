@@ -289,7 +289,8 @@ holder_cross_1(:,1) = reshape(GxS_1,[25,1]);
 holder_cross_1(:,2) = reshape(IxS_1,[25,1]);
 holder_cross_1(:,3) = reshape(IxG_1,[25,1]);
 [aov_cross_1,tbl,stats] = anova1(holder_cross_1,[],"off");
-disp(aov_cross_1)
+disp(tbl)
+disp(stats)
 
 %ANOVA on within-compartment comparisons
 SxS_1(SxS_1 == 0) = NaN;
