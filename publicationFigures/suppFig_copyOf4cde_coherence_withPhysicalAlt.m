@@ -263,7 +263,7 @@ colormap(ax(1),'jet');
 colorbar;
 xlabel('Channel');
 ylabel('Channel');
-title('Preferred Stimulus BRFS flash');
+title('Preferred Stimulus Monoc Alt flash');
 
 ax(2) = subplot(1,4,2);
 imagesc(grandAverageCoherence_BRFS(:,:,2));
@@ -271,7 +271,7 @@ colormap(ax(2),'jet');
 colorbar;
 xlabel('Channel');
 ylabel('Channel');
-title('Non-preferred stimulus BRFS flash');
+title('Non-preferred stimulus Monoc Alt flash');
 
 
 % Difference plot - with tStat

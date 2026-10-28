@@ -232,7 +232,7 @@ disp(freq(2:9))
 
 % Visualize the coherence matrix
 f = figure;
-set(f,"Position",[-1611 318 1499 268])
+set(f,"Position",[98 374 1638 268])
 ax(1) = subplot(1,4,1);
 imagesc(grandAverageCoherence_diopDichop(:,:,1));
 colormap(ax(1),'jet');

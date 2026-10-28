@@ -270,7 +270,7 @@ ns_S_avgMinusSEM = nsAvg - nsSEM;
 %% Figure generation! 
 
 tm_full = (-200:1800)'; % 1801 total timepoints
-bin_width = 50; % ms
+bin_width = 100; % ms
 time_bins = 0:bin_width:max(tm_full);
 num_bins = length(time_bins)-1;
 original_threshold = 0.05;

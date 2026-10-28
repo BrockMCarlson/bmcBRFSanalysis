@@ -259,7 +259,7 @@ ps_avg_all = {ps_S_avg, ps_G_avg, ps_I_avg};
 ns_avg_all = {ns_S_avg, ns_G_avg, ns_I_avg};
 %% Statistical Analysis for Significance Testing
 tm_full = -200:1800;
-bin_width = 50; % ms
+bin_width = 100; % ms
 time_bins = 0:bin_width:max(tm_full);
 num_bins = length(time_bins) - 1;
 original_threshold = 0.05;

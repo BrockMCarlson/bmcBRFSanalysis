@@ -384,7 +384,7 @@ for p = 1:length(params)
     switch answer
         case 'Yes'
             cd(plotDir)
-            baseName = sprintf('suppFig_coherenceAcrossTimeAndFreq', params(p).name);
+            baseName = strcat('suppFig_coherenceAcrossTimeAndFreq_', params(p).name);
             saveas(f, strcat(baseName,'.png'))
             saveas(f, strcat(baseName,'.svg'))
         case 'No'

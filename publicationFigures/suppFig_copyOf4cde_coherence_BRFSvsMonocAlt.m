@@ -176,30 +176,43 @@ for penetration = 1:size(LFP_trials,1)
         % % monoc_2 = [8, 10, 16, 18]; % PO LeftEye
         % % monoc_3 = [7, 9, 15, 17];  % NPO RightEye
         % % monoc_4 = [6, 12, 14, 20]; % NPO LeftEye
-        if prefMonoc(i,1) == 1
-            prefCondOnFlash(i,1) = 20; % 12 --> 20
-            nullCondOnFlash(i,1) = 19; % 11 --> 19
-        elseif prefMonoc(i,1) == 2
-            prefCondOnFlash(i,1) = 17; % 9 --> 17
-            nullCondOnFlash(i,1) = 18; % 10 --> 18
-        elseif prefMonoc(i,1) == 3
-            prefCondOnFlash(i,1) = 18; % 10 --> 18
-            nullCondOnFlash(i,1) = 17;  % 9 --> 17
-        elseif prefMonoc(i,1) == 4
-            prefCondOnFlash(i,1) = 19; % 11 --> 19
-            nullCondOnFlash(i,1) = 20; % 12 --> 20
-        end
+        % if prefMonoc(i,1) == 1
+        %     prefCondOnFlash(i,1) = 20; % 12 --> 20
+        %     nullCondOnFlash(i,1) = 19; % 11 --> 19
+        % elseif prefMonoc(i,1) == 2
+        %     prefCondOnFlash(i,1) = 17; % 9 --> 17
+        %     nullCondOnFlash(i,1) = 18; % 10 --> 18
+        % elseif prefMonoc(i,1) == 3
+        %     prefCondOnFlash(i,1) = 18; % 10 --> 18
+        %     nullCondOnFlash(i,1) = 17;  % 9 --> 17
+        % elseif prefMonoc(i,1) == 4
+        %     prefCondOnFlash(i,1) = 19; % 11 --> 19
+        %     nullCondOnFlash(i,1) = 20; % 12 --> 20
+        % end
 
+        if prefMonoc(i,1) == 1
+            BRFS_PS_Flash(i,1) = 12; % 12 
+            MonocAlt_PS_Flash(i,1) = 20; % 12 --> 20
+        elseif prefMonoc(i,1) == 2
+            BRFS_PS_Flash(i,1) = 9; % 9 
+            MonocAlt_PS_Flash(i,1) = 17; % 9 --> 17
+        elseif prefMonoc(i,1) == 3
+            BRFS_PS_Flash(i,1) = 10; % 10 
+            MonocAlt_PS_Flash(i,1) = 18;  % 10 --> 18
+        elseif prefMonoc(i,1) == 4
+            BRFS_PS_Flash(i,1) = 11; % 11 
+            MonocAlt_PS_Flash(i,1) = 19; % 11 --> 19
+        end
     end
         
-    overallPref = mode(prefCondOnFlash);
-    if overallPref == 17
-        overallNull = 18;
-    elseif overallPref == 18
-        overallNull = 17;
-    elseif overallPref == 19
+    overallPref = mode(BRFS_PS_Flash);
+    if overallPref == 12
         overallNull = 20;
-    elseif overallPref == 20
+    elseif overallPref == 9
+        overallNull = 17;
+    elseif overallPref == 10
+        overallNull = 18;
+    elseif overallPref == 11
         overallNull = 19;
     end
 
@@ -271,7 +284,7 @@ colormap(ax(2),'jet');
 colorbar;
 xlabel('Channel');
 ylabel('Channel');
-title('Non-preferred stimulus BRFS flash');
+title('Preferred stimulus Monoc Alt flash');
 
 
 % Difference plot - with tStat
@@ -374,11 +387,11 @@ switch answer
         disp('alright, saving figure to plotdir')
         sgtitle('Coherence Penetration Average')
         cd(plotDir)
-        saveName = strcat('suppFig_copyOf4cde_coherence_MonocAlt.png');
+        saveName = strcat('suppFig_copyOf4cde_coherence_BRFSvsMonocAlt.png');
         saveas(f,saveName) 
-        saveName = strcat('suppFig_copyOf4cde_coherence_MonocAlt.svg');
+        saveName = strcat('suppFig_copyOf4cde_coherence_BRFSvsMonocAlt.svg');
         saveas(f,saveName) 
-        saveName = strcat('suppFig_copyOf4cde_coherence_MonocAlt.fig');
+        saveName = strcat('suppFig_copyOf4cde_coherence_BRFSvsMonocAlt.fig');
         saveas(f,saveName) 
     case 'No'
         cd(plotDir)
